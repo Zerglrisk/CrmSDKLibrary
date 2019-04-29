@@ -1,5 +1,4 @@
-﻿using Microsoft.Xrm.Client;
-using Microsoft.Xrm.Sdk;
+﻿using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
@@ -34,15 +33,18 @@ namespace CrmSdkLibrary
             try
             {
                 //retrieve the parent record
-                parentRecord = CrmSdkLibrary.Connection.OrgService.Retrieve(LogicalName, parentRecordId, new ColumnSet());
+                parentRecord = CrmSdkLibrary.Connection.OrgService.Retrieve(LogicalName, parentRecordId, new ColumnSet(true));
 
                 //Clone the Account Record using Clone function;
                 //Clone function takes a bool parameter which relates the Related Entities of the parent
                 //record to the cloned records, if set to true.
                 //The bool parameter passed to Clone method is set to true by default.
-                childaccount = parentRecord.Clone(true);
+                childaccount = parentRecord;//.Clone(true);
                 //Remove all the attributes of type primaryid as all the cloned records will have their own primaryid
                 childaccount.Attributes.Remove(childaccount.LogicalName + "id");
+                childaccount.Attributes.Remove("address2_addressid");
+                childaccount.Attributes.Remove("address1_addressid");
+                childaccount.Id = Guid.Empty;
                 //Remove the telephone1 attribute from the cloned record to differentiate between the parent and cloned record
                 //childaccount.Attributes.Remove("telephone1");
                 if (attribute != null)
@@ -70,7 +72,7 @@ namespace CrmSdkLibrary
                     {
                         if (parentRecordIds[i] == (Guid)entity.Attributes[entity.LogicalName + "id"]) //복사할 레코드가 있으면
                         {
-                            Entity childaccount = entity.Clone(true);
+                            Entity childaccount = entity;//.Clone(true);
                             childaccount.Attributes.Remove(childaccount.LogicalName + "id");
                             if (attribute != null)
                                 childaccount.Attributes = attribute;
@@ -80,7 +82,7 @@ namespace CrmSdkLibrary
                 }
                 else
                 {
-                    Entity childaccount = entity.Clone(true);
+                    Entity childaccount = entity;//.Clone(true);
                     childaccount.Attributes.Remove(childaccount.LogicalName + "id");
                     if (attribute != null)
                         childaccount.Attributes = attribute;
