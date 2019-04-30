@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,16 +28,27 @@ namespace Example
             //ColumnSet columnset = new ColumnSet(new String[] { "name" });
 
             //var retrieved = CrmSdkLibrary.Connection.OrgService.Retrieve("account",childAccountID, columnset);
-            CrmSdkLibrary.Copy.CloneRecord("account", new Guid("a8a19cdd-88df-e311-b8e5-6c3be5a8b200"), null);
-            var qe = new QueryExpression("account") { ColumnSet = new ColumnSet("name") } ;
-            var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
-                //CrmSdkLibrary.Common.GetOptionSetList(CrmSdkLibrary.Connection.OrgService, "lead", "leadsourcecode");
+            //CrmSdkLibrary.Copy.CloneRecord("account", new Guid("a8a19cdd-88df-e311-b8e5-6c3be5a8b200"), null);
+            //var qe = new QueryExpression("account") { ColumnSet = new ColumnSet("name") } ;
+            //var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
+            //    //CrmSdkLibrary.Common.GetOptionSetList(CrmSdkLibrary.Connection.OrgService, "lead", "leadsourcecode");
 
-            foreach (var a in retrieve.Entities)
-            {
-                Console.WriteLine(a.Id + "," + (a.Contains("name") ? a["name"].ToString() : string.Empty));
-            }
+            //foreach (var a in retrieve.Entities)
+            //{
+            //    Console.WriteLine(a.Id + "," + (a.Contains("name") ? a["name"].ToString() : string.Empty));
+            //}
+            Program app = new Program();
+            Task.WaitAll(Task.Run(async () => await app.RunAsync()));
 
+
+        }
+
+        public async Task RunAsync()
+        {
+            HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("test@test90424.onmicrosoft.com", "true@0424",
+                "test90424.onmicrosoft.com", "https://test90424.crm5.dynamics.com/");
+           string aa = await CrmSdkLibrary.Api.User(client);
+           Console.WriteLine(aa);
         }
 
         private static Guid CloneRecord(string LogicalName, Guid parentRecordId, List<string> attribute)
