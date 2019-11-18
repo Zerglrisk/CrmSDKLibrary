@@ -17,7 +17,7 @@ namespace CrmSdkLibrary
     public class Connection
     {
         public static IOrganizationService OrgService { get; private set; }
-        private ClientCredentials _clientCredentials;
+        public static ClientCredentials _clientCredentials;
         private ClientCredentials _deviceCredentials;
 
         //CrmServiceClient를 사용하여 Microsoft Dynamics 365(온라인 및 온-프레미스) 웹 서비스에 연결한다.

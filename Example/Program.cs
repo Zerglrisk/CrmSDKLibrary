@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using CrmSdkLibrary;
 
 namespace Example
 {
@@ -17,8 +18,8 @@ namespace Example
             CrmSdkLibrary.Connection conn = new CrmSdkLibrary.Connection();
             //Console.WriteLine(conn.ConnectService("mscrm0827", "admin@mscrm0827.onmicrosoft.com", "mscrm@0827"));
             Console.WriteLine(conn.ConnectService(
-                new Uri("https://test90424.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
-                "test@test90424.onmicrosoft.com", "true@0424"));
+                new Uri("https://test191020.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
+                "test191020@test191020.onmicrosoft.com", "***REMOVED***"));
 
             //AttributeCollection attribute = new AttributeCollection();
             //attribute.Add("name", "child Account Test");
@@ -29,26 +30,38 @@ namespace Example
 
             //var retrieved = CrmSdkLibrary.Connection.OrgService.Retrieve("account",childAccountID, columnset);
             //CrmSdkLibrary.Copy.CloneRecord("account", new Guid("a8a19cdd-88df-e311-b8e5-6c3be5a8b200"), null);
-            //var qe = new QueryExpression("account") { ColumnSet = new ColumnSet("name") } ;
+            //var qe = new QueryExpression("account") { ColumnSet = new ColumnSet("name") };
             //var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
-            //    //CrmSdkLibrary.Common.GetOptionSetList(CrmSdkLibrary.Connection.OrgService, "lead", "leadsourcecode");
+            
+            //CrmSdkLibrary.Common.GetOptionSetList(CrmSdkLibrary.Connection.OrgService, "lead", "leadsourcecode");
 
             //foreach (var a in retrieve.Entities)
             //{
             //    Console.WriteLine(a.Id + "," + (a.Contains("name") ? a["name"].ToString() : string.Empty));
             //}
+
+            string appId = "5464f0a1-7c0e-40fc-818a-ee605a1a74eb";
+
+
             Program app = new Program();
+            Api.SetApplicationId("5ecca204-967a-4270-870d-e4c7990043dc");
             Task.WaitAll(Task.Run(async () => await app.RunAsync()));
 
-
+            Console.WriteLine("aav)");
         }
 
         public async Task RunAsync()
         {
-            HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("test@test90424.onmicrosoft.com", "true@0424",
-                "test90424.onmicrosoft.com", "https://test90424.crm5.dynamics.com/");
-           string aa = await CrmSdkLibrary.Api.User(client);
-           Console.WriteLine(aa);
+            //HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("test191020@test191020.onmicrosoft.com", "***REMOVED***",
+            //    "test191020.onmicrosoft.com", "https://test191020.crm5.dynamics.com/");
+            HttpClient client = CrmSdkLibrary.Api.GetWebapiHttpClient("test191020@test191020.onmicrosoft.com", "***REMOVED***",
+                   "https://test191020.crm5.dynamics.com/", "https://login.microsoftonline.com/3220ef0a-b804-47fa-ad66-5561c8d59114");
+            var aa = await CrmSdkLibrary.Api.User(client);
+            Console.WriteLine(aa);
+
+            //Console.WriteLine();
+            //var bb = await Api.GetDataAsJson(client);
+            //Console.WriteLine(bb);
         }
 
         private static Guid CloneRecord(string LogicalName, Guid parentRecordId, List<string> attribute)
@@ -75,12 +88,12 @@ namespace Example
                 //childaccount.Attributes.Remove("telephone1");
                 if (attribute != null)
                 {
-                    foreach(var a in attribute)
+                    foreach (var a in attribute)
                     {
                         childaccount.Attributes.Remove(a);
                     }
                 }
-                    //childaccount.Attributes = attribute;
+                //childaccount.Attributes = attribute;
                 //create the cloned record and return child account ID
                 try
                 {
@@ -88,7 +101,7 @@ namespace Example
                 }
                 catch
                 {
-                    if(attribute == null)
+                    if (attribute == null)
                     {
                         attribute = new List<string>();
                     }
