@@ -96,7 +96,7 @@ namespace CrmSdkLibrary
             }
 
             //Initialize
-            string strLabel = String.Empty;
+            var strLabel = string.Empty;
 
             //For OptionSet and EtntiyReference and Virtual
 
@@ -253,23 +253,23 @@ namespace CrmSdkLibrary
         /// <returns>string</returns>
         public static string GetOptionSetText(IOrganizationService service, string entityName, string attributeName, int optionSetValue)
         {
-            RetrieveEntityRequest retrieveDetails = new RetrieveEntityRequest
+            var retrieveDetails = new RetrieveEntityRequest
             {
                 EntityFilters = EntityFilters.All,
                 LogicalName = entityName,
                 RetrieveAsIfPublished = true
             };
-            RetrieveEntityResponse retrieveEntityResponseObj = (RetrieveEntityResponse)service.Execute(retrieveDetails);
-            Microsoft.Xrm.Sdk.Metadata.EntityMetadata metadata = retrieveEntityResponseObj.EntityMetadata;
-            Microsoft.Xrm.Sdk.Metadata.PicklistAttributeMetadata picklistMetadata = metadata.Attributes.FirstOrDefault(attribute => String.Equals(attribute.LogicalName, attributeName, StringComparison.OrdinalIgnoreCase)) as Microsoft.Xrm.Sdk.Metadata.PicklistAttributeMetadata;
-            Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata options = picklistMetadata.OptionSet;
-
-            IList<OptionMetadata> optionsList = (from o in options.Options
-                                                 where o.Value.Value == optionSetValue
+            var retrieveEntityResponseObj = (RetrieveEntityResponse)service.Execute(retrieveDetails);
+            var metadata = retrieveEntityResponseObj.EntityMetadata;
+            var pickListMetadata = metadata.Attributes.FirstOrDefault(attribute => string.Equals(attribute.LogicalName, attributeName, StringComparison.OrdinalIgnoreCase)) as Microsoft.Xrm.Sdk.Metadata.PicklistAttributeMetadata;
+            var options = pickListMetadata?.OptionSet;
+            
+            IList<OptionMetadata> optionsList = (from o in options?.Options
+                                                 where o.Value != null && o.Value.Value == optionSetValue
                                                  select o).ToList();
-            string optionsetLabel = (optionsList.First()).Label.UserLocalizedLabel.Label;
+            var optionSetLabel = (optionsList.First()).Label.UserLocalizedLabel.Label;
 
-            return optionsetLabel;
+            return optionSetLabel;
         }
 
         /// <summary>
@@ -296,8 +296,7 @@ namespace CrmSdkLibrary
             //var optionList = (from o in attributeMetadata.OptionSet.Options
             //    select new { Value = o.Value, Text = o.Label.UserLocalizedLabel.Label }).ToList();
 
-            return (from o in attributeMetadata.OptionSet.Options
-                select o).ToList();
+            return (from o in attributeMetadata.OptionSet.Options select o).ToList();
         }
     }
 }

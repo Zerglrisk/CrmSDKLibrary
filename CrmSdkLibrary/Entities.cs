@@ -10187,17 +10187,7 @@ namespace CrmSdkLibrary.Entities
     {
         SystemUser() { }
 
-        public Guid GetCurrentUserId(IOrganizationService service)
-        {
-            try
-            {
-                return ((WhoAmIResponse)service.Execute(new WhoAmIRequest())).UserId;
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-        }
+      
 
         public string GetCurrentUserName(IOrganizationService service, Guid userId)
         {
@@ -10218,7 +10208,7 @@ namespace CrmSdkLibrary.Entities
             try
             {
                 // Get a system user
-                var userId = GetCurrentUserId(service);
+                var userId = Messages.GetCurrentUserId(service);
 
                 // Lookup User
                 return GetCurrentUserName(service, userId);

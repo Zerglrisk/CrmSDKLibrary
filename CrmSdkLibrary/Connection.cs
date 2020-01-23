@@ -11,13 +11,14 @@ using System.Net;
 using Microsoft.Xrm.Sdk.Client;
 using System.ServiceModel.Description;
 using Microsoft.Xrm.Tooling.Connector;
+using AuthenticationType = CrmSdkLibrary.Definition.Enum.AuthenticationType;
 
 namespace CrmSdkLibrary
 {
     public class Connection
     {
         public static IOrganizationService OrgService { get; private set; }
-        public static ClientCredentials _clientCredentials;
+        public static ClientCredentials ClientCredentials;
         private ClientCredentials _deviceCredentials;
 
         //CrmServiceClient를 사용하여 Microsoft Dynamics 365(온라인 및 온-프레미스) 웹 서비스에 연결한다.
@@ -29,9 +30,9 @@ namespace CrmSdkLibrary
         /// <seealso cref="https://rajeevpentyala.com/2016/12/11/code-snippet-connect-to-dynamics-crm-using-organization-service-c/"/>
         /// <param name="connectionString">Provides service connection information</param>
         /// <param name="orgName"></param>
-        /// <param name="id"></param>
-        /// <param name="pw"></param>
-        public Guid ConnectService(string orgName, string id, string pw)
+        /// <param name="userName"></param>
+        /// <param name="password"></param>
+        public Guid ConnectService(string orgName, string userName, string password)
         {
             var uri = new System.Uri($"https://{orgName}.api.crm5.dynamics.com/XRMServices/2011/Organization.svc");
             #region Old Using Microsoft.Xrm.Tooling.Connector.CrmServiceClient
@@ -45,18 +46,18 @@ namespace CrmSdkLibrary
             */
             #endregion
             //기본인증정보 설정.
-            if (!string.IsNullOrEmpty(id) || !string.IsNullOrEmpty(pw))
+            if (!string.IsNullOrEmpty(userName) || !string.IsNullOrEmpty(password))
             {
-                if (_clientCredentials == null)
-                    _clientCredentials = new ClientCredentials();
-                _clientCredentials.UserName.UserName = id;
-                _clientCredentials.UserName.Password = pw;
+                if (ClientCredentials == null)
+                    ClientCredentials = new ClientCredentials();
+                ClientCredentials.UserName.UserName = userName;
+                ClientCredentials.UserName.Password = password;
             }
 
             if (_deviceCredentials == null)
                 _deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
 
-            var organizationServiceProxy = new OrganizationServiceProxy(uri, null, _clientCredentials, _deviceCredentials);
+            var organizationServiceProxy = new OrganizationServiceProxy(uri, null, ClientCredentials, _deviceCredentials);
 
             OrgService = organizationServiceProxy;
 
@@ -67,10 +68,10 @@ namespace CrmSdkLibrary
         /// Set clientCredential and Connect Server by Client using OrganizationServiceProxy to Custom URL
         /// </summary>
         /// <param name="organizationServiceUri"></param>
-        /// <param name="id"></param>
-        /// <param name="pw"></param>
+        /// <param name="userName"></param>
+        /// <param name="password"></param>
         /// <returns></returns>
-        public Guid ConnectService(Uri organizationServiceUri, string id, string pw)
+        public Guid ConnectService(Uri organizationServiceUri, string userName, string password)
         {
             #region Old Using Microsoft.Xrm.Tooling.Connector.CrmServiceClient
             /*
@@ -84,12 +85,12 @@ namespace CrmSdkLibrary
             #endregion
             
             //기본인증정보 설정.
-            if (!string.IsNullOrEmpty(id) || !string.IsNullOrEmpty(pw))
+            if (!string.IsNullOrEmpty(userName) || !string.IsNullOrEmpty(password))
             {
-                if (_clientCredentials == null)
-                    _clientCredentials = new ClientCredentials();
-                _clientCredentials.UserName.UserName = id;
-                _clientCredentials.UserName.Password = pw;
+                if (ClientCredentials == null)
+                    ClientCredentials = new ClientCredentials();
+                ClientCredentials.UserName.UserName = userName;
+                ClientCredentials.UserName.Password = password;
             }
             if (_deviceCredentials == null)
                 _deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
@@ -99,19 +100,46 @@ namespace CrmSdkLibrary
             try
             {
                 organizationServiceProxy = new OrganizationServiceProxy(organizationServiceUri, null,
-                    _clientCredentials, _deviceCredentials);
+                    ClientCredentials, _deviceCredentials);
             }
             catch (Exception e)
             {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 organizationServiceProxy = new OrganizationServiceProxy(organizationServiceUri, null,
-                    _clientCredentials, _deviceCredentials);
+                    ClientCredentials, _deviceCredentials);
             }
             organizationServiceProxy.Authenticate();
             
             OrgService = organizationServiceProxy;
             
             return ((WhoAmIResponse)organizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
+        }
+
+        /// <summary>
+        /// Connect Service Using CrmServiceClient
+        /// Crm Online : Office365
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/org-service/quick-start-org-service-console-app"/>
+        /// <param name="environmentUri"> e.g. https://test201018.crm5.dynamics.com</param>
+        /// <param name="userName"> e.g. you@yourorg.onmicrosoft.com </param>
+        /// <param name="password"> e.g. y0urp455w0rd </param>
+        /// <param name="authType">  </param>
+        /// <returns></returns>
+        public Guid ConnectService(string environmentUri, string userName, string password,
+            Definition.Enum.AuthenticationType authType = AuthenticationType.Office365) //Microsoft.Xrm.Tooling.Connector.AuthenticationType authType)
+        {
+            string conn = $@" 
+            Url = {environmentUri};
+            AuthType = {authType:G};
+            UserName = {userName};
+            Password = {password};
+            RequireNewInstance = True"; //GenerateConString();
+            var svc = new CrmServiceClient(conn);
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            svc.OrganizationServiceProxy.Authenticate();
+            OrgService = svc;
+
+            return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
         }
 
         //Similer WhoAmI Method

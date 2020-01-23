@@ -12,8 +12,14 @@ namespace CrmSdkLibrary
     {
         public static string ToDigitString(this string str)
         {
-            Regex regex = new Regex(@"[^\d]");
+            var regex = new Regex(@"[^\d]");
             return regex.Replace(str, "");
+        }
+
+        public static string ToDigitString(this object str)
+        {
+            var regex = new Regex(@"[^\d]");
+            return regex.Replace(str.ToString(), "");
         }
 
         public static AliasedValue ToAliasedValue(this object attr)
@@ -29,10 +35,13 @@ namespace CrmSdkLibrary
         {
             return isAliasedValue ? (OptionSetValue)attr.ToAliasedValue().Value : (OptionSetValue)attr;
         }
+        public static KeyValuePair<Guid, string> ToKeyValuePair(this EntityReference attr)
+        {
+            return attr != null ? new KeyValuePair<Guid, string>(attr.Id, attr.Name) : new KeyValuePair<Guid, string>();
+        }
         public static DateTime? ToDateTime(this object attr, bool isAliasedValue = false)
         {
-            DateTime temp;
-            if (DateTime.TryParse(isAliasedValue ? attr.ToAliasedValue().Value.ToString() : attr.ToString(), out temp))
+            if (DateTime.TryParse(isAliasedValue ? attr.ToAliasedValue().Value.ToString() : attr.ToString(), out var temp))
             {
                 return temp.AddHours(9);
             }
@@ -40,6 +49,26 @@ namespace CrmSdkLibrary
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/mt593046(v=crm.8)"/>
+        /// <param name="attr"></param>
+        /// <returns></returns>
+        public static string ToEntitySetPath(this EntityReference attr)
+        {
+            switch (attr.LogicalName.ToLower())
+            {
+                case "account":
+                    return "accounts";
+                case "opportunity":
+                    return "opportunities";
+                
+            }
+
+            return null;
         }
     }
 }
