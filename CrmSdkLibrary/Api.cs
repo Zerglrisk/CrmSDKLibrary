@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Web;
 using CrmSdkLibrary.Definition;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Xrm.Sdk;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -21,6 +22,7 @@ namespace CrmSdkLibrary
 
 
         public static string ClientId;
+
         /// <summary>
         /// Authenticate to Microsoft Dynamics 365 with the Web API
         /// </summary>
@@ -30,13 +32,20 @@ namespace CrmSdkLibrary
         /// <param name="domainName"></param>
         /// <param name="webAPIBaseAddress"></param>
         /// <returns></returns>
-        public static HttpClient getNewHttpClient(string userName, string password, string domainName, string webAPIBaseAddress)
+        public static HttpClient GetNewHttpClient(string userName, string password, string domainName, string webAPIBaseAddress)
         {
-            HttpClient client = new HttpClient(new HttpClientHandler() { Credentials = new NetworkCredential(userName, password, domainName) });
-            client.BaseAddress = new Uri(webAPIBaseAddress);
-            client.Timeout = new TimeSpan(0, 2, 0);
+            return GetNewHttpClient(new NetworkCredential(userName, password, domainName), webAPIBaseAddress);
+        }
+
+        public static HttpClient GetNewHttpClient(NetworkCredential credential, string webAPIBaseAddress)
+        {
+            var client = new HttpClient(new HttpClientHandler() {Credentials = credential})
+            {
+                BaseAddress = new Uri(webAPIBaseAddress), Timeout = new TimeSpan(0, 2, 0)
+            };
             return client;
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -80,36 +89,44 @@ namespace CrmSdkLibrary
         //    return httpClient;
         //}
 
+
         private static string ApplicationId { get; set; } = string.Empty;
 
-        public static void SetApplicationId(string applicationid)
+        /// <summary>
+        /// Set Azure App Id
+        /// </summary>
+        /// <param name="applicationId"></param>
+        public static void SetApplicationId(string applicationId)
         {
-            ApplicationId = applicationid;
+            ApplicationId = applicationId;
+        }
+
+        public static HttpClient GetWebApiHttpClient(string userName, string password, string serviceUrl,
+            string authorityUrl = "https://login.microsoftonline.com/common")
+        {
+            return GetWebApiHttpClient(new UserPasswordCredential(userName, password), serviceUrl, authorityUrl);
         }
         /// <summary>
         /// 
         /// </summary>
         /// <see href="https://rajeevpentyala.com/2018/09/18/code-snippet-authenticate-and-perform-operations-using-d365-web-api-and-c/"/>
         /// <see href="https://community.dynamics.com/crm/f/microsoft-dynamics-crm-forum/305276/crud-operations-using-web-api-in-console-app?pifragment-97030=1#responses"/>
-        /// <param name="userName"></param>
-        /// <param name="password"></param>
+        /// <param name="credential"></param>
         /// <param name="serviceUrl"></param>
         /// <param name="authorityUrl"></param>
         /// <returns></returns>
-        public static HttpClient GetWebapiHttpClient(string userName, string password, string serviceUrl, string authorityUrl = "https://login.microsoftonline.com/common")
+        public static HttpClient GetWebApiHttpClient(UserPasswordCredential credential, string serviceUrl, string authorityUrl = "https://login.microsoftonline.com/common")
         {
-            var credentials = new UserPasswordCredential(userName, password);
-            AuthenticationContext context = new AuthenticationContext(authorityUrl);
-            AuthenticationResult authResult = context.AcquireTokenAsync(serviceUrl,
-                /*azure app id*/Api.ApplicationId, credentials).Result;
+            //var credentials = new UserPasswordCredential(userName, password);
+            var context = new AuthenticationContext(authorityUrl);
+            var authResult = context.AcquireTokenAsync(serviceUrl, Api.ApplicationId, credential).Result;
 
-            var httpClient = new HttpClient() { BaseAddress = new Uri("https://test191020.crm5.dynamics.com/"), Timeout = new TimeSpan(0, 2, 0) };
+            var httpClient = new HttpClient() { BaseAddress = new Uri(serviceUrl), Timeout = new TimeSpan(0, 2, 0) };
 
             httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
             httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
-
             return httpClient;
         }
         //public static string DiscoverAuthority(string serviceUrl)
@@ -147,22 +164,25 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static async Task<WhoAmI> User(HttpClient httpClient)
         {
-            HttpResponseMessage response = null;
-
             try
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-                response = await httpClient.GetAsync("api/data/v9.0/WhoAmI", HttpCompletionOption.ResponseContentRead);
-                if (!response.IsSuccessStatusCode)
+                using (var response =
+                    await httpClient.GetAsync("api/data/v9.0/WhoAmI", HttpCompletionOption.ResponseContentRead))
                 {
-                    throw new Exception($"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
-                }
-                JObject whoAmIresp = JsonConvert.DeserializeObject<JObject>(await
-                    response.Content.ReadAsStringAsync());
-                whoAmIresp.Add("ODataContext", whoAmIresp["@odata.context"]);
-                whoAmIresp.Remove("@odata.context");
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception(
+                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    }
 
-                return whoAmIresp.ToObject<WhoAmI>();
+                    var whoAmI = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+                    whoAmI.Add("ODataContext", whoAmI["@odata.context"]);
+                    whoAmI.Remove("@odata.context");
+
+                    return whoAmI.ToObject<WhoAmI>();
+                }
 
                 //First obtain the user's ID.
                 //Guid myUserId = (Guid)whoAmIresp["UserId"];
@@ -176,21 +196,22 @@ namespace CrmSdkLibrary
         //5000개 레코드 이상 가져오는지 확인
         public static async Task<string> GetDataAsJson(HttpClient httpClient)
         {
-            HttpResponseMessage response = null;
-
             try
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-                response = await httpClient.GetAsync("api/data/v9.0/accounts?$select=name,accountnumber?$filter=", HttpCompletionOption.ResponseContentRead);
-                if (!response.IsSuccessStatusCode)
+                using (var response = await httpClient.GetAsync("api/data/v9.0/accounts?$select=name,accountnumber?$filter=", HttpCompletionOption.ResponseContentRead))
                 {
-                    throw new Exception($"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception(
+                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    }
+
+                    var resp = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+
+                    return resp.ToString();
                 }
-                JObject resp = JsonConvert.DeserializeObject<JObject>(await
-                    response.Content.ReadAsStringAsync());
-
-                return resp.ToString();
-
                 //First obtain the user's ID.
                 //Guid myUserId = (Guid)whoAmIresp["UserId"];
 
@@ -201,5 +222,43 @@ namespace CrmSdkLibrary
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="httpClient"></param>
+        /// <param name="target"></param>
+        /// <param name="fieldName"></param>
+        /// <returns></returns>
+        public static async Task<string> CalculateRollupField(HttpClient httpClient, EntityReference target,
+            string fieldName)
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                
+                using (var response =
+                    await httpClient.GetAsync($@"api/data/v8.0/CalculateRollupField(Target=@tid,FieldName=@fname)?@tid={{'@odata.id':'{target.ToEntitySetPath()}({target.Id})'}}&@fname='{fieldName}'", HttpCompletionOption.ResponseContentRead))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        //throw new Exception($"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                        //var aa = whoAmI.ToObject<ApiExceptionWrapper>(); //에러
+                    }
+
+                    var whoAmI = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+
+                    return whoAmI.ToObject<string>();
+                }
+
+                //First obtain the user's ID.
+                //Guid myUserId = (Guid)whoAmIresp["UserId"];
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }

@@ -20,33 +20,31 @@ namespace CrmSdkLibrary
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="LogicalName"></param>
-        /// <param name="parentEntityId"></param>
+        /// <param name="logicalName"></param>
+        /// <param name="parentRecordId"></param>
         /// <param name="attribute"></param>
         /// <see cref="http://www.inogic.com/blog/2014/08/clone-records-in-dynamics-crm/"/>
         /// <returns></returns>
-        public static Guid CloneRecord(string LogicalName, Guid parentRecordId, AttributeCollection attribute)
+        public static Guid CloneRecord(string logicalName, Guid parentRecordId, AttributeCollection attribute)
         {
             //Declare Variables
-            Entity parentRecord;
-            Entity childaccount;
             try
             {
                 //retrieve the parent record
-                parentRecord = CrmSdkLibrary.Connection.OrgService.Retrieve(LogicalName, parentRecordId, new ColumnSet(true));
+                var parentRecord = CrmSdkLibrary.Connection.OrgService.Retrieve(logicalName, parentRecordId, new ColumnSet(true));
 
                 //Clone the Account Record using Clone function;
                 //Clone function takes a bool parameter which relates the Related Entities of the parent
                 //record to the cloned records, if set to true.
                 //The bool parameter passed to Clone method is set to true by default.
-                childaccount = parentRecord;//.Clone(true);
-                //Remove all the attributes of type primaryid as all the cloned records will have their own primaryid
+                var childaccount = parentRecord;
+                //Remove all the attributes of type primaryId as all the cloned records will have their own primaryid
                 childaccount.Attributes.Remove(childaccount.LogicalName + "id");
                 childaccount.Attributes.Remove("address2_addressid");
                 childaccount.Attributes.Remove("address1_addressid");
                 childaccount.Id = Guid.Empty;
                 //Remove the telephone1 attribute from the cloned record to differentiate between the parent and cloned record
-                //childaccount.Attributes.Remove("telephone1");
+                //childAccount.Attributes.Remove("telephone1");
                 if (attribute != null)
                     childaccount.Attributes = attribute;
                 //create the cloned record and return child account ID
@@ -54,39 +52,37 @@ namespace CrmSdkLibrary
 
 
             }
-            catch (SaveChangesException ex)
+            catch (SaveChangesException)
             {
-                throw ex;
+                throw;
             }
         }
-        public static Guid[] CloneRecords(string LogicalName, Guid[] parentRecordIds, AttributeCollection attribute)
+        public static Guid[] CloneRecords(string logicalName, Guid[] parentRecordIds, AttributeCollection attribute)
         {
-            var qe = new QueryExpression(LogicalName.ToLower());
+            var qe = new QueryExpression(logicalName.ToLower());
             var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
 
             foreach (var entity in retrieve.Entities)
             {
                 if (parentRecordIds != null)
                 {
-                    for (int i = 0; i < parentRecordIds.Length; i++)
+                    foreach (var t in parentRecordIds)
                     {
-                        if (parentRecordIds[i] == (Guid)entity.Attributes[entity.LogicalName + "id"]) //복사할 레코드가 있으면
-                        {
-                            Entity childaccount = entity;//.Clone(true);
-                            childaccount.Attributes.Remove(childaccount.LogicalName + "id");
-                            if (attribute != null)
-                                childaccount.Attributes = attribute;
-                            CrmSdkLibrary.Connection.OrgService.Create(childaccount);
-                        }
+                        if (t != (Guid) entity.Attributes[entity.LogicalName + "id"]) continue;
+                        var childAccount = entity;//.Clone(true);
+                        childAccount.Attributes.Remove(childAccount.LogicalName + "id");
+                        if (attribute != null)
+                            childAccount.Attributes = attribute;
+                        CrmSdkLibrary.Connection.OrgService.Create(childAccount);
                     }
                 }
                 else
                 {
-                    Entity childaccount = entity;//.Clone(true);
-                    childaccount.Attributes.Remove(childaccount.LogicalName + "id");
+                    var childAccount = entity;//.Clone(true);
+                    childAccount.Attributes.Remove(childAccount.LogicalName + "id");
                     if (attribute != null)
-                        childaccount.Attributes = attribute;
-                    CrmSdkLibrary.Connection.OrgService.Create(childaccount);
+                        childAccount.Attributes = attribute;
+                    CrmSdkLibrary.Connection.OrgService.Create(childAccount);
                 }
             }
             return parentRecordIds;
