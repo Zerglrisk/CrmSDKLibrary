@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using CrmSdkLibrary.Definition;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Xrm.Sdk;
 using Newtonsoft.Json;
@@ -127,6 +129,7 @@ namespace CrmSdkLibrary
             httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
+            //httpClient.DefaultRequestHeaders.Add("Prefer", "odata.include-annotations=OData.Community.Display.V1.FormattedValue")
             return httpClient;
         }
         //public static string DiscoverAuthority(string serviceUrl)
@@ -223,8 +226,11 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
-        /// 
+        /// Applies To: Dynamics 365 (online), Dynamics 365 (on-premises), Dynamics CRM 2016, Dynamics CRM Online
+        /// Calculates the value of a rollup attribute.
         /// </summary>
+        /// <see cref="https://community.dynamics.com/365/b/leichtbewoelkt/posts/calculaterollupfield-with-webapi-function-in-javascript"/>
+        /// <see cref="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/mt718083%28v%3dcrm.8%29"/>
         /// <param name="httpClient"></param>
         /// <param name="target"></param>
         /// <param name="fieldName"></param>
@@ -260,5 +266,132 @@ namespace CrmSdkLibrary
                 throw ex;
             }
         }
+
+        /// <summary>
+        /// Applies To: Dynamics 365 (online), Dynamics 365 (on-premises), Dynamics CRM 2016, Dynamics CRM Online
+        /// Detects and retrieves duplicates for a specified record.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/mt683537%28v%3dcrm.8%29"/>
+        /// <param name="httpClient"></param>
+        /// <param name="businessEntity"></param>
+        /// <param name="matchingEntityName"></param>
+        /// <param name="pagingInfo"></param>
+        /// <returns></returns>
+        public static async Task<bool> RetrieveDuplicates(HttpClient httpClient, EntityReference businessEntity, string matchingEntityName, string pagingInfo)
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                using (var response =
+                    await httpClient.GetAsync($@"api/data/v9.0/RetrieveDuplicates(BusinessEntity=@p1,MatchingEntityName=@p2,PagingInfo=@p3)?@p2='{matchingEntityName}'&@p1={{'@odata.id':'{businessEntity.ToEntitySetPath()}({businessEntity.Id})'}}&@p3={{'PageNumber':1,'Count':10}}", HttpCompletionOption.ResponseContentRead))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        //throw new Exception(
+                        //    $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    }
+
+                    var jObj = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+                    jObj.Add("ODataContext", jObj["@odata.context"]);
+                    jObj.Remove("@odata.context");
+                    var parsed = jObj.ToObject<JObjectParsed>();
+
+                    if (parsed.Error != null)
+                    {
+                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
+                    }
+                    //{"@odata.context":"https://test201018.crm5.dynamics.com/api/data/v9.0/$metadata#opportunities","value":[]}
+                    return false;
+                    //return whoAmI.ToObject<WhoAmI>();
+                }
+
+                //First obtain the user's ID.
+                //Guid myUserId = (Guid)whoAmIresp["UserId"];
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see cref=""/>
+        /// <see cref="http://butenko.pro/2018/07/11/how-to-call-queryschedule-using-webapi/"/>
+        /// <param name="httpClient"></param>
+        /// <param name="userId"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="TimeCodes"></param>
+        /// <returns></returns>
+        //public static async Task<string> QuerySchedule(HttpClient httpClient, Guid userId, DateTime startDate, DateTime endDate, string TimeCodes)
+        //{
+        //    return null;
+        //}
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see cref="http://butenko.pro/2017/06/09/how-to-get-object-type-code-of-entity-using-webapi/"/>
+        /// <param name="httpClient"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static async Task<int> GetObjectTypeCode(HttpClient httpClient, string entityLogicalName)
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                using (var response = await httpClient.GetAsync($@"api/data/v9.0/EntityDefinitions?$filter=LogicalName eq '{entityLogicalName}'&$select=ObjectTypeCode", HttpCompletionOption.ResponseContentRead))
+                {
+                    //오류 페이지 내용을 가져오므로 정말 안될 때 쓰여야한다
+                    //if (!response.IsSuccessStatusCode)
+                    //{
+                    //    throw new Exception(
+                    //        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    //}
+
+                    var jObj = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+                    jObj.Add("ODataContext", jObj["@odata.context"]);
+                    jObj.Remove("@odata.context");
+                    var parsed = jObj.ToObject<JObjectParsed>();
+
+                    if (parsed.Error != null)
+                    {
+                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}",parsed.Error.InnerError);
+                    }
+                    return parsed.value.First.ObjectTypeCode;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public void ErrorCheck(ApiException error)
+        {
+            if (error.InnerError.Type == "Microsoft.OData.ODataException")
+            {
+                //throw new Microsoft.OData.ODataException();
+            }
+        }
+    }
+
+    
+    public class ODataResponse<T>
+
+    {
+
+        public T[] Value { get; set; }
+
     }
 }
+//http://butenko.pro/webapi-examples-index/
+
+//create 부분사용 
+//https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/webapi/web-api-samples-csharp

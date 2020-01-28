@@ -64,7 +64,11 @@ namespace Example
             var qe = new QueryExpression("opportunity") { ColumnSet = new ColumnSet(true) };
             var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
             
-            var ab = await CrmSdkLibrary.Api.CalculateRollupField(client,new EntityReference("opportunity", retrieve.Entities.First().Id), "new_roll_test");
+            //need test
+            var ab = await CrmSdkLibrary.Api.RetrieveDuplicates(client,new EntityReference("opportunity", retrieve.Entities.First().Id), "opportunity", "");
+
+            var ac = await Api.GetObjectTypeCode(client, "account");
+            Console.WriteLine($"Account ObjectTypeCode : {ac}");
 
             //Console.WriteLine();
             //var bb = await Api.GetDataAsJson(client);
