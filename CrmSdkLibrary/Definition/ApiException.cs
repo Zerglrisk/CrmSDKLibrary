@@ -19,11 +19,11 @@ namespace CrmSdkLibrary.Definition
         public ApiInnerError InnerError { get; set; }
     }
 
-    public class ApiInnerError
+    public class ApiInnerError : Exception
     {
-        public string Message { get; set; }
+        //public string Message { get; set; }
         public string Type { get; set; }
-        public string StackTrace { get; set; }
+        //public string StackTrace { get; set; }
 
     }
 }
