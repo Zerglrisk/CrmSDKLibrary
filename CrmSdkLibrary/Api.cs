@@ -12,6 +12,7 @@ using CrmSdkLibrary.Definition;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -277,20 +278,20 @@ namespace CrmSdkLibrary
         /// <param name="matchingEntityName"></param>
         /// <param name="pagingInfo"></param>
         /// <returns></returns>
-        public static async Task<bool> RetrieveDuplicates(HttpClient httpClient, EntityReference businessEntity, string matchingEntityName, string pagingInfo)
+        public static async Task<bool> RetrieveDuplicates(HttpClient httpClient, Entity businessEntity, PagingInfo pagingInfo)
         {
             try
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 using (var response =
-                    await httpClient.GetAsync($@"api/data/v9.0/RetrieveDuplicates(BusinessEntity=@p1,MatchingEntityName=@p2,PagingInfo=@p3)?@p2='{matchingEntityName}'&@p1={{'@odata.id':'{businessEntity.ToEntitySetPath()}({businessEntity.Id})'}}&@p3={{'PageNumber':1,'Count':10}}", HttpCompletionOption.ResponseContentRead))
+                    await httpClient.GetAsync($@"api/data/v9.0/RetrieveDuplicates(BusinessEntity=@p1,MatchingEntityName=@p2,PagingInfo=@p3)?@p2='{businessEntity.LogicalName}'&@p1={{'@odata.id':'{businessEntity.ToEntitySetPath()}({businessEntity.Id})'}}&@p3={{'PageNumber':{pagingInfo.PageNumber},'Count':{pagingInfo.Count}}}", HttpCompletionOption.ResponseContentRead))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
                         //throw new Exception(
                         //    $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                     }
-
+                    
                     var jObj = JsonConvert.DeserializeObject<JObject>(await
                         response.Content.ReadAsStringAsync());
                     jObj.Add("ODataContext", jObj["@odata.context"]);

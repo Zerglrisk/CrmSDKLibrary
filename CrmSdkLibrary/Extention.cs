@@ -70,5 +70,10 @@ namespace CrmSdkLibrary
 
             return null;
         }
+
+        public static string ToEntitySetPath(this Entity attr)
+        {
+            return attr.ToEntityReference().ToEntitySetPath();
+        }
     }
 }

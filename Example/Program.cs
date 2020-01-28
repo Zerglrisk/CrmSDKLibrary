@@ -48,7 +48,7 @@ namespace Example
             Api.SetApplicationId("68e95894-a339-40f1-a053-727f08c3a1ee");
             Task.WaitAll(Task.Run(async () => await app.RunAsync()));
 
-            Console.WriteLine("aav)");
+            Console.WriteLine("(End)");
         }
 
         public async Task RunAsync()
@@ -65,12 +65,13 @@ namespace Example
             var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
             
             //need test
-            var ab = await CrmSdkLibrary.Api.RetrieveDuplicates(client,new EntityReference("opportunity", retrieve.Entities.First().Id), "opportunity", "");
+            var ab = await CrmSdkLibrary.Api.RetrieveDuplicates(client, retrieve.Entities.First(), new PagingInfo(){PageNumber = 1, Count = 10});
 
             var ac = await Api.GetObjectTypeCode(client, "account");
             Console.WriteLine($"Account ObjectTypeCode : {ac}");
 
-            //Console.WriteLine();
+            var cc = Messages.GetCurrentOrganization(Connection.OrgService);
+            Console.WriteLine($"{cc.UrlName} +  {cc.EnvironmentId} + {cc.FriendlyName} + {cc.OrganizationVersion} + {cc.UniqueName} + {cc.Endpoints.First().Key}:{cc.Endpoints.First().Value}");
             //var bb = await Api.GetDataAsJson(client);
             //Console.WriteLine(bb);
         }
