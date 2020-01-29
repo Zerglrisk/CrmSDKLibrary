@@ -47,6 +47,18 @@ namespace CrmSdkLibrary
             }
         }
 
+        //public static Guid team(IOrganizationService service)
+        //{
+        //    try
+        //    {
+
+        //    }
+        //    catch (Exception)
+        //    {
+        //        throw;
+        //    }
+        //}
+
         /// <summary>
         /// Get Current Microsoft Dynamics CRM version
         /// </summary>
@@ -64,6 +76,12 @@ namespace CrmSdkLibrary
             }
         }
 
+        /// <summary>
+        /// Contains the data that’s needed to retrieve information about the current organization.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievecurrentorganizationrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <returns></returns>
         public static OrganizationDetail GetCurrentOrganization(IOrganizationService service)
         {
             try
@@ -84,7 +102,7 @@ namespace CrmSdkLibrary
         /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/dn817877%28v%3dcrm.8%29"/>
         /// <param name="service"></param>
         /// <param name="target"></param>
-        public void CalculatePrice(IOrganizationService service, EntityReference target)
+        public static void CalculatePrice(IOrganizationService service, EntityReference target)
         {
             try
             {
@@ -107,7 +125,7 @@ namespace CrmSdkLibrary
         /// <param name="target">Gets or sets a reference to the record containing the rollup attribute to calculate. Required.</param>
         /// <param name="fieldName">Gets or sets logical name of the attribute to calculate. Required.</param>
         /// <returns>Gets an entity that contains the attributes relevant to the calculated rollup attribute.</returns>
-        public Entity CalculateRollupField(IOrganizationService service, EntityReference target, string fieldName)
+        public static Entity CalculateRollupField(IOrganizationService service, EntityReference target, string fieldName)
         {
 
             try
@@ -127,14 +145,15 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
-        /// 
+        /// Contains the data that is needed to detect and retrieve duplicates for a specified record.
         /// </summary>
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveduplicatesrequest?view=dynamics-general-ce-9"/>
+        /// <see cref="https://blog.naver.com/wmf1235/221788586740"/>
         /// <param name="service"></param>
         /// <param name="businessEntity">Gets or sets a record for which the duplicates are retrieved.Required.</param>
         /// <param name="pagingInfo">Gets or sets a paging information for the retrieved duplicates.Required.</param>
         /// <returns>Gets a collection of duplicate entity instances.</returns>
-        public EntityCollection RetrieveDuplicates(IOrganizationService service, Entity businessEntity,  PagingInfo pagingInfo)
+        public static EntityCollection RetrieveDuplicatesEntities(IOrganizationService service, Entity businessEntity,  PagingInfo pagingInfo)
         {
             try
             {
@@ -150,6 +169,123 @@ namespace CrmSdkLibrary
             catch (Exception e)
             {
                 throw e;
+            }
+        }
+
+        //https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/org-service/discovery-service
+        public static void DiscoverUrl()
+        {
+
+            var a = new Microsoft.Xrm.Sdk.WebServiceClient.DiscoveryWebProxyClient(
+                new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"));
+
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add a set of existing privileges to an existing role.
+        /// 
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addprivilegesrolerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="privileges"></param>
+        /// <param name="roleId"></param>
+        public static void AddPrivilegesRole(IOrganizationService service, RolePrivilege[] privileges, Guid roleId)
+        {
+            try
+            {
+                var response = (AddPrivilegesRoleResponse) service.Execute(new AddPrivilegesRoleRequest()
+                {
+                    Privileges = privileges,
+                    RoleId = roleId
+                });
+                
+                
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data needed to retrieve the privileges a system user (user) has through his or her roles in the specified business unit.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveuserprivilegesrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="userId"></param>
+        /// <returns>Gets an array of privileges that the user holds.</returns>
+        public static RolePrivilege[] RetrieveUserPrivileges(IOrganizationService service, Guid userId)
+        {
+            try
+            {
+                var response = (RetrieveUserPrivilegesResponse)service.Execute(new RetrieveUserPrivilegesRequest()
+                {
+                    UserId = userId
+                });
+                return response.RolePrivileges;
+
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data needed to retrieve the privileges a system user (user) has through his or her roles in the specified business unit.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveuserprivilegesrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <returns>Gets an array of privileges that the user holds.</returns>
+        public static RolePrivilege[] RetrieveUserPrivileges(IOrganizationService service)
+        {
+            try
+            {
+                var userId = GetCurrentUserId(service);
+                return RetrieveUserPrivileges(service, userId);
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to grant a security principal (user or team) access to the specified record.
+        /// Availability : Account, Annotation, Appointment, Campaign, CampaignActivity, CampaignResponse, Connection, Contact, Contract, ConvertRule
+        /// CustomerOpportunityRole, CustomerRelationship, DuplicateRule, Email, EmailServerProfile, Entitlement, Fax, Goal
+        /// GoalRollupQuery, Import, ImportFile, ImportMap, Incident, IncidentResolution, Invoice, Lead, Letter, List, Mailbox
+        /// MailMergeTemplate, msdyn_PostAlbum, msdyn_wallsavedqueryusersettings, Opportunity, OpportunityClose, OrderClose
+        /// PhoneCall, ProcessSession, Queue, Quote, QuoteClose, RecurringAppointmentMaster, Report, RoutingRule, SalesOrder
+        /// ServiceAppointment, SharePointDocumentLocation, SharePointSite, SLA, SLAKPIInstance, SocialActivity, SocialProfile
+        /// Task, Template, UserForm, UserQuery, UserQueryVisualization, Workflow
+        /// need test
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.grantaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="principalAccess">principal is team EntityReference.</param>
+        /// <param name="target">target entity reference</param>
+        public static void GrantAccess(IOrganizationService service,PrincipalAccess principalAccess, EntityReference target)
+        {
+            try
+            {
+                //var teamReference = new EntityReference("team", teamid);
+                //var pr = new PrincipalAccess()
+                //{
+                //    AccessMask = AccessRights.ReadAccess | AccessRights.WriteAccess,
+                //    Principal = teamReference
+                //};
+
+                var reponse = (GrantAccessResponse) service.Execute(new GrantAccessRequest()
+                {
+                    PrincipalAccess = principalAccess,
+                    Target = target,
+                });
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

@@ -124,7 +124,9 @@
     <Compile Include="ConnectionSQL.cs" />
     <Compile Include="Copy.cs" />
     <Compile Include="Definition\ApiException.cs" />
+    <Compile Include="Definition\Attribute\StringValue.cs" />
     <Compile Include="Definition\Enum\AuthenticationType.cs" />
+    <Compile Include="Definition\Enum\Location.cs" />
     <Compile Include="Definition\JObjectParsed.cs" />
     <Compile Include="Definition\WhoAmI.cs" />
     <Compile Include="Entities.cs" />

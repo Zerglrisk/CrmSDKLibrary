@@ -8,8 +8,10 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CrmSdkLibrary;
+using CrmSdkLibrary.Definition.Enum;
 using CrmSdkLibrary.Entities;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Xrm.Sdk.Organization;
 using AuthenticationType = CrmSdkLibrary.Definition.Enum.AuthenticationType;
 
 namespace Example
@@ -19,7 +21,7 @@ namespace Example
         static void Main(string[] args)
         {
             CrmSdkLibrary.Connection conn = new CrmSdkLibrary.Connection();
-            //Console.WriteLine(conn.ConnectService("mscrm0827", "admin@mscrm0827.onmicrosoft.com", "mscrm@0827"));
+            //Console.WriteLine(conn.ConnectService("test201018", "test201018@test201018.onmicrosoft.com", "tester201018@", Location.APAC));
             //Console.WriteLine(conn.ConnectService(
             //    new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
@@ -43,7 +45,6 @@ namespace Example
             //{
             //    Console.WriteLine(a.Id + "," + (a.Contains("name") ? a["name"].ToString() : string.Empty));
             //}
-
             Program app = new Program();
             Api.SetApplicationId("68e95894-a339-40f1-a053-727f08c3a1ee");
             Task.WaitAll(Task.Run(async () => await app.RunAsync()));
@@ -70,8 +71,10 @@ namespace Example
             var ac = await Api.GetObjectTypeCode(client, "account");
             Console.WriteLine($"Account ObjectTypeCode : {ac}");
 
-            var cc = Messages.GetCurrentOrganization(Connection.OrgService);
-            Console.WriteLine($"{cc.UrlName} +  {cc.EnvironmentId} + {cc.FriendlyName} + {cc.OrganizationVersion} + {cc.UniqueName} + {cc.Endpoints.First().Key}:{cc.Endpoints.First().Value}");
+            //var cc = Messages.GetCurrentOrganization(Connection.OrgService);
+            //Console.WriteLine($"{cc.UrlName} +  {cc.EnvironmentId} + {cc.FriendlyName} + {cc.OrganizationVersion} + {cc.UniqueName} + {cc.Endpoints.First().Key}:{cc.Endpoints.First().Value}");
+            var cc = await Api.GetCurrentOrganization(client, EndpointAccessType.Default);
+            Console.WriteLine(cc);
             //var bb = await Api.GetDataAsJson(client);
             //Console.WriteLine(bb);
         }
