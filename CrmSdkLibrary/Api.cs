@@ -374,6 +374,56 @@ namespace CrmSdkLibrary
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see cref="https://crmtipoftheday.com/757/passing-enumerated-values-to-web-api/"/>
+        /// <param name="httpClient"></param>
+        /// <param name="accessType"></param>
+        /// <returns></returns>
+        public static async Task<Microsoft.Xrm.Sdk.Organization.OrganizationDetail> GetCurrentOrganization(HttpClient httpClient,Microsoft.Xrm.Sdk.Organization.EndpointAccessType accessType)
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                using (var response = await httpClient.GetAsync($@"api/data/v9.0/RetrieveCurrentOrganization(AccessType=Microsoft.Dynamics.CRM.EndpointAccessType'{accessType}')", HttpCompletionOption.ResponseContentRead))
+                {
+                    //오류 페이지 내용을 가져오므로 정말 안될 때 쓰여야한다
+                    //if (!response.IsSuccessStatusCode)
+                    //{
+                    //    throw new Exception(
+                    //        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    //}
+
+                    var jObj = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+                    jObj.Add("ODataContext", jObj["@odata.context"]);
+                    jObj.Remove("@odata.context");
+                    var parsed = jObj.ToObject<JObjectParsed>();
+
+                    if (parsed.Error != null)
+                    {
+                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
+                    }
+
+                    //Count 부분 때문에 오브젝트로 변경이 안됨.
+                    var dd = jObj["Detail"] as JObject;
+                    var ddds = dd["Endpoints"]["Count"] as JProperty;
+                    var end = dd["Endpoints"].ToObject<Microsoft.Xrm.Sdk.Organization.EndpointCollection>();
+                    
+                    
+                    dd["Endpoints"].Remove();
+                    var dddd = dd.ToObject<Microsoft.Xrm.Sdk.Organization.OrganizationDetail>();
+                    return jObj.ToObject<Microsoft.Xrm.Sdk.Organization.OrganizationDetail>();
+                    //return parsed.value.First.ObjectTypeCode;
+                }
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
         public void ErrorCheck(ApiException error)
         {
             if (error.InnerError.Type == "Microsoft.OData.ODataException")

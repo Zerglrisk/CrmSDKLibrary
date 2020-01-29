@@ -32,9 +32,10 @@ namespace CrmSdkLibrary
         /// <param name="orgName"></param>
         /// <param name="userName"></param>
         /// <param name="password"></param>
-        public Guid ConnectService(string orgName, string userName, string password)
+        /// <param name="location"></param>
+        public Guid ConnectService(string orgName, string userName, string password, Definition.Enum.Location location)
         {
-            var uri = new System.Uri($"https://{orgName}.api.crm5.dynamics.com/XRMServices/2011/Organization.svc");
+            var uri = new System.Uri($"https://{orgName}.api.crm{Definition.Attribute.StringValue.GetStringValue(location)}.dynamics.com/XRMServices/2011/Organization.svc");
             #region Old Using Microsoft.Xrm.Tooling.Connector.CrmServiceClient
             /*
             //need string connectionString parameter
@@ -56,7 +57,7 @@ namespace CrmSdkLibrary
 
             if (_deviceCredentials == null)
                 _deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
-
+            
             var organizationServiceProxy = new OrganizationServiceProxy(uri, null, ClientCredentials, _deviceCredentials);
 
             OrgService = organizationServiceProxy;
