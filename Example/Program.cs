@@ -30,19 +30,9 @@ namespace Example
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
             Console.WriteLine(conn.ConnectService("https://test201018.crm5.dynamics.com", "test201018@test201018.onmicrosoft.com", "tester201018@",AuthenticationType.Office365));
 
-            var qe = new QueryExpression("account") { ColumnSet = new ColumnSet(true) };
-            var re = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
-            AttributeCollection attribute = new AttributeCollection();
-            attribute.Add("name", "child Account Test");
-            Guid childAccountID = CrmSdkLibrary.Copy.CloneRecord(Account.EntityLogicalName, re.Entities.First().Id, attribute);
-
             CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
             ColumnSet columnset = new ColumnSet(new String[] { "name" });
 
-            //var retrieved = CrmSdkLibrary.Connection.OrgService.Retrieve("account",childAccountID, columnset);
-            //CrmSdkLibrary.Copy.CloneRecord("account", new Guid("a8a19cdd-88df-e311-b8e5-6c3be5a8b200"), null);
-            //var qe = new QueryExpression("opportunity") { ColumnSet = new ColumnSet(true) };
-            //var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
 
             //CrmSdkLibrary.Common.GetOptionSetList(CrmSdkLibrary.Connection.OrgService, "lead", "leadsourcecode");
 
