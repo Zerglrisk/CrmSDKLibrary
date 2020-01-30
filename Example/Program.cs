@@ -6,12 +6,15 @@ using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using CrmSdkLibrary;
 using CrmSdkLibrary.Definition.Enum;
 using CrmSdkLibrary.Entities;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Xrm.Sdk.Organization;
+using AttributeCollection = Microsoft.Xrm.Sdk.AttributeCollection;
 using AuthenticationType = CrmSdkLibrary.Definition.Enum.AuthenticationType;
 
 namespace Example
@@ -27,12 +30,14 @@ namespace Example
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
             Console.WriteLine(conn.ConnectService("https://test201018.crm5.dynamics.com", "test201018@test201018.onmicrosoft.com", "tester201018@",AuthenticationType.Office365));
 
-            //AttributeCollection attribute = new AttributeCollection();
-            //attribute.Add("name", "child Account Test");
-            //Guid childAccountID = CrmSdkLibrary.Copy.CloneRecord(Account.EntityLogicalName, , attribute);
+            var qe = new QueryExpression("account") { ColumnSet = new ColumnSet(true) };
+            var re = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
+            AttributeCollection attribute = new AttributeCollection();
+            attribute.Add("name", "child Account Test");
+            Guid childAccountID = CrmSdkLibrary.Copy.CloneRecord(Account.EntityLogicalName, re.Entities.First().Id, attribute);
 
-            //CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
-            //ColumnSet columnset = new ColumnSet(new String[] { "name" });
+            CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
+            ColumnSet columnset = new ColumnSet(new String[] { "name" });
 
             //var retrieved = CrmSdkLibrary.Connection.OrgService.Retrieve("account",childAccountID, columnset);
             //CrmSdkLibrary.Copy.CloneRecord("account", new Guid("a8a19cdd-88df-e311-b8e5-6c3be5a8b200"), null);
@@ -79,56 +84,5 @@ namespace Example
             //Console.WriteLine(bb);
         }
 
-        private static Guid CloneRecord(string logicalName, Guid parentRecordId, List<string> attribute)
-        {
-            //Declare Variables
-            try
-            {
-                //retrieve the parent record
-                var parentRecord = CrmSdkLibrary.Connection.OrgService.Retrieve(logicalName, parentRecordId, new ColumnSet(true));
-
-                //Clone the Account Record using Clone function;
-                //Clone function takes a bool parameter which relates the Related Entities of the parent
-                //record to the cloned records, if set to true.
-                //The bool parameter passed to Clone method is set to true by default.
-                var childAccount = parentRecord;
-                //Remove all the attributes of type primaryid as all the cloned records will have their own primaryid
-                childAccount.Attributes.Remove(childAccount.LogicalName + "id");
-                childAccount.Attributes.Remove("address2_addressid");
-                childAccount.Attributes.Remove("address1_addressid");
-                childAccount.Id = Guid.Empty;
-                //Remove the telephone1 attribute from the cloned record to differentiate between the parent and cloned record
-                //childaccount.Attributes.Remove("telephone1");
-                if (attribute != null)
-                {
-                    foreach (var a in attribute)
-                    {
-                        childAccount.Attributes.Remove(a);
-                    }
-                }
-                //childAccount.Attributes = attribute;
-                //create the cloned record and return child account ID
-                try
-                {
-                    return CrmSdkLibrary.Connection.OrgService.Create(childAccount);
-                }
-                catch
-                {
-                    if (attribute == null)
-                    {
-                        attribute = new List<string>();
-                    }
-                    attribute.Add(childAccount.Attributes.First().Key);
-                    Console.WriteLine("Delete Key  : " + childAccount.Attributes.First().Key);
-                    return CloneRecord(logicalName, parentRecordId, attribute);
-                }
-
-
-            }
-            catch (SaveChangesException ex)
-            {
-                throw ex;
-            }
-        }
     }
 }
