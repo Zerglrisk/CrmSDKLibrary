@@ -26,7 +26,7 @@ namespace CrmSdkLibrary
         /// <param name="attribute"></param>
         /// <see cref="http://www.inogic.com/blog/2014/08/clone-records-in-dynamics-crm/"/>
         /// <returns>Created Record Id</returns>
-        public static Guid CloneRecord(string logicalName, Guid parentRecordId, AttributeCollection attribute)
+        public static Guid CloneRecord(string logicalName, Guid parentRecordId, AttributeCollection attribute = null)
         {
             /* === ex ===
                var qe = new QueryExpression("account"){ColumnSet = new ColumnSet(true)};
@@ -85,7 +85,7 @@ namespace CrmSdkLibrary
         /// <param name="parentRecordIds"></param>
         /// <param name="attribute"></param>
         /// <returns>Created Record Ids</returns>
-        public static List<Guid> CloneRecords(string logicalName, Guid[] parentRecordIds, AttributeCollection attribute)
+        public static List<Guid> CloneRecords(string logicalName, Guid[] parentRecordIds, AttributeCollection attribute = null)
         {
             /*  === ex ===
                var qe = new QueryExpression("account"){ColumnSet = new ColumnSet(true)};
