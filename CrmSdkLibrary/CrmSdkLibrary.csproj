@@ -128,6 +128,7 @@
     <Compile Include="Definition\Attribute\StringValue.cs" />
     <Compile Include="Definition\Enum\AuthenticationType.cs" />
     <Compile Include="Definition\Enum\Location.cs" />
+    <Compile Include="Definition\Enum\QualifyLeadEntity.cs" />
     <Compile Include="Definition\JObjectParsed.cs" />
     <Compile Include="Definition\WhoAmI.cs" />
     <Compile Include="Entities.cs" />
