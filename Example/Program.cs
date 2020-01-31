@@ -30,10 +30,10 @@ namespace Example
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
             Console.WriteLine(conn.ConnectService("https://test201018.crm5.dynamics.com", "test201018@test201018.onmicrosoft.com", "tester201018@",AuthenticationType.Office365));
 
-            CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
-            ColumnSet columnset = new ColumnSet(new String[] { "name" });
+            //CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
+            //ColumnSet columnset = new ColumnSet(new String[] { "name" });
 
-
+            
             //CrmSdkLibrary.Common.GetOptionSetList(CrmSdkLibrary.Connection.OrgService, "lead", "leadsourcecode");
 
             //foreach (var a in retrieve.Entities)

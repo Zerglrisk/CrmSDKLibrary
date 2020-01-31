@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CrmSdkLibrary.Definition.Enum;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Organization;
@@ -282,6 +283,62 @@ namespace CrmSdkLibrary
                     PrincipalAccess = principalAccess,
                     Target = target,
                 });
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to qualify a lead and create account, contact, and opportunity records that are linked to the originating lead record.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.qualifyleadrequest?view=dynamics-general-ce-9"/>
+        /// <see cref="https://community.dynamics.com/365/b/crmmemories/posts/qualify-a-lead-in-c"/>
+        /// <param name="service"></param>
+        /// <param name="targetLead">The ID of the lead that is qualified</param>
+        /// <param name="statusCode">The status of the lead.</param>
+        /// <param name="qualifyLeadEntity">A value that indicates whether to create an Entity from the originating lead.</param>
+        /// <param name="opportunityCurrency">The Currency to use for the Opportunity.</param>
+        /// <param name="opportunityCustomer">The Account or Contact that will be associated with the Opportunity.</param>
+        /// <param name="sourceCampaign">The source Campaign that will be associated with the Opportunity.</param>
+        /// <returns>The collection of references to the newly created account, contact, and opportunity records.</returns>
+        public static EntityReferenceCollection QualifyLead(IOrganizationService service, EntityReference targetLead,
+            int statusCode, QualifyLeadEntity qualifyLeadEntity, EntityReference opportunityCustomer = null, 
+            EntityReference opportunityCurrency = null,  EntityReference sourceCampaign = null)
+        {
+            try
+            {
+                /*
+                   Messages.QualifyLead(Connection.OrgService,
+                   new EntityReference("lead", new Guid("561231D5-78E0-454C-8C80-374BB5E3FA26")), 3,
+                   QualifyLeadEntity.Account | QualifyLeadEntity.Contact | QualifyLeadEntity.Opportunity,
+                   new EntityReference("account", new Guid("475B158C-541C-E511-80D3-3863BB347BA8") ));
+                 */
+
+                //statusCode Value 3 is Qualify StatusCode. (Default)
+                var createAccount = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Account);
+                var createContact = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Contact);
+                var createOpportunity = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Opportunity);
+                var response = (QualifyLeadResponse) service.Execute(new QualifyLeadRequest()
+                {
+                    LeadId = targetLead,
+                    Status = new OptionSetValue(statusCode),
+
+                    CreateAccount = createAccount,
+                    CreateContact = createContact,
+                    CreateOpportunity = createOpportunity,
+                    
+                    // The Currency to use for the Opportunity.
+                    OpportunityCurrencyId = null,
+
+                    // The Account or Contact that will be associated with the Opportunity.
+                    OpportunityCustomerId = null,
+
+                    // The source Campaign that will be associated with the Opportunity.
+                    SourceCampaignId =  null
+                });
+                return response.CreatedEntities;
             }
             catch (Exception)
             {
