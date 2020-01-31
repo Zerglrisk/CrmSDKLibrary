@@ -13,6 +13,10 @@ namespace CrmSdkLibrary
 {
     public class Messages
     {
+        public static bool DisableDuplicateDetection { get; set; } = false;
+
+        public static KeyValuePair<string, object> GetDisableDuplicateDetectionParameter { get; } = new KeyValuePair<string, object>("SuppressDuplicateDetection", DisableDuplicateDetection);
+
         public static Guid GetCurrentUserId(IOrganizationService service)
         {
             try
@@ -107,7 +111,7 @@ namespace CrmSdkLibrary
         {
             try
             {
-                service.Execute(new CalculatePriceRequest(){Target = target});
+                service.Execute(new CalculatePriceRequest() { Target = target });
             }
             catch (Exception e)
             {
@@ -154,7 +158,7 @@ namespace CrmSdkLibrary
         /// <param name="businessEntity">Gets or sets a record for which the duplicates are retrieved.Required.</param>
         /// <param name="pagingInfo">Gets or sets a paging information for the retrieved duplicates.Required.</param>
         /// <returns>Gets a collection of duplicate entity instances.</returns>
-        public static EntityCollection RetrieveDuplicatesEntities(IOrganizationService service, Entity businessEntity,  PagingInfo pagingInfo)
+        public static EntityCollection RetrieveDuplicatesEntities(IOrganizationService service, Entity businessEntity, PagingInfo pagingInfo)
         {
             try
             {
@@ -194,13 +198,13 @@ namespace CrmSdkLibrary
         {
             try
             {
-                var response = (AddPrivilegesRoleResponse) service.Execute(new AddPrivilegesRoleRequest()
+                var response = (AddPrivilegesRoleResponse)service.Execute(new AddPrivilegesRoleRequest()
                 {
                     Privileges = privileges,
                     RoleId = roleId
                 });
-                
-                
+
+
             }
             catch (Exception e)
             {
@@ -267,7 +271,7 @@ namespace CrmSdkLibrary
         /// <param name="service"></param>
         /// <param name="principalAccess">principal is team EntityReference.</param>
         /// <param name="target">target entity reference</param>
-        public static void GrantAccess(IOrganizationService service,PrincipalAccess principalAccess, EntityReference target)
+        public static void GrantAccess(IOrganizationService service, PrincipalAccess principalAccess, EntityReference target)
         {
             try
             {
@@ -278,7 +282,7 @@ namespace CrmSdkLibrary
                 //    Principal = teamReference
                 //};
 
-                var reponse = (GrantAccessResponse) service.Execute(new GrantAccessRequest()
+                var reponse = (GrantAccessResponse)service.Execute(new GrantAccessRequest()
                 {
                     PrincipalAccess = principalAccess,
                     Target = target,
@@ -304,8 +308,8 @@ namespace CrmSdkLibrary
         /// <param name="sourceCampaign">The source Campaign that will be associated with the Opportunity.</param>
         /// <returns>The collection of references to the newly created account, contact, and opportunity records.</returns>
         public static EntityReferenceCollection QualifyLead(IOrganizationService service, EntityReference targetLead,
-            int statusCode, QualifyLeadEntity qualifyLeadEntity, EntityReference opportunityCustomer = null, 
-            EntityReference opportunityCurrency = null,  EntityReference sourceCampaign = null)
+            int statusCode, QualifyLeadEntity qualifyLeadEntity, EntityReference opportunityCustomer = null,
+            EntityReference opportunityCurrency = null, EntityReference sourceCampaign = null)
         {
             try
             {
@@ -320,15 +324,18 @@ namespace CrmSdkLibrary
                 var createAccount = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Account);
                 var createContact = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Contact);
                 var createOpportunity = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Opportunity);
-                var response = (QualifyLeadResponse) service.Execute(new QualifyLeadRequest()
+
+                var response = (QualifyLeadResponse)service.Execute(new QualifyLeadRequest()
                 {
+                    Parameters = new ParameterCollection() { GetDisableDuplicateDetectionParameter },
+
                     LeadId = targetLead,
                     Status = new OptionSetValue(statusCode),
 
                     CreateAccount = createAccount,
                     CreateContact = createContact,
                     CreateOpportunity = createOpportunity,
-                    
+
                     // The Currency to use for the Opportunity.
                     OpportunityCurrencyId = null,
 
@@ -336,7 +343,9 @@ namespace CrmSdkLibrary
                     OpportunityCustomerId = null,
 
                     // The source Campaign that will be associated with the Opportunity.
-                    SourceCampaignId =  null
+                    SourceCampaignId = null,
+
+
                 });
                 return response.CreatedEntities;
             }
