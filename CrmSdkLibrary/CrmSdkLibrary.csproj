@@ -126,6 +126,7 @@
     <Compile Include="Copy.cs" />
     <Compile Include="Definition\ApiException.cs" />
     <Compile Include="Definition\Attribute\StringValue.cs" />
+    <Compile Include="Definition\EmailFormat.cs" />
     <Compile Include="Definition\Enum\AuthenticationType.cs" />
     <Compile Include="Definition\Enum\Location.cs" />
     <Compile Include="Definition\Enum\QualifyLeadEntity.cs" />
