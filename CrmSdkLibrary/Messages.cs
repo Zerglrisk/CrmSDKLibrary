@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CrmSdkLibrary.Definition;
 using CrmSdkLibrary.Definition.Enum;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Workflow.Activities;
 
 namespace CrmSdkLibrary
 {
@@ -15,7 +17,7 @@ namespace CrmSdkLibrary
     {
         public static bool DisableDuplicateDetection { get; set; } = false;
 
-        public static KeyValuePair<string, object> GetDisableDuplicateDetectionParameter { get; } = new KeyValuePair<string, object>("SuppressDuplicateDetection", DisableDuplicateDetection);
+        public static KeyValuePair<string, object> GetDisableDuplicateDetectionParameter => new KeyValuePair<string, object>("SuppressDuplicateDetection", DisableDuplicateDetection);
 
         public static Guid GetCurrentUserId(IOrganizationService service)
         {
@@ -353,6 +355,75 @@ namespace CrmSdkLibrary
             {
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to send an email message.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.sendemailrequest?view=dynamics-general-ce-9"/>
+        /// <see cref="https://docs.microsoft.com/en-us/dynamics365/customerengagement/on-premises/developer/entities/email"/>
+        /// <param name="service"></param>
+        /// <param name="email"></param>
+        public static void SendEmail(IOrganizationService service, EmailFormat email)
+        {
+            //Sender
+            var fromEntity = new EntityCollection();
+
+             var fromentity = new Entity("activityparty")
+            {
+                Attributes =
+                {
+                    ["partyid"] = email.From
+                }
+            };
+             fromEntity.Entities.Add(fromentity);
+
+            var toEntity = new EntityCollection();
+            foreach (var reference in email.To)
+            {
+                var entity = new Entity("activityparty")
+                {
+                    Attributes =
+                    {
+                        ["partyid"] = reference
+                    }
+                };
+                toEntity.Entities.Add(entity);
+            }
+            foreach (var address in email.EmailAddress)
+            {
+                var entity = new Entity("activityparty")
+                {
+                    Attributes =
+                    {
+                        ["addressused"] = address
+                    }
+                };
+                toEntity.Entities.Add(entity);
+            }
+
+            var emailEntity = new Entity("email")
+            {
+                  Attributes  =
+                  {
+                      ["subjct"] = email.Subject,
+                      ["description"] = email.Description,
+                      ["from"] = fromEntity,
+                      ["to"] = toEntity,
+                  }
+            };
+
+            var emailId = service.Create(emailEntity);
+
+
+            var response = (SendEmailResponse) service.Execute(new SendEmailRequest()
+            {
+                Parameters = new ParameterCollection() {GetDisableDuplicateDetectionParameter},
+                EmailId = emailId,
+                IssueSend = true,
+                TrackingToken = string.Empty
+            });
+            
         }
     }
 }
