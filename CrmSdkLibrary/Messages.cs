@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CrmSdkLibrary.Definition;
 using CrmSdkLibrary.Definition.Enum;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Workflow.Activities;
 
 namespace CrmSdkLibrary
 {
@@ -15,7 +17,7 @@ namespace CrmSdkLibrary
     {
         public static bool DisableDuplicateDetection { get; set; } = false;
 
-        public static KeyValuePair<string, object> GetDisableDuplicateDetectionParameter { get; } = new KeyValuePair<string, object>("SuppressDuplicateDetection", DisableDuplicateDetection);
+        public static KeyValuePair<string, object> GetDisableDuplicateDetectionParameter => new KeyValuePair<string, object>("SuppressDuplicateDetection", DisableDuplicateDetection);
 
         public static Guid GetCurrentUserId(IOrganizationService service)
         {
@@ -348,6 +350,189 @@ namespace CrmSdkLibrary
 
                 });
                 return response.CreatedEntities;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to send an email message.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.sendemailrequest?view=dynamics-general-ce-9"/>
+        /// <see cref="https://docs.microsoft.com/en-us/dynamics365/customerengagement/on-premises/developer/entities/email"/>
+        /// <param name="service"></param>
+        /// <param name="email"></param>
+        public static void SendEmail(IOrganizationService service, EmailFormat email)
+        {
+            //Sender
+            var fromEntity = new EntityCollection();
+
+             var fromentity = new Entity("activityparty")
+            {
+                Attributes =
+                {
+                    ["partyid"] = email.From
+                }
+            };
+             fromEntity.Entities.Add(fromentity);
+
+            var toEntity = new EntityCollection();
+            foreach (var reference in email.To)
+            {
+                var entity = new Entity("activityparty")
+                {
+                    Attributes =
+                    {
+                        ["partyid"] = reference
+                    }
+                };
+                toEntity.Entities.Add(entity);
+            }
+            foreach (var address in email.EmailAddress)
+            {
+                var entity = new Entity("activityparty")
+                {
+                    Attributes =
+                    {
+                        ["addressused"] = address
+                    }
+                };
+                toEntity.Entities.Add(entity);
+            }
+
+            var emailEntity = new Entity("email")
+            {
+                  Attributes  =
+                  {
+                      ["subjct"] = email.Subject,
+                      ["description"] = email.Description,
+                      ["from"] = fromEntity,
+                      ["to"] = toEntity,
+                  }
+            };
+
+            var emailId = service.Create(emailEntity);
+
+
+            var response = (SendEmailResponse) service.Execute(new SendEmailRequest()
+            {
+                Parameters = new ParameterCollection() {GetDisableDuplicateDetectionParameter},
+                EmailId = emailId,
+                IssueSend = true,
+                TrackingToken = string.Empty
+            });
+            
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add a set of existing privileges to an existing role.
+        /// </summary>
+        /// <see cref=""/>
+        /// <param name="service"></param>
+        /// <param name="roleId"></param>
+        /// <param name="privileges"></param>
+        /// <returns>There is no return value from this operation.</returns>
+        public static void AddPrivilegesRole(IOrganizationService service, Guid roleId, IEnumerable<RolePrivilege> privileges)
+        {
+            try
+            {
+                var response = (AddPrivilegesRoleResponse)service.Execute(new AddPrivilegesRoleRequest()
+                {
+                    RoleId = roleId,
+                    Privileges = privileges.ToArray()
+                });
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveroleprivilegesrolerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="roleId"></param>
+        /// <returns></returns>
+        public static IEnumerable<RolePrivilege> RetrieveRolePrivilegesRole(IOrganizationService service, Guid roleId)
+        {
+            try
+            {
+                var response = (RetrieveRolePrivilegesRoleResponse)service.Execute(new RetrieveRolePrivilegesRoleRequest()
+                {
+                    RoleId = roleId,
+                });
+                return response.RolePrivileges;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Deprecated
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievemembersteamrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="teamId"></param>
+        /// <param name="columnSet"></param>
+        public static EntityCollection RetrieveMembersTeamDeprecated(IOrganizationService service, Guid teamId, ColumnSet columnSet)
+        {
+            try
+            {
+                var response = (RetrieveMembersTeamResponse) service.Execute(new RetrieveMembersTeamRequest()
+                {
+                    EntityId = teamId,
+                    MemberColumnSet = columnSet
+                });
+
+                return response.EntityCollection;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieve Members(SystemUser) in provided Team
+        /// </summary>
+        /// <param name="serivce"></param>
+        /// <param name="teamId"></param>
+        /// <param name="columnSet">default, All ColumnSet</param>
+        /// <returns></returns>
+        public static EntityCollection RetrieveMembersTeam(IOrganizationService serivce, Guid teamId, ColumnSet columnSet = null)
+        {
+            try
+            {
+                if (columnSet == null)
+                {
+                    columnSet = new ColumnSet(true);
+                }
+
+                var qe = new QueryExpression("systemuser")
+                {
+                    ColumnSet = columnSet,
+                    LinkEntities =
+                    {
+                        new LinkEntity("systemuser","teammembership","systemuserid","systemuserid", JoinOperator.Inner)
+                        {
+                            LinkCriteria = new FilterExpression()
+                            {
+                                Conditions =
+                                {
+                                    new ConditionExpression("teamid", ConditionOperator.Equal, teamId)
+                                }
+                            }
+                        }
+                    }
+                };
+                return serivce.RetrieveMultiple(qe);
             }
             catch (Exception)
             {

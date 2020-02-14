@@ -32,6 +32,7 @@ namespace Example
 
             //CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
             //ColumnSet columnset = new ColumnSet(new String[] { "name" });
+            Messages.DisableDuplicateDetection = true;
             Messages.QualifyLead(Connection.OrgService,
                 new EntityReference("lead", new Guid("A461CA69-7A34-4416-A6D4-224C9D91E945")), 3,
                 QualifyLeadEntity.Account | QualifyLeadEntity.Contact | QualifyLeadEntity.Opportunity);
