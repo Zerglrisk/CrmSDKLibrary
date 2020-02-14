@@ -35,7 +35,8 @@ namespace CrmSdkLibrary
         /// <param name="location"></param>
         public Guid ConnectService(string orgName, string userName, string password, Definition.Enum.Location location)
         {
-            var uri = new System.Uri($"https://{orgName}.api.crm{Definition.Attribute.StringValue.GetStringValue(location)}.dynamics.com/XRMServices/2011/Organization.svc");
+            
+            var uri = new System.Uri($"https://{orgName}.api.crm{location.GetStringValue()}.dynamics.com/XRMServices/2011/Organization.svc");
             #region Old Using Microsoft.Xrm.Tooling.Connector.CrmServiceClient
             /*
             //need string connectionString parameter
