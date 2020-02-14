@@ -22,7 +22,7 @@ namespace CrmSdkLibrary.Definition.Attribute
             FieldInfo fi = type.GetField(value.ToString());
             var attr = fi.GetCustomAttributes(typeof(StringValue), false) as StringValue[];
 
-            return attr.Length > 0 ? attr[0].Value : null;
+            return attr != null && attr.Length > 0 ? attr[0].Value : null;
         }
     }
 }

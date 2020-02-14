@@ -24,7 +24,7 @@ namespace Example
         static void Main(string[] args)
         {
             CrmSdkLibrary.Connection conn = new CrmSdkLibrary.Connection();
-            //Console.WriteLine(conn.ConnectService("test201018", "test201018@test201018.onmicrosoft.com", "tester201018@", Location.APAC));
+            Console.WriteLine(conn.ConnectService("test201018", "test201018@test201018.onmicrosoft.com", "tester201018@", Location.APAC));
             //Console.WriteLine(conn.ConnectService(
             //    new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
