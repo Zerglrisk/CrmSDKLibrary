@@ -24,7 +24,7 @@ namespace Example
         static void Main(string[] args)
         {
             CrmSdkLibrary.Connection conn = new CrmSdkLibrary.Connection();
-            Console.WriteLine(conn.ConnectService("test201018", "test201018@test201018.onmicrosoft.com", "tester201018@", Location.APAC));
+            //Console.WriteLine(conn.ConnectService("test201018", "test201018@test201018.onmicrosoft.com", "tester201018@", Location.APAC));
             //Console.WriteLine(conn.ConnectService(
             //    new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
@@ -32,10 +32,7 @@ namespace Example
 
             //CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
             //ColumnSet columnset = new ColumnSet(new String[] { "name" });
-            Messages.DisableDuplicateDetection = true;
-            Messages.QualifyLead(Connection.OrgService,
-                new EntityReference("lead", new Guid("A461CA69-7A34-4416-A6D4-224C9D91E945")), 3,
-                QualifyLeadEntity.Account | QualifyLeadEntity.Contact | QualifyLeadEntity.Opportunity);
+            
 
             //CrmSdkLibrary.Common.GetOptionSetList(CrmSdkLibrary.Connection.OrgService, "lead", "leadsourcecode");
 
@@ -43,11 +40,14 @@ namespace Example
             //{
             //    Console.WriteLine(a.Id + "," + (a.Contains("name") ? a["name"].ToString() : string.Empty));
             //}
+            var a = Messages.RetrieveRolePrivilegesRole(Connection.OrgService, new Guid("F3909BF4-4433-43DA-9244-C6E4325AA4D0"));
+            var b = Messages.RetrieveUserPrivileges(Connection.OrgService, new Guid("60678fb0-a757-480a-9c5d-16903df1390a"));
             Program app = new Program();
             Api.SetApplicationId("68e95894-a339-40f1-a053-727f08c3a1ee");
             Task.WaitAll(Task.Run(async () => await app.RunAsync()));
 
             Console.WriteLine("(End)");
+
         }
 
         public async Task RunAsync()

@@ -7,6 +7,8 @@ using CrmSdkLibrary.Definition;
 using CrmSdkLibrary.Definition.Enum;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Workflow.Activities;
@@ -244,7 +246,7 @@ namespace CrmSdkLibrary
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveuserprivilegesrequest?view=dynamics-general-ce-9"/>
         /// <param name="service"></param>
         /// <returns>Gets an array of privileges that the user holds.</returns>
-        public static RolePrivilege[] RetrieveUserPrivileges(IOrganizationService service)
+        public static IEnumerable<RolePrivilege> RetrieveUserPrivileges(IOrganizationService service)
         {
             try
             {
@@ -320,6 +322,11 @@ namespace CrmSdkLibrary
                    new EntityReference("lead", new Guid("561231D5-78E0-454C-8C80-374BB5E3FA26")), 3,
                    QualifyLeadEntity.Account | QualifyLeadEntity.Contact | QualifyLeadEntity.Opportunity,
                    new EntityReference("account", new Guid("475B158C-541C-E511-80D3-3863BB347BA8") ));
+
+                    Messages.DisableDuplicateDetection = true;
+                    Messages.QualifyLead(Connection.OrgService,
+                    new EntityReference("lead", new Guid("A461CA69-7A34-4416-A6D4-224C9D91E945")), 3,
+                    QualifyLeadEntity.Account | QualifyLeadEntity.Contact | QualifyLeadEntity.Opportunity);
                  */
 
                 //statusCode Value 3 is Qualify StatusCode. (Default)
@@ -451,7 +458,7 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
-        /// 
+        /// Retrieve the privileges that are assigned to the specified role.
         /// </summary>
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveroleprivilegesrolerequest?view=dynamics-general-ce-9"/>
         /// <param name="service"></param>
@@ -536,6 +543,367 @@ namespace CrmSdkLibrary
             }
             catch (Exception)
             {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to retrieve all security principals (users or teams) that have access to, and access rights for, the specified record.
+        /// Availability : Account, Annotation, Appointment, Campaign, CampaignActivity, CampaignResponse, Connection, Contact, Contract, ConvertRule
+        /// CustomerOpportunityRole, CustomerRelationship, DuplicateRule, Email, EmailServerProfile, Entitlement, Fax, Goal
+        /// GoalRollupQuery, Import, ImportFile, ImportMap, Incident, IncidentResolution, Invoice, Lead, Letter, List, Mailbox
+        /// MailMergeTemplate, msdyn_PostAlbum, msdyn_wallsavedqueryusersettings, Opportunity, OpportunityClose, OrderClose
+        /// PhoneCall, ProcessSession, Queue, Quote, QuoteClose, RecurringAppointmentMaster, Report, RoutingRule, SalesOrder
+        /// ServiceAppointment, SharePointDocumentLocation, SharePointSite, SLA, SLAKPIInstance, SocialActivity, SocialProfile
+        /// Task, Template, UserForm, UserQuery, UserQueryVisualization, Workflow
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievesharedprincipalsandaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccess(IOrganizationService service, EntityReference target)
+        {
+            try
+            {
+                var response= (RetrieveSharedPrincipalsAndAccessResponse)service.Execute(new RetrieveSharedPrincipalsAndAccessRequest()
+                {
+                     Target = target
+                });
+                return response.PrincipalAccesses;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to retrieve entity metadata.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveentityrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="entityFilters"></param>
+        /// <returns></returns>
+        public static EntityMetadata RetrieveEntity(IOrganizationService service, string entityLogicalName,
+            EntityFilters entityFilters = EntityFilters.Default)
+        {
+            try
+            {
+                var response = (RetrieveEntityResponse) service.Execute(new RetrieveEntityRequest()
+                {
+                    EntityFilters =  entityFilters,
+                    LogicalName =  entityLogicalName
+                });
+                return response.EntityMetadata;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get EntityPrimaryFieldName
+        /// Custom Entities Default Primary Field Name is new_name
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static string GetEntityPrimaryFieldName(IOrganizationService service, string entityLogicalName)
+        {
+            try
+            {
+                var entityMetadata = RetrieveEntity(service, entityLogicalName, EntityFilters.Entity);
+                return entityMetadata.PrimaryNameAttribute;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to create a new global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.createoptionsetrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSet"></param>
+        /// <returns>Created Option Set Guid</returns>
+        public static Guid CreateOptionSet(IOrganizationService service, OptionSetMetadata optionSet)
+        {
+            try
+            {
+                var response = (CreateOptionSetResponse) service.Execute(new CreateOptionSetRequest()
+                {
+                    OptionSet = optionSet
+                });
+                return response.OptionSetId;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to update the definition of a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionsetresponse?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSet"></param>
+        public static void UpdateOptionSet(IOrganizationService service, OptionSetMetadata optionSet)
+        {
+            try
+            {
+                var response = (UpdateOptionSetResponse)service.Execute(new UpdateOptionSetRequest()
+                {
+                    OptionSet = optionSet
+                });
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to delete a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionsetrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="globalOptionSetName"></param>
+        public static void DeleteOptionSet(IOrganizationService service, string globalOptionSetName)
+        {
+            try
+            {
+                var response = (DeleteOptionSetResponse)service.Execute(new DeleteOptionSetRequest()
+                {
+                    Name = globalOptionSetName
+                });
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to retrieve a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveoptionsetrequest?view=dynamics-general-ce-9"/>
+        /// <param name="servie"></param>
+        /// <param name="globalOptionSetName"></param>
+        /// <returns></returns>
+        public static OptionSetMetadataBase RetrieveOptionSet(IOrganizationService service, string globalOptionSetName)
+        {
+            try
+            {
+                var response = (RetrieveOptionSetResponse)service.Execute(new RetrieveOptionSetRequest()
+                {
+                    Name = globalOptionSetName, 
+                    RetrieveAsIfPublished = true
+                });
+                return response.OptionSetMetadata;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to retrieve information about all global option sets.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrievealloptionsetsrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        public static IEnumerable<OptionSetMetadataBase> RetrieveAllOptionSets(IOrganizationService service)
+        {
+            try
+            {
+                var response = (RetrieveAllOptionSetsResponse) service.Execute(new RetrieveAllOptionSetsRequest()
+                {
+                    RetrieveAsIfPublished = true
+                });
+
+                return response.OptionSetMetadata;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to delete an option value in a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName">Gets or sets the name of the option set that contains the value.</param>
+        /// <param name="value">Gets or sets the value of the option to delete.</param>
+        public static void DeleteOptionValue(IOrganizationService service, string optionSetName, int value)
+        {
+            try
+            {
+                var response = (DeleteOptionValueResponse) service.Execute(new DeleteOptionValueRequest()
+                {
+                    OptionSetName = optionSetName,
+                    Value = value, 
+                });
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to delete an option value in a local option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName">Gets or sets the name of the option set that contains the value.</param>
+        /// <param name="value">Gets or sets the value of the option to delete.</param>
+        /// <param name="entityLogicalName">Gets or sets the logical name of the entity that contains the attribute.</param>
+        /// <param name="attributeLogicalName">Gets or sets the logical name of the attribute from which to delete the option value.</param>
+        /// <param name="solutionUniqueName">Gets or sets the solution name associated with this option value. Optional.</param>
+        public static void DeleteOptionValue(IOrganizationService service, string optionSetName, int value,
+            string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null)
+        {
+            try
+            {
+                var response = (DeleteOptionValueResponse)service.Execute(new DeleteOptionValueRequest()
+                {
+                    OptionSetName = optionSetName,
+                    Value = value,
+                    EntityLogicalName = entityLogicalName,
+                    AttributeLogicalName = attributeLogicalName,
+                    SolutionUniqueName = solutionUniqueName
+                });
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to insert a new option value for a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.insertoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName"></param>
+        /// <param name="label"></param>
+        /// <returns>Gets the option value for the new option.</returns>
+        public static int InsertOptionValue(IOrganizationService service, string optionSetName,
+            Microsoft.Xrm.Sdk.Label label)
+        {
+            try
+            {
+                var response = (InsertOptionValueResponse)service.Execute(new InsertOptionValueRequest()
+                {
+                    OptionSetName = optionSetName,
+                    Label = label
+                });
+                return response.NewOptionValue;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to insert a new option value for a local option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.insertoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName"></param>
+        /// <param name="label"></param>
+        /// <returns>Gets the option value for the new option.</returns>
+        public static int InsertOptionValue(IOrganizationService service, string optionSetName,
+            Microsoft.Xrm.Sdk.Label label, string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null)
+        {
+            try
+            {
+                var response = (InsertOptionValueResponse)service.Execute(new InsertOptionValueRequest()
+                {
+                    OptionSetName = optionSetName,
+                    Label = label,
+                    EntityLogicalName = entityLogicalName,
+                    AttributeLogicalName = attributeLogicalName,
+                    SolutionUniqueName = solutionUniqueName, 
+                    
+                });
+                return response.NewOptionValue;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to update an option value in a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName"></param>
+        /// <param name="label"></param>
+        /// <param name="value"></param>
+        public static void UpdateOptionValue(IOrganizationService service, string optionSetName,
+            Microsoft.Xrm.Sdk.Label label, int value)
+        {
+            try
+            {
+                var response = (UpdateOptionValueResponse)service.Execute(new UpdateOptionValueRequest()
+                {
+                    OptionSetName = optionSetName,
+                    Value = value,
+                    Label = label
+                });
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to update an option value in a local option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName"></param>
+        /// <param name="label"></param>
+        /// <param name="value"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="attributeLogicalName"></param>
+        /// <param name="solutionUniqueName"></param>
+        public static void UpdateOptionValue(IOrganizationService service, string optionSetName,
+            Microsoft.Xrm.Sdk.Label label, int value, string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null)
+        {
+            try
+            {
+                var response = (UpdateOptionValueResponse)service.Execute(new UpdateOptionValueRequest()
+                {
+                    OptionSetName = optionSetName,
+                    Value = value,
+                    Label = label,
+                    EntityLogicalName = entityLogicalName,
+                    AttributeLogicalName =  attributeLogicalName,
+                    SolutionUniqueName = solutionUniqueName
+                });
+            }
+            catch (Exception)
+            {
+
                 throw;
             }
         }
