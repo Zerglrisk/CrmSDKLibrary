@@ -13,6 +13,7 @@ using CrmSdkLibrary;
 using CrmSdkLibrary.Definition.Enum;
 using CrmSdkLibrary.Entities;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Organization;
 using AttributeCollection = Microsoft.Xrm.Sdk.AttributeCollection;
 using AuthenticationType = CrmSdkLibrary.Definition.Enum.AuthenticationType;
@@ -28,7 +29,7 @@ namespace Example
             //Console.WriteLine(conn.ConnectService(
             //    new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
-            Console.WriteLine(conn.ConnectService("https://test201018.crm5.dynamics.com", "test201018@test201018.onmicrosoft.com", "tester201018@",AuthenticationType.Office365));
+            Console.WriteLine(conn.ConnectService("***REMOVED***", "***REMOVED***", "***REMOVED***",AuthenticationType.Office365));
 
             //CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
             //ColumnSet columnset = new ColumnSet(new String[] { "name" });
@@ -40,8 +41,16 @@ namespace Example
             //{
             //    Console.WriteLine(a.Id + "," + (a.Contains("name") ? a["name"].ToString() : string.Empty));
             //}
-            var a = Messages.RetrieveRolePrivilegesRole(Connection.OrgService, new Guid("F3909BF4-4433-43DA-9244-C6E4325AA4D0"));
-            var b = Messages.RetrieveUserPrivileges(Connection.OrgService, new Guid("60678fb0-a757-480a-9c5d-16903df1390a"));
+
+            var ee = Messages.RetrieveEntity(Connection.OrgService, "lead", EntityFilters.Entity);
+
+            var c = Messages.RetrieveViews(Connection.OrgService, "lead");
+            foreach (Entity entity in c.Entities)
+            {
+               Console.WriteLine(entity["name"].ToString() + " : " +entity["querytype"].ToString()); 
+            }
+            var d = Messages.RetrieveEntitiesByView(Connection.OrgService,new Guid("9237f5bf-3f99-4034-8501-e279334774bb"));
+            var e = Messages.RetrieveViewAttributes(Connection.OrgService, new Guid("9237f5bf-3f99-4034-8501-e279334774bb"));
             Program app = new Program();
             Api.SetApplicationId("68e95894-a339-40f1-a053-727f08c3a1ee");
             Task.WaitAll(Task.Run(async () => await app.RunAsync()));

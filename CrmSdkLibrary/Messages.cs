@@ -60,7 +60,8 @@ namespace CrmSdkLibrary
         //{
         //    try
         //    {
-
+        //        var metaData = RetrieveEntity(service, entityLogicalName);
+        //        return metaData.Privileges;
         //    }
         //    catch (Exception)
         //    {
@@ -82,6 +83,24 @@ namespace CrmSdkLibrary
             catch (Exception e)
             {
                 throw e;
+            }
+        }
+
+        public static int GetEntityTypeCode(IOrganizationService service, string entityLogicalName)
+        {
+            try
+            {
+                var metaData = RetrieveEntity(service, entityLogicalName);
+                if (!metaData.ObjectTypeCode.HasValue)
+                {
+                    throw new Exception("ObjectTypeCode is nUll");
+                }
+
+                return (int) metaData.ObjectTypeCode;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
 
@@ -604,6 +623,30 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
+        /// Contains the data that is needed to retrieve metadata information about all the entities.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveallentitiesrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="entityFilters"></param>
+        /// <returns></returns>
+        public static IEnumerable<EntityMetadata> RetrieveAllEntities(IOrganizationService service, EntityFilters entityFilters = EntityFilters.Default)
+        {
+            try
+            {
+                var response = (RetrieveAllEntitiesResponse)service.Execute(new RetrieveAllEntitiesRequest()
+                {
+                    EntityFilters = entityFilters
+                });
+                return response.EntityMetadata;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Get EntityPrimaryFieldName
         /// Custom Entities Default Primary Field Name is new_name
         /// </summary>
@@ -623,6 +666,46 @@ namespace CrmSdkLibrary
             }
         }
 
+        /// <summary>
+        /// Get Entity Set Name
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.entitymetadata.entitysetname?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static string GetEntitySetName(IOrganizationService service, string entityLogicalName)
+        {
+            try
+            {
+                var entityMetadata = RetrieveEntity(service, entityLogicalName, EntityFilters.Entity);
+                return entityMetadata.EntitySetName;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get All Entity Set Name
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        public static Dictionary<string, string> GetAllEntitySetName(IOrganizationService service)
+        {
+            try
+            {
+                var entityMetadatas = RetrieveAllEntities(service, EntityFilters.Entity);
+                return entityMetadatas.ToDictionary(
+                    delegate(EntityMetadata metadata) { return metadata.LogicalName; },
+                    delegate(EntityMetadata metadata) { return metadata.EntitySetName; });
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
         /// <summary>
         /// Contains the data that is needed to create a new global option set.
         /// </summary>
@@ -907,5 +990,123 @@ namespace CrmSdkLibrary
                 throw;
             }
         }
+
+        /// <summary>
+        /// https://docs.microsoft.com/en-us/dynamics365/customer-engagement/web-api/savedquery?view=dynamics-ce-odata-9
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static EntityCollection RetrieveViews(IOrganizationService service, string entityLogicalName)
+        {
+            try
+            {
+                var qe = new QueryExpression("savedquery")
+                {
+                    ColumnSet = new ColumnSet(true),
+                    Criteria =  new FilterExpression()
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("returnedtypecode", ConditionOperator.Equal, GetEntityTypeCode(service ,entityLogicalName))
+                        }
+                    }
+                };
+                return service.RetrieveMultiple(qe);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public static Entity RetrieveView(IOrganizationService service, Guid viewId)
+        {
+            try
+            {
+                return service.Retrieve("savedquery", viewId, new ColumnSet(true));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to convert a query in FetchXML to a QueryExpression.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.fetchxmltoqueryexpressionrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="fetchXml"></param>
+        /// <returns></returns>
+        public static QueryExpression FetchXmlToQueryExpression(IOrganizationService service, string fetchXml)
+        {
+            try
+            {
+                return ((FetchXmlToQueryExpressionResponse) service.Execute(new FetchXmlToQueryExpressionRequest()
+                {
+                    FetchXml = fetchXml
+                })).Query;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieve Columns(Attributes) From View
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="viewId"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> RetrieveViewAttributes(IOrganizationService service, Guid viewId)
+        {
+            try
+            {
+                var view = RetrieveView(service, viewId);
+                if (view.Contains("fetchxml"))
+                {
+                    var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
+                    return qe.ColumnSet.Columns;
+
+                }
+                else
+                {
+                    throw new Exception("Cannot find fetchxml string");
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieve Entities(Records) By View
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="viewId"></param>
+        /// <returns></returns>
+        public static EntityCollection RetrieveEntitiesByView(IOrganizationService service, Guid viewId)
+        {
+            try
+            {
+                var view = RetrieveView(service, viewId);
+                if (view.Contains("fetchxml"))
+                {
+                    return service.RetrieveMultiple(new FetchExpression(view["fetchxml"].ToString()));
+                }
+                else
+                {
+                    throw new Exception("Cannot find fetchxml string");
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        
     }
 }
