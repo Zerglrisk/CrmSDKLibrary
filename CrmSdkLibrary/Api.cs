@@ -22,7 +22,8 @@ namespace CrmSdkLibrary
     {
         //https://stackoverflow.com/questions/50795500/authenticate-to-dynamics-365-using-adal-v3-using-clientid/51305491
 
-
+        private static Dictionary<string, string> _entitySetPaths;
+        public static Dictionary<string, string> EntitySetPaths => _entitySetPaths ?? (_entitySetPaths = Messages.GetAllEntitySetName(Connection.OrgService));
 
         public static string ClientId;
 
