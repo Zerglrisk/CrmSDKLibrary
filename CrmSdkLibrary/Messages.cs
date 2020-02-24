@@ -1028,6 +1028,13 @@ namespace CrmSdkLibrary
                 throw;
             }
         }
+
+        /// <summary>
+        /// Retrieve View(savedquery) Entity
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="viewId"></param>
+        /// <returns></returns>
         public static Entity RetrieveView(IOrganizationService service, Guid viewId)
         {
             try
@@ -1105,9 +1112,13 @@ namespace CrmSdkLibrary
                 {
                     var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
                     var attrs = RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
+                    
+                    if (attrs == null)
+                    {
+                        throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
+                    }
 
                     return qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
-                        .Where(attr => attr != null)
                         .ToDictionary(attr => attr.LogicalName, attr => attr.DisplayName.LocalizedLabels.FirstOrDefault()?.Label);
 
                 }
