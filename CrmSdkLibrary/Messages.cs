@@ -17,10 +17,19 @@ namespace CrmSdkLibrary
 {
     public class Messages
     {
+        /// <summary>
+        /// Disable Duplication Detection (Default : false)
+        /// 중복 탐지 비활성화 
+        /// </summary>
         public static bool DisableDuplicateDetection { get; set; } = false;
 
         public static KeyValuePair<string, object> GetDisableDuplicateDetectionParameter => new KeyValuePair<string, object>("SuppressDuplicateDetection", DisableDuplicateDetection);
 
+        /// <summary>
+        /// Get logged-in user id
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns></returns>
         public static Guid GetCurrentUserId(IOrganizationService service)
         {
             try
@@ -1068,6 +1077,38 @@ namespace CrmSdkLibrary
                 {
                     var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
                     return qe.ColumnSet.Columns;
+
+                }
+                else
+                {
+                    throw new Exception("Cannot find fetchxml string");
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieve Columns(Attributes) From View as Dictionary(logical name, display name)
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="viewId"></param>
+        /// <returns></returns>
+        public static Dictionary<string, string> RetrieveViewAttributesAsDictionary(IOrganizationService service, Guid viewId)
+        {
+            try
+            {
+                var view = RetrieveView(service, viewId);
+                if (view.Contains("fetchxml"))
+                {
+                    var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
+                    var attrs = RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
+
+                    return qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+                        .Where(attr => attr != null)
+                        .ToDictionary(attr => attr.LogicalName, attr => attr.DisplayName.LocalizedLabels.FirstOrDefault()?.Label);
 
                 }
                 else
