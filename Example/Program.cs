@@ -12,6 +12,7 @@ using System.Xml.Linq;
 using CrmSdkLibrary;
 using CrmSdkLibrary.Definition.Enum;
 using CrmSdkLibrary.Entities;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Organization;
@@ -25,32 +26,32 @@ namespace Example
         static void Main(string[] args)
         {
             CrmSdkLibrary.Connection conn = new CrmSdkLibrary.Connection();
+            //Login Case 1
             //Console.WriteLine(conn.ConnectService("test201018", "test201018@test201018.onmicrosoft.com", "tester201018@", Location.APAC));
+            //Login Case 2
             //Console.WriteLine(conn.ConnectService(
             //    new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
+            //Login Case 3
             Console.WriteLine(conn.ConnectService("***REMOVED***", "***REMOVED***", "***REMOVED***",AuthenticationType.Office365));
 
-            //CrmSdkLibrary.Entities.Account acc = new CrmSdkLibrary.Entities.Account();
-            //ColumnSet columnset = new ColumnSet(new String[] { "name" });
-            
-
-            //CrmSdkLibrary.Common.GetOptionSetList(CrmSdkLibrary.Connection.OrgService, "lead", "leadsourcecode");
-
-            //foreach (var a in retrieve.Entities)
-            //{
-            //    Console.WriteLine(a.Id + "," + (a.Contains("name") ? a["name"].ToString() : string.Empty));
-            //}
-
-            var ee = Messages.RetrieveEntity(Connection.OrgService, "lead", EntityFilters.Entity);
-
-            var c = Messages.RetrieveViews(Connection.OrgService, "lead");
-            foreach (Entity entity in c.Entities)
+            var cc = Messages.RetrieveAllEntities(Connection.OrgService);
+            var count = 0;
+            foreach (var entityMetadata in cc)
             {
-               Console.WriteLine(entity["name"].ToString() + " : " +entity["querytype"].ToString()); 
+                if (entityMetadata.LogicalName.Contains("new_"))
+                {
+                    Console.WriteLine(entityMetadata.LogicalName + ", " + count);
+                }
+
+                count++;
             }
-            var d = Messages.RetrieveEntitiesByView(Connection.OrgService,new Guid("9237f5bf-3f99-4034-8501-e279334774bb"));
-            var e = Messages.RetrieveViewAttributes(Connection.OrgService, new Guid("9237f5bf-3f99-4034-8501-e279334774bb"));
+            var a = Messages.RetrieveViews(Connection.OrgService, "contact");
+            var b = Messages.RetrieveViewAttributes(Connection.OrgService,new Guid("{2f0d0ede-d356-4b1e-83bd-e978f10e3eeb}"));
+            var c = Messages.RetrieveView(Connection.OrgService, new Guid("2f0d0ede-d356-4b1e-83bd-e978f10e3eeb"));
+            var d = Messages.RetrieveViewAttributesAsDictionary(Connection.OrgService,
+                new Guid("{2f0d0ede-d356-4b1e-83bd-e978f10e3eeb}"));
+           
             Program app = new Program();
             Api.SetApplicationId("68e95894-a339-40f1-a053-727f08c3a1ee");
             Task.WaitAll(Task.Run(async () => await app.RunAsync()));
@@ -66,6 +67,10 @@ namespace Example
             HttpClient client = CrmSdkLibrary.Api.GetWebApiHttpClient(new UserPasswordCredential("test201018@test201018.onmicrosoft.com", "tester201018@"),
                    "https://test201018.crm5.dynamics.com", "https://login.microsoftonline.com/b402a2b7-7be7-4436-b53c-a47d0f64fe9d");
             var aa = await CrmSdkLibrary.Api.User(client);
+
+            //Load All EntiySetName To Memory
+            var a = Api.EntitySetPaths;
+
             Console.WriteLine(aa);
 
             
