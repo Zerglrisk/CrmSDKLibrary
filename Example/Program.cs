@@ -49,8 +49,8 @@ namespace Example
             var a = Messages.RetrieveViews(Connection.OrgService, "contact");
             var b = Messages.RetrieveViewAttributes(Connection.OrgService,new Guid("{2f0d0ede-d356-4b1e-83bd-e978f10e3eeb}"));
             var c = Messages.RetrieveView(Connection.OrgService, new Guid("2f0d0ede-d356-4b1e-83bd-e978f10e3eeb"));
-            var d = Messages.RetrieveViewAttributesAsDictionary(Connection.OrgService,
-                new Guid("{2f0d0ede-d356-4b1e-83bd-e978f10e3eeb}"));
+            //var d = Messages.RetrieveViewAttributesAsDictionary(Connection.OrgService,
+            //    new Guid("{2f0d0ede-d356-4b1e-83bd-e978f10e3eeb}"));
            
             Program app = new Program();
             Api.SetApplicationId("68e95894-a339-40f1-a053-727f08c3a1ee");
