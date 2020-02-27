@@ -1,22 +1,14 @@
-﻿using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using CrmSdkLibrary;
-using CrmSdkLibrary.Definition.Enum;
-using CrmSdkLibrary.Entities;
-using Microsoft.Crm.Sdk.Messages;
+﻿using CrmSdkLibrary;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Organization;
-using AttributeCollection = Microsoft.Xrm.Sdk.AttributeCollection;
+using Microsoft.Xrm.Sdk.Query;
+using System;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Xml;
+using CrmSdkLibrary.Definition;
 using AuthenticationType = CrmSdkLibrary.Definition.Enum.AuthenticationType;
 
 namespace Example
@@ -47,15 +39,20 @@ namespace Example
                 count++;
             }
             var a = Messages.RetrieveViews(Connection.OrgService, "contact");
-            var b = Messages.RetrieveViewAttributes(Connection.OrgService,new Guid("{2f0d0ede-d356-4b1e-83bd-e978f10e3eeb}"));
-            var c = Messages.RetrieveView(Connection.OrgService, new Guid("2f0d0ede-d356-4b1e-83bd-e978f10e3eeb"));
-            //var d = Messages.RetrieveViewAttributesAsDictionary(Connection.OrgService,
-            //    new Guid("{2f0d0ede-d356-4b1e-83bd-e978f10e3eeb}"));
-           
-            Program app = new Program();
-            Api.SetApplicationId("68e95894-a339-40f1-a053-727f08c3a1ee");
-            Task.WaitAll(Task.Run(async () => await app.RunAsync()));
+            var aa = Messages.RetrieveEntity(Connection.OrgService, "contact", EntityFilters.All);
+            var b = Messages.RetrieveViewAttributes(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
+            var c = Messages.RetrieveView(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
+            var d = Messages.FetchXmlToQueryExpression(Connection.OrgService, c["fetchxml"].ToString());
 
+            var dd = Messages.RetrieveViewAttributesAsDictionary2Ordered(Connection.OrgService,
+                new Guid("{00000000-0000-0000-00aa-000010001004}"));
+            //var xml = new XmlDocument();
+            //xml.LoadXml(c["layoutxml"].ToString());
+            //var xnList = xml.GetElementsByTagName("cell");
+            //foreach (XmlNode xn in xnList)
+            //{
+            //    if (xn.Attributes != null) Console.WriteLine(xn.Attributes["name"].Value);
+            //}
             Console.WriteLine("(End)");
 
         }

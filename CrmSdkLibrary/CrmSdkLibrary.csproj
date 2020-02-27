@@ -125,14 +125,15 @@
     <Compile Include="Connection.cs" />
     <Compile Include="ConnectionSQL.cs" />
     <Compile Include="Copy.cs" />
-    <Compile Include="Definition\ApiException.cs" />
+    <Compile Include="Definition\Model\ApiException.cs" />
     <Compile Include="Definition\Attribute\StringValue.cs" />
-    <Compile Include="Definition\EmailFormat.cs" />
+    <Compile Include="Definition\Model\EmailFormat.cs" />
     <Compile Include="Definition\Enum\AuthenticationType.cs" />
     <Compile Include="Definition\Enum\Location.cs" />
     <Compile Include="Definition\Enum\QualifyLeadEntity.cs" />
-    <Compile Include="Definition\JObjectParsed.cs" />
-    <Compile Include="Definition\WhoAmI.cs" />
+    <Compile Include="Definition\Model\JObjectParsed.cs" />
+    <Compile Include="Definition\Model\WhoAmI.cs" />
+    <Compile Include="Definition\SqlConverter.cs" />
     <Compile Include="Entities.cs" />
     <Compile Include="Entities\SystemUser.cs" />
     <Compile Include="Extention.cs" />
@@ -145,8 +146,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\logo.png"  Pack="true" PackagePath=""/>
+    <Content Include="Resources\logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

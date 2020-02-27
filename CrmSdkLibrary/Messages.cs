@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using CrmSdkLibrary.Definition;
 using CrmSdkLibrary.Definition.Enum;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Organization;
@@ -1074,21 +1076,34 @@ namespace CrmSdkLibrary
         /// </summary>
         /// <param name="service"></param>
         /// <param name="viewId"></param>
+        /// <param name="ordering"></param>
         /// <returns></returns>
-        public static IEnumerable<string> RetrieveViewAttributeLogicalNames(IOrganizationService service, Guid viewId)
+        public static IEnumerable<string> RetrieveViewAttributeLogicalNames(IOrganizationService service, Guid viewId, bool ordering = false)
         {
             try
             {
                 var view = RetrieveView(service, viewId);
-                if (view.Contains("fetchxml"))
+                if (ordering)
                 {
-                    var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
-                    return qe.ColumnSet.Columns;
+                    var xml = new XmlDocument();
+                    xml.LoadXml(view["layoutxml"].ToString());
+                    var xnList = xml.GetElementsByTagName("cell");
 
+                    return (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value)
+                        .ToList();
                 }
                 else
                 {
-                    throw new Exception("Cannot find fetchxml string");
+                    if (view.Contains("fetchxml"))
+                    {
+                        var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
+                        return qe.ColumnSet.Columns;
+
+                    }
+                    else
+                    {
+                        throw new Exception("Cannot find fetchxml string");
+                    }
                 }
             }
             catch (Exception)
@@ -1097,6 +1112,12 @@ namespace CrmSdkLibrary
             }
         }
 
+        /// <summary>
+        /// Retrieve entity AttributeMetaDatas
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="viewId"></param>
+        /// <returns></returns>
         public static IEnumerable<AttributeMetadata> RetrieveViewAttributes(IOrganizationService service, Guid viewId)
         {
             try
@@ -1117,30 +1138,60 @@ namespace CrmSdkLibrary
         /// </summary>
         /// <param name="service"></param>
         /// <param name="viewId"></param>
+        /// <param name="ordering"></param>
         /// <returns></returns>
-        public static Dictionary<string, string> RetrieveViewAttributesAsDictiondary(IOrganizationService service, Guid viewId)
+        public static Dictionary<string, string> RetrieveViewAttributesNamePair(IOrganizationService service, Guid viewId, bool ordering = false)
         {
             try
             {
                 var view = RetrieveView(service, viewId);
-                if (view.Contains("fetchxml"))
+                if (ordering)
                 {
-                    var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
-                    var attrs = RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
-
-                    if (attrs == null)
+                    if (view.Contains("layoutxml") && view.Contains("returnedtypecode"))
                     {
-                        throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
+                        var xml = new XmlDocument();
+                        xml.LoadXml(view["layoutxml"].ToString());
+                        var xnList = xml.GetElementsByTagName("cell");
+
+                        var attributes = (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList();
+                        var attrs = RetrieveEntity(service, view["returnedtypecode"].ToString(), EntityFilters.Attributes);
+
+                        if (attrs == null)
+                        {
+                            throw new Exception($"Cannot retrieve attributes from {view["returnedtypecode"].ToString()}");
+                        }
+
+                        return attributes.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+                            .Where(attr => attr != null)
+                            .ToDictionary(attr => attr.LogicalName, attr => attr.DisplayName.UserLocalizedLabel.Label);
+
                     }
-
-                    return qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
-                        .Where(attr => attr != null)
-                        .ToDictionary(attr => attr.LogicalName, attr => attr.DisplayName.UserLocalizedLabel.Label);
-
+                    else
+                    {
+                        throw new Exception("Cannot find layoutxml string");
+                    }
                 }
                 else
                 {
-                    throw new Exception("Cannot find fetchxml string");
+                    if (view.Contains("fetchxml"))
+                    {
+                        var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
+                        var attrs = RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
+
+                        if (attrs == null)
+                        {
+                            throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
+                        }
+
+                        return qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+                            .Where(attr => attr != null)
+                            .ToDictionary(attr => attr.LogicalName, attr => attr.DisplayName.UserLocalizedLabel.Label);
+
+                    }
+                    else
+                    {
+                        throw new Exception("Cannot find fetchxml string");
+                    }
                 }
             }
             catch (Exception)
@@ -1155,29 +1206,58 @@ namespace CrmSdkLibrary
         /// <param name="service"></param>
         /// <param name="viewId"></param>
         /// <returns></returns>
-        public static Dictionary<string, AttributeMetadata> RetrieveViewAttributesAsDictionary2(IOrganizationService service, Guid viewId)
+        public static Dictionary<string, AttributeMetadata> RetrieveViewAttributeMetadatas(IOrganizationService service, Guid viewId, bool ordering = false)
         {
             try
             {
                 var view = RetrieveView(service, viewId);
-                if (view.Contains("fetchxml"))
+
+                if (ordering)
                 {
-                    var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
-                    var attrs = RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
-
-                    if (attrs == null)
+                    if (view.Contains("layoutxml") && view.Contains("returnedtypecode"))
                     {
-                        throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
+                        var xml = new XmlDocument();
+                        xml.LoadXml(view["layoutxml"].ToString());
+                        var xnList = xml.GetElementsByTagName("cell");
+
+                        var attributes = (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList();
+                        var attrs = RetrieveEntity(service, view["returnedtypecode"].ToString(), EntityFilters.Attributes);
+
+                        if (attrs == null)
+                        {
+                            throw new Exception($"Cannot retrieve attributes from {view["returnedtypecode"].ToString()}");
+                        }
+
+                        return attributes.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+                            .Where(attr => attr != null)
+                            .ToDictionary(attr => attr.LogicalName, attr => attr);
+
                     }
-
-                    return qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
-                        .Where(attr => attr != null)
-                        .ToDictionary(attr => attr.LogicalName, attr => attr);
-
+                    else
+                    {
+                        throw new Exception("Cannot find layoutxml string");
+                    }
                 }
                 else
                 {
-                    throw new Exception("Cannot find fetchxml string");
+                    if (view.Contains("fetchxml"))
+                    {
+                        var qe = FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
+                        var attrs = RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
+
+                        if (attrs == null)
+                        {
+                            throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
+                        }
+
+                        return qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+                            .Where(attr => attr != null)
+                            .ToDictionary(attr => attr.LogicalName, attr => attr);
+                    }
+                    else
+                    {
+                        throw new Exception("Cannot find fetchxml string");
+                    }
                 }
             }
             catch (Exception)
