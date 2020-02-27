@@ -19,10 +19,9 @@ namespace CrmSdkLibrary.Definition.Attribute
         {
             var type = value.GetType();
 
-            FieldInfo fi = type.GetField(value.ToString());
-            var attr = fi.GetCustomAttributes(typeof(StringValue), false) as StringValue[];
+            var fi = type.GetField(value.ToString());
 
-            return attr != null && attr.Length > 0 ? attr[0].Value : null;
+            return fi.GetCustomAttributes(typeof(StringValue), false) is StringValue[] attr && attr.Length > 0 ? attr[0].Value : null;
         }
     }
 }
