@@ -125,6 +125,8 @@
     <Compile Include="Connection.cs" />
     <Compile Include="ConnectionSQL.cs" />
     <Compile Include="Copy.cs" />
+    <Compile Include="Definition\Enum\JoinType.cs" />
+    <Compile Include="Definition\Enum\SortDirection.cs" />
     <Compile Include="Definition\Model\ApiException.cs" />
     <Compile Include="Definition\Attribute\StringValue.cs" />
     <Compile Include="Definition\Model\EmailFormat.cs" />
@@ -132,6 +134,7 @@
     <Compile Include="Definition\Enum\Location.cs" />
     <Compile Include="Definition\Enum\QualifyLeadEntity.cs" />
     <Compile Include="Definition\Model\JObjectParsed.cs" />
+    <Compile Include="Definition\Model\SqlWrapper.cs" />
     <Compile Include="Definition\Model\WhoAmI.cs" />
     <Compile Include="Definition\SqlConverter.cs" />
     <Compile Include="Entities.cs" />
