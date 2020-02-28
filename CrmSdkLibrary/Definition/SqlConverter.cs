@@ -36,6 +36,15 @@ namespace CrmSdkLibrary.Definition
             sqlWrapper.SetLayoutColumns(layoutXml);
             sqlWrapper.Columns.AddRange(queryExpression.ColumnSet.Columns.ToList());
 
+            foreach (var aa in queryExpression.Criteria.Conditions)
+            {
+                sqlWrapper.Conditions.Add(new SqlWrapper.Condition()
+                {
+                    ColumnName = aa.AttributeName,
+                    Value =  aa.Values.ToList(),
+                    ConditionType =  (ConditionType) aa.Operator
+                });
+            }
             #region Order
             var index = 0;
             foreach (var order in queryExpression.Orders)
@@ -66,6 +75,16 @@ namespace CrmSdkLibrary.Definition
             };
             
             sqlWrapper.Columns.AddRange(entity.Columns.Columns.ToList());
+
+            foreach (var aa in entity.LinkCriteria.Conditions)
+            {
+                sqlWrapper.Conditions.Add(new SqlWrapper.Condition()
+                {
+                    ColumnName = aa.AttributeName,
+                    Value = aa.Values.ToList(),
+                    ConditionType = (ConditionType)aa.Operator
+                });
+            }
 
             #region Order
             var index = 0;
