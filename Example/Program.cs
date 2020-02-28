@@ -29,23 +29,27 @@ namespace Example
 
             var cc = Messages.RetrieveAllEntities(Connection.OrgService);
             var count = 0;
-            foreach (var entityMetadata in cc)
-            {
-                if (entityMetadata.LogicalName.Contains("new_"))
-                {
-                    Console.WriteLine(entityMetadata.LogicalName + ", " + count);
-                }
+            //foreach (var entityMetadata in cc)
+            //{
+            //    if (entityMetadata.LogicalName.Contains("new_"))
+            //    {
+            //        Console.WriteLine(entityMetadata.LogicalName + ", " + count);
+            //    }
 
-                count++;
-            }
+            //    count++;
+            //}
             var a = Messages.RetrieveViews(Connection.OrgService, "contact");
+            foreach (var aaa in a.Entities)
+            {
+                Console.WriteLine(aaa["name"] + ", " + count++);
+            }
             var aa = Messages.RetrieveEntity(Connection.OrgService, "contact", EntityFilters.All);
             var b = Messages.RetrieveViewAttributes(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
             var c = Messages.RetrieveView(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
             var d = Messages.FetchXmlToQueryExpression(Connection.OrgService, c["fetchxml"].ToString());
-
-            var dd = Messages.RetrieveViewAttributesAsDictionary2Ordered(Connection.OrgService,
-                new Guid("{00000000-0000-0000-00aa-000010001004}"));
+            var converted = SqlConverter.Convert(d, c["layoutxml"].ToString());
+            var dd = Messages.RetrieveViewAttributeMetadatas(Connection.OrgService,
+                new Guid("{00000000-0000-0000-00aa-000010001004}"),true);
             //var xml = new XmlDocument();
             //xml.LoadXml(c["layoutxml"].ToString());
             //var xnList = xml.GetElementsByTagName("cell");
@@ -53,6 +57,7 @@ namespace Example
             //{
             //    if (xn.Attributes != null) Console.WriteLine(xn.Attributes["name"].Value);
             //}
+            Console.WriteLine(converted.GenerateSql());
             Console.WriteLine("(End)");
 
         }
