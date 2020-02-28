@@ -1072,6 +1072,28 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
+        /// Contains the data that is needed to convert a query, which is represented as a QueryExpression class, to its equivalent query, which is represented as FetchXML.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.queryexpressiontofetchxmlrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="queryExpression"></param>
+        /// <returns></returns>
+        public static string QueryExpressionToFetchXml(IOrganizationService service, QueryExpression queryExpression)
+        {
+            try
+            {
+                return ((QueryExpressionToFetchXmlResponse) service.Execute(new QueryExpressionToFetchXmlRequest()
+                {
+                    Query = queryExpression
+                })).FetchXml;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Retrieve Columns(Attributes) From View
         /// </summary>
         /// <param name="service"></param>

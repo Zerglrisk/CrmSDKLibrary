@@ -20,6 +20,8 @@ namespace CrmSdkLibrary.Definition.Model
         public List<Order> Orders { get; set; }
         public string From { get; set; }
         public List<SqlJoinWrapper> Join { get; set; }
+
+        public List<Condition> Conditions { get; set; }
         public SqlWrapper()
         {
             Sorted = false;
@@ -27,6 +29,7 @@ namespace CrmSdkLibrary.Definition.Model
             Orders= new List<Order>();
             LayoutColumns = new ColumnSet();
             Join = new List<SqlJoinWrapper>();
+            Conditions = new List<Condition>();
         }
 
         public void SetLayoutColumns(string layoutXml)
@@ -83,8 +86,16 @@ namespace CrmSdkLibrary.Definition.Model
             {
                 query += $"AS {join.Alias} ";
             }
-            query += $" ON {this.From}.{join.JoinFromAttributeName} = {join.Alias}.{join.JoinToAttributeName} ";
+            query += $"ON ({this.From}.{join.JoinFromAttributeName} = {join.Alias}.{join.JoinToAttributeName} ";
 
+            var conditionString = new List<string>();
+            foreach (var condition in join.Conditions)
+            {
+                conditionString.Add($"({join.Alias}.{condition.ColumnName} {condition.ConditionType.GetStringValue()} {string.Join(", ",condition.Value)})");
+            }
+
+            query += (conditionString.Count > 0 ? "AND " : "") + string.Join(" AND ", conditionString);
+            query += " ) ";
             foreach (var link in join.Join)
             {
                 query += GenerateJoinSql(link);
@@ -143,6 +154,14 @@ namespace CrmSdkLibrary.Definition.Model
             public string ColumnName { get; set; }
             public SortDirection SortDirection { get; set; }
         }
+
+        public class Condition
+        {
+            public string ColumnName { get; set; }
+            public List<object> Value { get; set; }
+
+            public ConditionType ConditionType { get; set; }
+        }
     }
 
     public class SqlJoinWrapper
@@ -152,7 +171,7 @@ namespace CrmSdkLibrary.Definition.Model
         public List<SqlWrapper.Order> Orders { get; set; }
         public string From { get; set; }
         public  JoinType JoinType { get; set; }
-
+        public List<SqlWrapper.Condition> Conditions { get; set; }
         public string Alias { get; set; }
         /// <summary>
         /// parent
@@ -166,6 +185,7 @@ namespace CrmSdkLibrary.Definition.Model
             Columns = new SqlWrapper.ColumnSet();
             Orders= new List<SqlWrapper.Order>();
             Join = new List<SqlJoinWrapper>();
+            Conditions = new List<SqlWrapper.Condition>();
         }
     }
 

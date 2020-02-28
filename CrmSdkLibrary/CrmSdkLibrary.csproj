@@ -125,6 +125,7 @@
     <Compile Include="Connection.cs" />
     <Compile Include="ConnectionSQL.cs" />
     <Compile Include="Copy.cs" />
+    <Compile Include="Definition\Enum\ConditionType.cs" />
     <Compile Include="Definition\Enum\JoinType.cs" />
     <Compile Include="Definition\Enum\SortDirection.cs" />
     <Compile Include="Definition\Model\ApiException.cs" />
