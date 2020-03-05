@@ -1002,8 +1002,6 @@ namespace CrmSdkLibrary
             }
         }
 
-
-
         /// <summary>
         /// Contains the data that is needed to convert a query in FetchXML to a QueryExpression.
         /// </summary>
@@ -1047,6 +1045,5 @@ namespace CrmSdkLibrary
                 throw;
             }
         }
-
     }
 }
