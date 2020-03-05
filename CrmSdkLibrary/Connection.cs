@@ -18,6 +18,7 @@ namespace CrmSdkLibrary
     public class Connection
     {
         public static IOrganizationService OrgService { get; private set; }
+        public static Type OrgServiceType { get;private set;}
         public static ClientCredentials ClientCredentials;
         private ClientCredentials _deviceCredentials;
 
@@ -35,7 +36,7 @@ namespace CrmSdkLibrary
         /// <param name="location"></param>
         public Guid ConnectService(string orgName, string userName, string password, Definition.Enum.Location location)
         {
-            
+
             var uri = new System.Uri($"https://{orgName}.api.crm{location.GetStringValue()}.dynamics.com/XRMServices/2011/Organization.svc");
             #region Old Using Microsoft.Xrm.Tooling.Connector.CrmServiceClient
             /*
@@ -58,10 +59,11 @@ namespace CrmSdkLibrary
 
             if (_deviceCredentials == null)
                 _deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
-            
+
             var organizationServiceProxy = new OrganizationServiceProxy(uri, null, ClientCredentials, _deviceCredentials);
 
             OrgService = organizationServiceProxy;
+            OrgServiceType = organizationServiceProxy.GetType();
 
             return ((WhoAmIResponse)organizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
         }
@@ -76,6 +78,7 @@ namespace CrmSdkLibrary
         public Guid ConnectService(Uri organizationServiceUri, string userName, string password)
         {
             #region Old Using Microsoft.Xrm.Tooling.Connector.CrmServiceClient
+
             /*
             //need string connectionString parameter
             var conn = new CrmServiceClient(connectionString);
@@ -84,8 +87,9 @@ namespace CrmSdkLibrary
             _orgService = ((IOrganizationService)conn.OrganizationWebProxyClient != null) ? 
                 (IOrganizationService)conn.OrganizationWebProxyClient : (IOrganizationService)conn.OrganizationServiceProxy;
             */
+
             #endregion
-            
+
             //기본인증정보 설정.
             if (!string.IsNullOrEmpty(userName) || !string.IsNullOrEmpty(password))
             {
@@ -94,26 +98,31 @@ namespace CrmSdkLibrary
                 ClientCredentials.UserName.UserName = userName;
                 ClientCredentials.UserName.Password = password;
             }
+
             if (_deviceCredentials == null)
                 _deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
 
             OrganizationServiceProxy organizationServiceProxy = null;
 
+
+            ServicePointManager.SecurityProtocol =
+                SecurityProtocolType.Tls12 | SecurityProtocolType.Tls | SecurityProtocolType.Tls11;
             try
             {
                 organizationServiceProxy = new OrganizationServiceProxy(organizationServiceUri, null,
                     ClientCredentials, _deviceCredentials);
             }
-            catch (Exception e)
+            catch
             {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 organizationServiceProxy = new OrganizationServiceProxy(organizationServiceUri, null,
-                    ClientCredentials, _deviceCredentials);
+                    ClientCredentials, null);
             }
+
             organizationServiceProxy.Authenticate();
-            
+
             OrgService = organizationServiceProxy;
-            
+            OrgServiceType = organizationServiceProxy.GetType();
+
             return ((WhoAmIResponse)organizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
         }
 
@@ -140,6 +149,7 @@ namespace CrmSdkLibrary
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             svc.OrganizationServiceProxy.Authenticate();
             OrgService = svc;
+            OrgServiceType = svc.GetType();
 
             return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
         }
@@ -239,7 +249,7 @@ namespace CrmSdkLibrary
         /// <param name="domain"></param>
         /// <returns>Get filled <code>AuthenticationCredentials</code>.</returns>
         public AuthenticationCredentials GetCredentials<TService>(IServiceManagement<TService> service,
-            AuthenticationProviderType endpointType,string userid, string userpw, string domain)
+            AuthenticationProviderType endpointType, string userid, string userpw, string domain)
         {
             AuthenticationCredentials authCredentials = new AuthenticationCredentials();
 

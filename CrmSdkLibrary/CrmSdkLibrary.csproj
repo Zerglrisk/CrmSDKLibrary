@@ -143,6 +143,8 @@
     <Compile Include="Extention.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Retrieves\SystemView.cs" />
+    <Compile Include="Retrieves\UserView.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
