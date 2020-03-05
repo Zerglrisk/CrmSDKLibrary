@@ -25,7 +25,6 @@ namespace Example
             //    new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
             //Login Case 3
-            Console.WriteLine(conn.ConnectService("***REMOVED***", "***REMOVED***", "***REMOVED***",AuthenticationType.Office365));
 
             var cc = Messages.RetrieveAllEntities(Connection.OrgService);
             var count = 0;
@@ -38,17 +37,12 @@ namespace Example
 
             //    count++;
             //}
-            var a = Messages.RetrieveViews(Connection.OrgService, "contact");
-            foreach (var aaa in a.Entities)
-            {
-                Console.WriteLine(aaa["name"] + ", " + count++);
-            }
             var aa = Messages.RetrieveEntity(Connection.OrgService, "contact", EntityFilters.All);
-            var b = Messages.RetrieveViewAttributes(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
-            var c = Messages.RetrieveView(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
+            var b = CrmSdkLibrary.Retrieves.SystemView.RetrieveAttributes(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
+            var c = CrmSdkLibrary.Retrieves.SystemView.RetrieveView(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
             var d = Messages.FetchXmlToQueryExpression(Connection.OrgService, c["fetchxml"].ToString());
             var converted = SqlConverter.Convert(d, c["layoutxml"].ToString());
-            var dd = Messages.RetrieveViewAttributeMetadatas(Connection.OrgService,
+            var dd = CrmSdkLibrary.Retrieves.SystemView.RetrieveAttributeMetadata(Connection.OrgService,
                 new Guid("{00000000-0000-0000-00aa-000010001004}"),true);
             //var xml = new XmlDocument();
             //xml.LoadXml(c["layoutxml"].ToString());
@@ -64,7 +58,7 @@ namespace Example
 
         public async Task RunAsync()
         {
-            //HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("test191020@test191020.onmicrosoft.com", "***REMOVED***",
+            //HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("test191020@test191020.onmicrosoft.com", "Aa_1685511",
             //    "test191020.onmicrosoft.com", "https://test201018.crm5.dynamics.com/");
             HttpClient client = CrmSdkLibrary.Api.GetWebApiHttpClient(new UserPasswordCredential("test201018@test201018.onmicrosoft.com", "tester201018@"),
                    "https://test201018.crm5.dynamics.com", "https://login.microsoftonline.com/b402a2b7-7be7-4436-b53c-a47d0f64fe9d");
