@@ -425,6 +425,39 @@ namespace CrmSdkLibrary
             }
         }
 
+        public static async Task<string> RetrieveViews(HttpClient httpClient, string entityLogicalName)
+        {
+            try
+            {
+                var entityLogicalNameSetPath = EntitySetPaths.Where(x => x.Key == entityLogicalName).Select(x => x.Value).FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(entityLogicalNameSetPath))
+                {
+                    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
+                }
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
+                using (var response = await httpClient.GetAsync($"api/data/v9.0/{entityLogicalNameSetPath}?$filter=", HttpCompletionOption.ResponseContentRead))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception(
+                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    }
+
+                    var resp = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+
+                    return resp.ToString();
+                }
+                //First obtain the user's ID.
+                //Guid myUserId = (Guid)whoAmIresp["UserId"];
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         public void ErrorCheck(ApiException error)
         {
             if (error.InnerError.Type == "Microsoft.OData.ODataException")
