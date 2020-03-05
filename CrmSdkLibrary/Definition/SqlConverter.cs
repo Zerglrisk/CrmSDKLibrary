@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using CrmSdkLibrary.Definition.Enum;
 using CrmSdkLibrary.Definition.Model;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 
 namespace CrmSdkLibrary.Definition
@@ -34,7 +35,16 @@ namespace CrmSdkLibrary.Definition
             };
 
             sqlWrapper.SetLayoutColumns(layoutXml);
-            sqlWrapper.Columns.AddRange(queryExpression.ColumnSet.Columns.ToList());
+
+            #region Columns
+
+            var attrs = Messages.RetrieveEntity(Connection.OrgService, queryExpression.EntityName, EntityFilters.Attributes);
+            foreach (var attrMetadata in queryExpression.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x=>x.LogicalName == column)).Where(attr => attr != null))
+            {
+                sqlWrapper.Columns.Add(attrMetadata.LogicalName, attrMetadata.DisplayName.UserLocalizedLabel.Label);
+                sqlWrapper.SetLayoutColumnsDisplayName(attrMetadata.LogicalName, attrMetadata.DisplayName.UserLocalizedLabel.Label);
+            }
+            #endregion
 
             foreach (var aa in queryExpression.Criteria.Conditions)
             {
@@ -45,6 +55,7 @@ namespace CrmSdkLibrary.Definition
                     ConditionType =  (ConditionType) aa.Operator
                 });
             }
+
             #region Order
             var index = 0;
             foreach (var order in queryExpression.Orders)
@@ -58,27 +69,31 @@ namespace CrmSdkLibrary.Definition
             #region Join
             foreach (var entity in queryExpression.LinkEntities)
             {
-             sqlWrapper.Join.Add(GetSqlJoinWrapper(entity));   
+             sqlWrapper.Join.Add(GetSqlJoinWrapper(entity, ref sqlWrapper));   
             } 
             #endregion
             return sqlWrapper;
         }
 
-        private static SqlJoinWrapper GetSqlJoinWrapper(LinkEntity entity)
+        private static SqlJoinWrapper GetSqlJoinWrapper(LinkEntity entity, ref SqlWrapper sqlWrapper)
         {
-            var sqlWrapper = new SqlJoinWrapper()
+            var sqlJoinWrapper = new SqlJoinWrapper()
             {
                 From = entity.LinkToEntityName,
                 JoinFromAttributeName = entity.LinkFromAttributeName,
                 JoinToAttributeName = entity.LinkToAttributeName,
                 Alias = entity.EntityAlias
             };
-            
-            sqlWrapper.Columns.AddRange(entity.Columns.Columns.ToList());
+            var attrs = Messages.RetrieveEntity(Connection.OrgService, entity.LinkToEntityName, EntityFilters.Attributes);
+            foreach (var attrMetadata in entity.Columns.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column)).Where(attr => attr != null))
+            {
+                sqlJoinWrapper.Columns.Add(attrMetadata.LogicalName, attrMetadata.DisplayName.UserLocalizedLabel.Label);
+                sqlWrapper.SetLayoutColumnsDisplayName($"{entity.EntityAlias}.{attrMetadata.LogicalName}", attrMetadata.DisplayName.UserLocalizedLabel.Label);
+            }
 
             foreach (var aa in entity.LinkCriteria.Conditions)
             {
-                sqlWrapper.Conditions.Add(new SqlWrapper.Condition()
+                sqlJoinWrapper.Conditions.Add(new SqlWrapper.Condition()
                 {
                     ColumnName = aa.AttributeName,
                     Value = aa.Values.ToList(),
@@ -90,7 +105,7 @@ namespace CrmSdkLibrary.Definition
             var index = 0;
             foreach (var order in entity.Orders)
             {
-                sqlWrapper.Orders.Add(new SqlWrapper.Order() { ColumnName = order.AttributeName, SortDirection = order.OrderType == OrderType.Ascending ? SortDirection.Ascending : SortDirection.Descending, Index = index });
+                sqlJoinWrapper.Orders.Add(new SqlWrapper.Order() { ColumnName = order.AttributeName, SortDirection = order.OrderType == OrderType.Ascending ? SortDirection.Ascending : SortDirection.Descending, Index = index });
                 index++;
             }
 
@@ -99,11 +114,11 @@ namespace CrmSdkLibrary.Definition
             #region Join
             foreach (var link in entity.LinkEntities)
             {
-                sqlWrapper.Join.Add(GetSqlJoinWrapper(link));
+                sqlJoinWrapper.Join.Add(GetSqlJoinWrapper(link, ref sqlWrapper));
             }
             #endregion
 
-            return sqlWrapper;
+            return sqlJoinWrapper;
         }
     }
 }

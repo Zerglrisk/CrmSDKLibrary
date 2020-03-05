@@ -43,6 +43,13 @@ namespace CrmSdkLibrary.Definition.Model
             this.LayoutColumns.AddRange((from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList());
         }
 
+        public bool SetLayoutColumnsDisplayName(string name, string displayName)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            var col = this.LayoutColumns.FirstOrDefault(x => x.Name == name);
+            if (col != null) col.DisplayName = displayName;
+            return true;
+        }
         /// <summary>
         /// Need to Add Condition
         /// </summary>
