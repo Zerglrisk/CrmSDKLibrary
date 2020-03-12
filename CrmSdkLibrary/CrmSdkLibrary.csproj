@@ -139,12 +139,14 @@
     <Compile Include="Definition\Model\WhoAmI.cs" />
     <Compile Include="Definition\SqlConverter.cs" />
     <Compile Include="Entities.cs" />
+    <Compile Include="Entities\Account.cs" />
+    <Compile Include="Entities\Contact.cs" />
     <Compile Include="Entities\SystemUser.cs" />
+    <Compile Include="Entities\SystemView.cs" />
     <Compile Include="Extention.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Retrieves\SystemView.cs" />
-    <Compile Include="Retrieves\UserView.cs" />
+    <Compile Include="Entities\UserView.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
