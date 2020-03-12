@@ -4,17 +4,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 
-namespace CrmSdkLibrary.Retrieves
+namespace CrmSdkLibrary.Entities
 {
-    public class SystemView
+    public class SystemView 
     {
+        private static int? _entityTypeCode;
+        public static int? EntityTypeCode =>
+            _entityTypeCode ?? (_entityTypeCode = Connection.OrgService != null
+                ? Messages.GetEntityTypeCode(Connection.OrgService, EntityLogicalName)
+                : _entityTypeCode);
+        public const string EntityLogicalName = "savedquery";
+        public const string EntitySetPath = "savedqueries"; 
+        public const string DisplayName = "View";
+        public const string PrimaryKey = "savedqueryid";
+        public const string PrimaryKeyAttribute = "name";
         /// <summary>
-        /// 
+        /// Retrieve Views by entity
         /// </summary>
         /// <see cref="https://docs.microsoft.com/en-us/dynamics365/customer-engagement/web-api/savedquery?view=dynamics-ce-odata-9"/>
         /// <param name="service"></param>
@@ -24,7 +33,7 @@ namespace CrmSdkLibrary.Retrieves
         {
             try
             {
-                var qe = new QueryExpression("savedquery")
+                var qe = new QueryExpression(EntityLogicalName)
                 {
                     ColumnSet = new ColumnSet(true),
                     Criteria = new FilterExpression()
@@ -53,7 +62,7 @@ namespace CrmSdkLibrary.Retrieves
         {
             try
             {
-                return service.Retrieve("savedquery", viewId, new ColumnSet(true));
+                return service.Retrieve(EntityLogicalName, viewId, new ColumnSet(true));
             }
             catch (Exception)
             {
@@ -98,7 +107,7 @@ namespace CrmSdkLibrary.Retrieves
 
                             //Get all Next LinkEntity's Attribute into Dictionary
                             attributes.AddRange(GetLinkEntityLogicalNames(service, linkEntity.LinkEntities.ToList()));
-                         
+
                         }
 
                         return attributes;
@@ -154,7 +163,7 @@ namespace CrmSdkLibrary.Retrieves
                         throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
                     }
 
-                    var attributes = new Dictionary<string,string>();
+                    var attributes = new Dictionary<string, string>();
 
                     attributes = qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
                         .Where(attr => attr != null)

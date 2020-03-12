@@ -15,7 +15,7 @@ namespace CrmSdkLibrary.Entities
     [System.Runtime.Serialization.DataContractAttribute()]
     [Microsoft.Xrm.Sdk.Client.EntityLogicalNameAttribute("account")]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("CrmSvcUtil", "8.2.1.8676")]
-    public partial class Account : Microsoft.Xrm.Sdk.Entity, System.ComponentModel.INotifyPropertyChanging, System.ComponentModel.INotifyPropertyChanged
+    public partial class Accounts : Microsoft.Xrm.Sdk.Entity, System.ComponentModel.INotifyPropertyChanging, System.ComponentModel.INotifyPropertyChanged
     {
         #region Field
         [System.Runtime.Serialization.DataContractAttribute()]
@@ -33,7 +33,7 @@ namespace CrmSdkLibrary.Entities
         /// <summary>
         /// Default Constructor.
         /// </summary>
-        public Account() :
+        public Accounts() :
                 base(EntityLogicalName)
         {
         }
@@ -2973,50 +2973,7 @@ namespace CrmSdkLibrary.Entities
         }
         #endregion Field
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <see cref="https://community.dynamics.com/crm/b/misscrm360exploration/archive/2015/05/10/tips-crm-c-create-validated-parent-and-child-records-at-once-as-one-big-compound-using-related-entities"/>
-        /// <param name="service"></param>
-        /// <param name="name"></param>
-        /// <param name="subject"></param>  
-        /// <param name="contents"></param>
-        public void CreateLetterRecordWithRelatedEntities(IOrganizationService service, string name, string subject, string contents)
-        {
-            try
-            {
-                //Define the account for which we will add letters
-                //Account
-                var entity = new Entity("account");
-                entity["name"] = name;
-
-                //This acts as a container for each letter we create, Note that we haven't
-                //define the relationship between the letter and account yet.
-                var entityCollection = new EntityCollection();
-                var eLetter = new Entity("letter");
-                eLetter["subject"] = string.Format(subject);
-
-                //bind to the EntityCollection of the related records
-                entityCollection.Entities.Add(eLetter);
-
-                //Creates the reference between which relationship between Letter and
-                //Account we would be like to use.
-                var relationship = new Relationship("Account_Letters");
-
-                //Adds the letters to the account under the specified relationship
-                entity.RelatedEntities.Add(relationship, entityCollection);
-
-                //Passes the Account (which contains the letters)
-                service.Create(entity);
-                //and guess, you only need 1 request for all records!!
-            }
-            catch (Exception e)
-            {
-                throw e;
-
-            }
-
-        }
+      
     }
 
     /// <summary>
@@ -3025,7 +2982,7 @@ namespace CrmSdkLibrary.Entities
     [System.Runtime.Serialization.DataContractAttribute()]
     [Microsoft.Xrm.Sdk.Client.EntityLogicalNameAttribute("contact")]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("CrmSvcUtil", "8.2.1.8676")]
-    public partial class Contact : Microsoft.Xrm.Sdk.Entity, System.ComponentModel.INotifyPropertyChanging, System.ComponentModel.INotifyPropertyChanged
+    public partial class Contacts : Microsoft.Xrm.Sdk.Entity, System.ComponentModel.INotifyPropertyChanging, System.ComponentModel.INotifyPropertyChanged
     {
         #region Field
         [System.Runtime.Serialization.DataContractAttribute()]
@@ -3042,7 +2999,7 @@ namespace CrmSdkLibrary.Entities
         /// <summary>
         /// Default Constructor.
         /// </summary>
-        public Contact() :
+        public Contacts() :
                 base(EntityLogicalName)
         {
         }
@@ -8582,9 +8539,9 @@ namespace CrmSdkLibrary.Entities
             Entity e = new Entity("opportunity");
 
             e.Attributes["Name"] = "help";
-            Account ee = new Account()
+            var ee = new Entity("account")
             {
-                Name = "help",
+                ["Name"] = "help",
 
             };
             service.Create(ee);
