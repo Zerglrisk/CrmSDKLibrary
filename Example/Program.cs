@@ -25,7 +25,6 @@ namespace Example
             //    new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
             //Login Case 3
-
             var cc = Messages.RetrieveAllEntities(Connection.OrgService);
             var count = 0;
             //foreach (var entityMetadata in cc)
@@ -38,12 +37,13 @@ namespace Example
             //    count++;
             //}
             var aa = Messages.RetrieveEntity(Connection.OrgService, "contact", EntityFilters.All);
-            var b = CrmSdkLibrary.Retrieves.SystemView.RetrieveAttributes(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
-            var c = CrmSdkLibrary.Retrieves.SystemView.RetrieveView(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
+            var b = CrmSdkLibrary.Entities.SystemView.RetrieveAttributes(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
+            var c = CrmSdkLibrary.Entities.SystemView.RetrieveView(Connection.OrgService, new Guid("{00000000-0000-0000-00aa-000010001004}"));
             var d = Messages.FetchXmlToQueryExpression(Connection.OrgService, c["fetchxml"].ToString());
             var converted = SqlConverter.Convert(d, c["layoutxml"].ToString());
-            var dd = CrmSdkLibrary.Retrieves.SystemView.RetrieveAttributeMetadata(Connection.OrgService,
+            var dd = CrmSdkLibrary.Entities.SystemView.RetrieveAttributeMetadata(Connection.OrgService,
                 new Guid("{00000000-0000-0000-00aa-000010001004}"),true);
+
             //var xml = new XmlDocument();
             //xml.LoadXml(c["layoutxml"].ToString());
             //var xnList = xml.GetElementsByTagName("cell");
