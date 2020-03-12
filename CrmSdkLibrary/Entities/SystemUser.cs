@@ -9,6 +9,17 @@ namespace CrmSdkLibrary.Entities
 {
     public partial class SystemUser
     {
+        private static int? _entityTypeCode;
+        public static int? EntityTypeCode =>
+            _entityTypeCode ?? (_entityTypeCode = Connection.OrgService != null
+                ? Messages.GetEntityTypeCode(Connection.OrgService, EntityLogicalName)
+                : _entityTypeCode);
+        public const string EntityLogicalName = "systemuser";
+        public const string EntitySetPath = "systemusers";
+        public const string DisplayName = "User";
+        public const string PrimaryKey = "ownerid";
+        public const string PrimaryKeyAttribute = "fullname";
+
         public void RetrieveRolesFromUserOrganization(RoleTargets target)
         {
 
