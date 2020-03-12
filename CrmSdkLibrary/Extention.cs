@@ -37,6 +37,12 @@ namespace CrmSdkLibrary
         {
             return isAliasedValue ? (OptionSetValue)attr.ToAliasedValue().Value : (OptionSetValue)attr;
         }
+
+        public static Money ToMoney(this object attr, bool isAliasedValue = false)
+        {
+            return isAliasedValue ? (Money)attr.ToAliasedValue().Value : (Money)attr;
+        }
+
         public static KeyValuePair<Guid, string> ToKeyValuePair(this EntityReference attr)
         {
             return attr != null ? new KeyValuePair<Guid, string>(attr.Id, attr.Name) : new KeyValuePair<Guid, string>();
@@ -50,6 +56,94 @@ namespace CrmSdkLibrary
             else
             {
                 return null;
+            }
+        }
+
+        public static T ToCrmValue<T>(this Entity entity, string attributeName, bool isFormattedValue = false)
+        {
+            if (typeof(T) != typeof(string) && typeof(T) != typeof(int)
+                && typeof(T) != typeof(DateTime) && typeof(T) != typeof(KeyValuePair<Guid, string>)
+                && typeof(T) != typeof(bool) && typeof(T) != typeof(EntityReference))
+            {
+                throw new Exception("Type not Supported");
+            }
+
+            if (entity == null)
+            {
+                throw new Exception("Entity is null");
+            }
+
+            var attr = entity.Contains(attributeName) ? entity[attributeName] : null;
+            if (attr == null)
+            {
+                if (typeof(T) == typeof(string))
+                {
+                    return (T)Convert.ChangeType("", typeof(T));
+                }
+                else if (typeof(T) == typeof(int))
+                {
+                    return (T)Convert.ChangeType(-1, typeof(T));
+                }
+                else if (typeof(T) == typeof(DateTime))
+                {
+                    return (T)Convert.ChangeType(DateTime.MinValue, typeof(T));
+                }
+                else if (typeof(T) == typeof(KeyValuePair<Guid, string>))
+                {
+                    return (T)Convert.ChangeType(new KeyValuePair<Guid, string>(), typeof(T));
+                }
+                else if (typeof(T) == typeof(EntityReference))
+                {
+                    return (T)Convert.ChangeType(new EntityReference(string.Empty, Guid.Empty) { Name = string.Empty }, typeof(T));
+                }
+                else if (typeof(T) == typeof(bool))
+                {
+                    return (T)Convert.ChangeType(false, typeof(T));
+                }
+                else
+                {
+                    return (T)Convert.ChangeType(null, typeof(T));
+                }
+            }
+
+            if (isFormattedValue)
+            {
+                return (T)Convert.ChangeType(entity.FormattedValues[attributeName], typeof(T));
+            }
+            if (attr is AliasedValue)
+            {
+                attr = attr.ToAliasedValue().Value;
+            }
+            if (attr is OptionSetValue)
+            {
+                return (T)Convert.ChangeType(attr.ToOptionSetValue().Value, typeof(T));
+            }
+            else if (attr is Money)
+            {
+                return (T)Convert.ChangeType(attr.ToMoney().Value, typeof(T));
+            }
+            else if (attr is string)
+            {
+                return (T)Convert.ChangeType(attr, typeof(T));
+            }
+            else if (attr is DateTime)
+            {
+                return (T)Convert.ChangeType(((DateTime)attr).AddHours(9), typeof(T));
+            }
+            else if (attr is EntityReference)
+            {
+                if (typeof(T) == typeof(KeyValuePair<Guid, string>))
+                {
+                    return (T)Convert.ChangeType(new KeyValuePair<Guid, string>(attr.ToEntityReference().Id, attr.ToEntityReference().Name), typeof(T));
+                }
+                else
+                {
+                    return (T)Convert.ChangeType(attr, typeof(T));
+                }
+            }
+            else
+            {
+                return (T)Convert.ChangeType(attr.ToString(), typeof(T));
             }
         }
 

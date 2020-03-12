@@ -1,17 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Tooling.Connector;
 
-namespace CrmSdkLibrary.Retrieves
+namespace CrmSdkLibrary.Entities
 {
     public class UserView
     {
+        private static int? _entityTypeCode;
+        public static int? EntityTypeCode =>
+            _entityTypeCode ?? (_entityTypeCode = Connection.OrgService != null
+                ? Messages.GetEntityTypeCode(Connection.OrgService, EntityLogicalName)
+                : _entityTypeCode);
+        public const string EntityLogicalName = "userquery";
+        public const string EntitySetPath = "userqueries";
+        public const string DisplayName = "Saved View";
+        public const string PrimaryKey = "userqueryid";
+        public const string PrimaryKeyAttribute = "name";
+
         /// <summary>
         /// 
         /// </summary>
@@ -23,7 +30,7 @@ namespace CrmSdkLibrary.Retrieves
         {
             try
             {
-                var qe = new QueryExpression("userquery")
+                var qe = new QueryExpression(EntityLogicalName)
                 {
                     ColumnSet = new ColumnSet(true),
                     Criteria = new FilterExpression()
@@ -70,7 +77,7 @@ namespace CrmSdkLibrary.Retrieves
         {
             try
             {
-                return service.Retrieve("savedquery", viewId, new ColumnSet(true));
+                return service.Retrieve("userquery", viewId, new ColumnSet(true));
             }
             catch (Exception)
             {
