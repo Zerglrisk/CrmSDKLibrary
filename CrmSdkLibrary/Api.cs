@@ -12,6 +12,7 @@ using CrmSdkLibrary.Definition;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -59,7 +60,7 @@ namespace CrmSdkLibrary
         /// <param name="domainName"></param>
         /// <param name="serviceUrl"></param>
         /// <returns></returns>
-        //public static HttpClient getCrmAPIHttpClient(string userName, string password, string domainName, string serviceUrl)
+        //public static HttpClient GetCrmApiHttpClient(string userName, string password, string domainName, string serviceUrl)
         //{
         //    Api api = new Api();
         //    HttpClient httpClient;
@@ -72,7 +73,7 @@ namespace CrmSdkLibrary
         //        }
         //        else
         //        {
-        //            httpClient = new HttpClient(new HttpClientHandler(){UseDefaultCredentials = true});
+        //            httpClient = new HttpClient(new HttpClientHandler() { UseDefaultCredentials = true });
         //        }
         //    }
         //    else
@@ -97,7 +98,7 @@ namespace CrmSdkLibrary
         private static string ApplicationId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Set Azure App Id
+        /// Set Azure App Id(Client ID)
         /// </summary>
         /// <param name="applicationId"></param>
         public static void SetApplicationId(string applicationId)
@@ -134,33 +135,151 @@ namespace CrmSdkLibrary
             //httpClient.DefaultRequestHeaders.Add("Prefer", "odata.include-annotations=OData.Community.Display.V1.FormattedValue")
             return httpClient;
         }
-        //public static string DiscoverAuthority(string serviceUrl)
-        //{
-        //    try
-        //    {
-        //        //Require Microsoft.IdentityModel.Clients.ActiveDirectory.dll
-        //        AuthenticationParameters ap = AuthenticationParameters.CreateFromResourceUrlAsync(
-        //            new Uri(serviceUrl + "api/data/")).Result;
 
-        //        return ap.Authority;
-        //    }
-        //    catch (HttpRequestException e)
-        //    {
-        //        throw new Exception("An HTTP request exception occurred during authority discovery.", e);
-        //    }
-        //    catch (System.Exception e)
-        //    {
-        //        // This exception ocurrs when the service is not configured for OAuth.
-        //        if (e.HResult == -2146233088)
-        //        {
-        //            return String.Empty;
-        //        }
-        //        else
-        //        {
-        //            throw e;
-        //        }
-        //    }
-        //}
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="secret"></param>
+        /// <param name="serviceUrl"></param>
+        /// <param name="authorityUrl"></param>
+        /// <returns></returns>
+        public static HttpClient GetWebApiHttpClient(string secret, string serviceUrl, string authorityUrl = "https://login.microsoftonline.com/common")
+        {
+            var clientCredential = new ClientCredential(Api.ApplicationId, secret); // );"_Xqg[Fw7-J3j9D:CacUojLjm2Gc8[RU=");
+            var context = new AuthenticationContext(authorityUrl);
+
+            var authResult = context.AcquireTokenAsync(serviceUrl, clientCredential).Result;
+
+            var httpClient = new HttpClient() { BaseAddress = new Uri(serviceUrl), Timeout = new TimeSpan(0, 2, 0) };
+
+            httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
+            httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
+            //httpClient.DefaultRequestHeaders.Add("Prefer", "odata.include-annotations=OData.Community.Display.V1.FormattedValue")
+            return httpClient;
+        }
+
+
+
+        /// <summary>
+        /// ServiceUrl(ResourceUrl)
+        /// </summary>
+        /// <param name="serviceUrl">>e.g.) https://tester200317.crm5.dynamics.com</param>
+        /// <returns></returns>
+        public static Guid GetTenantId(string serviceUrl)
+        {
+            try
+            {
+                var tenantId = Guid.Empty;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+                AuthenticationParameters ap = AuthenticationParameters.CreateFromUrlAsync(new Uri($"{serviceUrl}/api/data/")).Result;
+
+                var segments = new Uri(ap.Authority).Segments;
+
+                foreach (var segment in new Uri(ap.Authority).Segments)
+                {
+                    if (Guid.TryParse(segment.Replace("/",""), out tenantId))
+                    {
+                        break;
+                    }
+                }
+
+                return tenantId;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
+        }
+        // For ActiveDirectory 3.13.9 lowest : https://community.dynamics.com/crm/f/microsoft-dynamics-crm-forum/274605/steps-to-retrieve-token-dynamics-crm-365-online-webapi
+        // (https://stackoverflow.com/questions/53502733/powerbi-aadsts90002-tenant-authorize-not-found)
+        /// <summary>
+        /// </summary>
+        /// <param name="apiUrl">e.g.) https://tester200317.api.crm5.dynamics.com/api/data/</param>
+        /// <returns></returns>
+        public static async Task<string> GetToken(string apiUrl)
+        {
+            Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext authContext = null;
+            try
+            {
+                // Get the Resource Url & Authority Url using the Api method. This is the best way to get authority URL
+                // for any Azure service api.
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+                AuthenticationParameters ap = AuthenticationParameters.CreateFromUrlAsync(new Uri(apiUrl)).Result;
+
+                string resourceUrl = ap.Resource;
+                string authorityUrl =  DiscoverAuthority(ap.Resource);//$"https://login.microsoftonline.com/{GetTenantId(resourceUrl)}";
+
+                //Generate the Authority context .. For the sake of simplicity for the post, I haven't splitted these
+                // in to multiple methods. Ideally, you would want to use some sort of design pattern to generate the context and store
+                // till the end of the program.
+                authContext = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(authorityUrl, false);
+
+                try
+                {
+                    //Check if we can get the authentication token w/o prompting for credentials.
+                    //With this system will try to get the token from the cache if there is any, if it is not there then will throw error
+                    var authToken = await authContext.AcquireTokenAsync(resourceUrl, Api.ApplicationId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Never));
+                    return authToken.AccessToken;
+                }
+                catch (AdalException e)
+                {
+
+                    if (e.ErrorCode == "user_interaction_required")
+                    {
+                        // We are here means, there is no cached token, So get it from the service.
+                        // You should see a prompt for User Id & Password at this place.
+                        var authToken = await authContext.AcquireTokenAsync(resourceUrl, Api.ApplicationId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Auto));
+                        return authToken.AccessToken;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                Console.WriteLine("Got the authentication token, Getting data from Webapi !!");
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Some thing unexpected happened here, Please see the exception details : {ex.ToString()}");
+            }
+
+            return null;
+        }
+        public static string DiscoverAuthority(string serviceUrl)
+        {
+            try
+            {
+                //Require Microsoft.IdentityModel.Clients.ActiveDirectory.dll
+                AuthenticationParameters ap = AuthenticationParameters.CreateFromUrlAsync(
+                    new Uri(serviceUrl + "/api/data/")).Result;
+                var authority = new Uri(ap.Authority);
+
+                return $"{authority.Scheme}://{authority.Host}:{authority.Port}/{authority.Segments[1]}";
+            }
+            catch (HttpRequestException e)
+            {
+                throw new Exception("An HTTP request exception occurred during authority discovery.", e);
+            }
+            catch (System.Exception e)
+            {
+                // This exception ocurrs when the service is not configured for OAuth.
+                if (e.HResult == -2146233088)
+                {
+                    return String.Empty;
+                }
+                else
+                {
+                    throw e;
+                }
+            }
+        }
 
         /// <summary>
         /// Get User Using WebAPI
@@ -285,7 +404,7 @@ namespace CrmSdkLibrary
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 using (var response =
-                    await httpClient.GetAsync($@"api/data/v9.0/RetrieveDuplicates(BusinessEntity=@p1,MatchingEntityName=@p2,PagingInfo=@p3)?@p2='{businessEntity.LogicalName}'&@p1={{'@odata.id':'{businessEntity.ToEntitySetPath()}({businessEntity.Id})'}}&@p3={{'PageNumber':{pagingInfo.PageNumber},'Count':{pagingInfo.Count}}}", HttpCompletionOption.ResponseContentRead))
+                    await httpClient.GetAsync($@"api/data/v9.0/RetrieveDuplicates(BusinessEntity=@p1,MatchingEntityName=@p2,PagingInfo=@p3)?@p2='{businessEntity.LogicalName}'&@p1={{'@odata.id':'{Api.EntitySetPaths[businessEntity.LogicalName]}({businessEntity.Id})'}}&@p3={{'PageNumber':{pagingInfo.PageNumber},'Count':{pagingInfo.Count}}}", HttpCompletionOption.ResponseContentRead))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
@@ -394,12 +513,13 @@ namespace CrmSdkLibrary
                     //{
                     //    throw new Exception(
                     //        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
-                    //}
+                    //}R
 
                     var jObj = JsonConvert.DeserializeObject<JObject>(await
                         response.Content.ReadAsStringAsync());
                     jObj.Add("ODataContext", jObj["@odata.context"]);
                     jObj.Remove("@odata.context");
+                    //jObj.Add("value",jObj["Detail"]);
                     var parsed = jObj.ToObject<JObjectParsed>();
 
                     if (parsed.Error != null)
@@ -409,13 +529,28 @@ namespace CrmSdkLibrary
 
                     //Count 부분 때문에 오브젝트로 변경이 안됨.
                     var dd = jObj["Detail"] as JObject;
-                    var ddds = dd["Endpoints"]["Count"] as JProperty;
-                    var end = dd["Endpoints"].ToObject<Microsoft.Xrm.Sdk.Organization.EndpointCollection>();
-                    
-                    
-                    dd["Endpoints"].Remove();
+
+                    #region EndPoints
+                    var obj = dd["Endpoints"] as JObject;
+                    var count = dd["Endpoints"]["Count"] as JValue;
+                    var keys = dd["Endpoints"]["Keys"] as JArray;
+                    var values = dd["Endpoints"]["Values"] as JArray;
+                    //var end = dd["Endpoints"].ToObject<Microsoft.Xrm.Sdk.Organization.EndpointCollection>();
+                    var endpoints = new Microsoft.Xrm.Sdk.Organization.EndpointCollection();
+                    for (var i = 0; i < (long)count.Value; ++i)
+                    {
+                        var key = keys[i] as JValue;
+                        var value = values[i] as JValue;
+                        EndpointType endpointType;
+                        EndpointType.TryParse(key.Value.ToString(), out endpointType);
+                        endpoints.Add(endpointType, value.Value.ToString());
+                    }
+
+                    dd.Property("Endpoints").Remove(); 
+                    #endregion
                     var dddd = dd.ToObject<Microsoft.Xrm.Sdk.Organization.OrganizationDetail>();
-                    return jObj.ToObject<Microsoft.Xrm.Sdk.Organization.OrganizationDetail>();
+                    dddd.Endpoints.AddRange(endpoints);
+                    return dddd;
                     //return parsed.value.First.ObjectTypeCode;
                 }
             }
@@ -425,17 +560,24 @@ namespace CrmSdkLibrary
             }
         }
 
-        public static async Task<string> RetrieveViews(HttpClient httpClient, string entityLogicalName)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see cref="https://stackoverflow.com/a/39001154"/>
+        /// <param name="httpClient"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static async Task<string> RetrieveSystemViews(HttpClient httpClient, string entityLogicalName)
         {
             try
             {
-                var entityLogicalNameSetPath = EntitySetPaths.Where(x => x.Key == entityLogicalName).Select(x => x.Value).FirstOrDefault();
-                if (string.IsNullOrWhiteSpace(entityLogicalNameSetPath))
-                {
-                    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
-                }
+                //var entityLogicalNameSetPath = EntitySetPaths.Where(x => x.Key == entityLogicalName).Select(x => x.Value).FirstOrDefault();
+                //if (string.IsNullOrWhiteSpace(entityLogicalNameSetPath))
+                //{
+                //    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
+                //}
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
-                using (var response = await httpClient.GetAsync($"api/data/v9.0/{entityLogicalNameSetPath}?$filter=", HttpCompletionOption.ResponseContentRead))
+                using (var response = await httpClient.GetAsync($"api/data/v9.0/savedqueries?$filter=returnedtypecode eq '{entityLogicalName}'", HttpCompletionOption.ResponseContentRead))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
@@ -448,8 +590,45 @@ namespace CrmSdkLibrary
 
                     return resp.ToString();
                 }
-                //First obtain the user's ID.
-                //Guid myUserId = (Guid)whoAmIresp["UserId"];
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="httpClient"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static async Task<string> RetrieveUserViews(HttpClient httpClient, string entityLogicalName, bool isAll = false)
+        {
+            try
+            {
+                //var entityLogicalNameSetPath = EntitySetPaths.Where(x => x.Key == entityLogicalName).Select(x => x.Value).FirstOrDefault();
+                //if (string.IsNullOrWhiteSpace(entityLogicalNameSetPath))
+                //{
+                //    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
+                //}
+                //https://yourorg.crm.dynamics.com/api/data/v9.1/userqueries?$filter=returnedtypecode%20eq%20%272%27%20and%20layoutxml%20ne%20null
+                var isAllString = isAll ? string.Empty : " and layoutxml ne null";
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
+                using (var response = await httpClient.GetAsync($"api/data/v9.0/userqueries?$filter=returnedtypecode eq '{entityLogicalName}'" + isAllString, HttpCompletionOption.ResponseContentRead))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception(
+                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    }
+
+                    var resp = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+
+                    return resp.ToString();
+                }
 
             }
             catch (Exception ex)
