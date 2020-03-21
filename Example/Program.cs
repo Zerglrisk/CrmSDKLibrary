@@ -4,11 +4,15 @@ using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.IdentityModel.Tokens;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Xml;
 using CrmSdkLibrary.Definition;
+using AuthenticationContext = Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext;
 using AuthenticationType = CrmSdkLibrary.Definition.Enum.AuthenticationType;
 
 namespace Example
@@ -19,14 +23,16 @@ namespace Example
         {
             CrmSdkLibrary.Connection conn = new CrmSdkLibrary.Connection();
             //Login Case 1
-            //Console.WriteLine(conn.ConnectService("test201018", "test201018@test201018.onmicrosoft.com", "tester201018@", Location.APAC));
+            //Console.WriteLine(conn.ConnectService("test201018", "tester200317@tester200317.onmicrosoft.com", "tester201018@", Location.APAC));
             //Login Case 2
             //Console.WriteLine(conn.ConnectService(
             //    new Uri("https://test201018.api.crm5.dynamics.com/XRMServices/2011/Organization.svc"),
             //    "test201018@test201018.onmicrosoft.com", "tester201018@"));
             //Login Case 3
+            Console.WriteLine(conn.ConnectService("https://tester200317.crm5.dynamics.com", "tester200317@tester200317.onmicrosoft.com", "tester201018@", AuthenticationType.Office365));
             var cc = Messages.RetrieveAllEntities(Connection.OrgService);
             var count = 0;
+
             //foreach (var entityMetadata in cc)
             //{
             //    if (entityMetadata.LogicalName.Contains("new_"))
@@ -51,25 +57,33 @@ namespace Example
             //{
             //    if (xn.Attributes != null) Console.WriteLine(xn.Attributes["name"].Value);
             //}
+
+            Program app = new Program();
+            Api.SetApplicationId("26de6e84-f9e2-4ca6-a174-fbb9d00b175c");
+            Task.WaitAll(Task.Run(async () => await app.RunAsync()));
+
             Console.WriteLine(converted.GenerateSql());
             Console.WriteLine("(End)");
 
         }
 
+
         public async Task RunAsync()
         {
-            //HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("test191020@test191020.onmicrosoft.com", "Aa_1685511",
-            //    "test191020.onmicrosoft.com", "https://test201018.crm5.dynamics.com/");
-            HttpClient client = CrmSdkLibrary.Api.GetWebApiHttpClient(new UserPasswordCredential("test201018@test201018.onmicrosoft.com", "tester201018@"),
-                   "https://test201018.crm5.dynamics.com", "https://login.microsoftonline.com/b402a2b7-7be7-4436-b53c-a47d0f64fe9d");
+            //HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("tester200317@tester200317.onmicrosoft.com", "Aa_1685511",
+            //    "test191020.onmicrosoft.com", "https://tester200317.crm5.dynamics.com/");
+            HttpClient client = CrmSdkLibrary.Api.GetWebApiHttpClient(new UserPasswordCredential("tester200317@tester200317.onmicrosoft.com", "tester201018@"),
+                   "https://tester200317.crm5.dynamics.com", "https://login.microsoftonline.com/2e83d097-5831-48ad-a9df-e105ef01997d");
             var aa = await CrmSdkLibrary.Api.User(client);
-
+            var cli = Api.GetWebApiHttpClient("_Xqg[Fw7-J3j9D:CacUojLjm2Gc8[RU=",
+                "https://tester200317.crm5.dynamics.com",
+                "https://login.microsoftonline.com/2e83d097-5831-48ad-a9df-e105ef01997d");
             //Load All EntiySetName To Memory
             var a = Api.EntitySetPaths;
-
             Console.WriteLine(aa);
 
-            
+            var aaaaaa = await Api.GetToken("https://tester200317.api.crm5.dynamics.com/api/data/");
+            var aaaaab = await Api.GetCurrentOrganization(client, EndpointAccessType.Default);
             var qe = new QueryExpression("opportunity") { ColumnSet = new ColumnSet(true) };
             var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
             
