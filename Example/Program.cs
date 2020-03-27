@@ -59,7 +59,7 @@ namespace Example
             //}
 
             Program app = new Program();
-            Api.SetApplicationId("26de6e84-f9e2-4ca6-a174-fbb9d00b175c");
+            Api.SetClientId("26de6e84-f9e2-4ca6-a174-fbb9d00b175c");
             Task.WaitAll(Task.Run(async () => await app.RunAsync()));
 
             Console.WriteLine(converted.GenerateSql());
@@ -70,33 +70,32 @@ namespace Example
 
         public async Task RunAsync()
         {
-            //HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("tester200317@tester200317.onmicrosoft.com", "Aa_1685511",
+            //HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("tester200317@tester200317.onmicrosoft.com", "tester201018@",
             //    "test191020.onmicrosoft.com", "https://tester200317.crm5.dynamics.com/");
-            HttpClient client = CrmSdkLibrary.Api.GetWebApiHttpClient(new UserPasswordCredential("tester200317@tester200317.onmicrosoft.com", "tester201018@"),
+            HttpClient client = await CrmSdkLibrary.Api.GetWebApiHttpClient(new UserPasswordCredential("tester200317@tester200317.onmicrosoft.com", "tester201018@"),
                    "https://tester200317.crm5.dynamics.com", "https://login.microsoftonline.com/2e83d097-5831-48ad-a9df-e105ef01997d");
-            var aa = await CrmSdkLibrary.Api.User(client);
-            var cli = Api.GetWebApiHttpClient("_Xqg[Fw7-J3j9D:CacUojLjm2Gc8[RU=",
+
+            var cli =  await Api.GetWebApiHttpClient("_Xqg[Fw7-J3j9D:CacUojLjm2Gc8[RU=",
                 "https://tester200317.crm5.dynamics.com",
                 "https://login.microsoftonline.com/2e83d097-5831-48ad-a9df-e105ef01997d");
             //Load All EntiySetName To Memory
-            var a = Api.EntitySetPaths;
-            Console.WriteLine(aa);
+            var entitySetPaths = Api.EntitySetPaths;
+            Console.WriteLine(await Api.User(client));
 
-            var aaaaaa = await Api.GetToken("https://tester200317.api.crm5.dynamics.com/api/data/");
-            var aaaaab = await Api.GetCurrentOrganization(client, EndpointAccessType.Default);
+            var accessToken = await Api.GetToken("https://tester200317.api.crm5.dynamics.com/api/data/");
+            var organizationDetail = await Api.GetCurrentOrganization(client, EndpointAccessType.Default);
             var qe = new QueryExpression("opportunity") { ColumnSet = new ColumnSet(true) };
             var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
             
             //need test
             var ab = await CrmSdkLibrary.Api.RetrieveDuplicates(client, retrieve.Entities.First(), new PagingInfo(){PageNumber = 1, Count = 10});
 
-            var ac = await Api.GetObjectTypeCode(client, "account");
-            Console.WriteLine($"Account ObjectTypeCode : {ac}");
+            var objectTyperCode = await Api.GetObjectTypeCode(client, "account");
+            Console.WriteLine($"Account ObjectTypeCode : {objectTyperCode}");
 
             //var cc = Messages.GetCurrentOrganization(Connection.OrgService);
             //Console.WriteLine($"{cc.UrlName} +  {cc.EnvironmentId} + {cc.FriendlyName} + {cc.OrganizationVersion} + {cc.UniqueName} + {cc.Endpoints.First().Key}:{cc.Endpoints.First().Value}");
-            var cc = await Api.GetCurrentOrganization(client, EndpointAccessType.Default);
-            Console.WriteLine(cc);
+
             //var bb = await Api.GetDataAsJson(client);
             //Console.WriteLine(bb);
         }
