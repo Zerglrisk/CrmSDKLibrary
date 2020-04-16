@@ -1045,5 +1045,68 @@ namespace CrmSdkLibrary
                 throw;
             }
         }
+
+        /// <summary>
+        /// Deactivate a record
+        /// </summary>
+        /// <see cref="https://msdynamicscrmblog.wordpress.com/2013/05/02/activatedeactivate-a-record-using-c-in-dynamics-crm-2011/"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="recordId"></param>
+        public static void DeactivateRecord(IOrganizationService service, string entityLogicalName, Guid recordId)
+        {
+            var cols = new ColumnSet(new[] { "statecode", "statuscode" });
+
+            //Check if it is Active or not
+            var entity = service.Retrieve(entityLogicalName, recordId, cols);
+
+            if (entity != null && entity.GetAttributeValue<OptionSetValue>("statecode").Value == 0)
+            {
+                //StateCode = 1 and StatusCode = 2 for deactivating Account or Contact
+                SetStateRequest setStateRequest = new SetStateRequest()
+                {
+                    EntityMoniker = new EntityReference
+                    {
+                        Id = recordId,
+                        LogicalName = entityLogicalName,
+                    },
+                    State = new OptionSetValue(1),
+                    Status = new OptionSetValue(2)
+                };
+                service.Execute(setStateRequest);
+            }
+        }
+
+
+        /// <summary>
+        /// Activate a record
+        /// </summary>
+        /// <see cref="https://msdynamicscrmblog.wordpress.com/2013/05/02/activatedeactivate-a-record-using-c-in-dynamics-crm-2011/"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="recordId"></param>
+        public static void ActivateRecord(IOrganizationService service, string entityLogicalName, Guid recordId)
+        {
+            var cols = new ColumnSet(new[] { "statecode", "statuscode" });
+
+            //Check if it is Inactive or not
+            var entity = service.Retrieve(entityLogicalName, recordId, cols);
+
+            if (entity != null && entity.GetAttributeValue<OptionSetValue>("statecode").Value == 1)
+            {
+                //StateCode = 0 and StatusCode = 1 for activating Account or Contact
+                SetStateRequest setStateRequest = new SetStateRequest()
+                {
+                    EntityMoniker = new EntityReference
+                    {
+                        Id = recordId,
+                        LogicalName = entityLogicalName,
+                    },
+                    State = new OptionSetValue(0),
+                    Status = new OptionSetValue(1)
+                };
+                service.Execute(setStateRequest);
+            }
+        }
     }
 }
