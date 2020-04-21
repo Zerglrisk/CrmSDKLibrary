@@ -109,6 +109,10 @@
       <Project>{8047d594-9184-4d8a-936b-86323be56318}</Project>
       <Name>CrmSdkLibrary</Name>
     </ProjectReference>
+    <ProjectReference Include="..\WebApi\WebApi.csproj">
+      <Project>{59e338ce-8f44-43bc-8062-68146d117405}</Project>
+      <Name>WebApi</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
