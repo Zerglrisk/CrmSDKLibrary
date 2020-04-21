@@ -1,31 +1,35 @@
 ﻿using System;
-using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using CrmSdkLibrary.Definition;
-using Microsoft.Crm.Sdk.Messages;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.IdentityModel.Clients.ActiveDirectory.Extensibility;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace CrmSdkLibrary
+namespace WebApi
 {
+
     //https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade
     public class Api
     {
         //https://stackoverflow.com/questions/50795500/authenticate-to-dynamics-365-using-adal-v3-using-clientid/51305491
 
         private static Dictionary<string, string> _entitySetPaths;
-        public static Dictionary<string, string> EntitySetPaths => _entitySetPaths ?? (_entitySetPaths = Messages.GetAllEntitySetName(Connection.OrgService));
+
+        public static Dictionary<string, string> EntitySetPaths
+        {
+            get => _entitySetPaths;
+            private set => _entitySetPaths = value; //_entitySetPaths ?? (_entitySetPaths = Api.GetAllEntitySetName(new HttpClient()).Result);
+        }
 
         /// <summary>
         /// Authenticate to Microsoft Dynamics 365 with the Web API
@@ -36,19 +40,20 @@ namespace CrmSdkLibrary
         /// <param name="domainName"></param>
         /// <param name="apiUrl">e.g.) https://tester200317.api.crm5.dynamics.com/api/data/v9.0/</param>
         /// <returns></returns>
-        public static HttpClient GetNewHttpClient(string userName, string password, string domainName, string apiUrl)
-        {
-            return GetNewHttpClient(new NetworkCredential(userName, password, domainName), apiUrl);
-        }
+        //public static HttpClient GetNewHttpClient(string userName, string password, string domainName, string apiUrl)
+        //{
+        //    return GetNewHttpClient(new NetworkCredential(userName, password, domainName), apiUrl);
+        //}
 
-        public static HttpClient GetNewHttpClient(NetworkCredential credential, string apiUrl)
-        {
-            var client = new HttpClient(new HttpClientHandler() {Credentials = credential})
-            {
-                BaseAddress = new Uri(apiUrl), Timeout = new TimeSpan(0, 2, 0)
-            };
-            return client;
-        }
+        //public static HttpClient GetNewHttpClient(NetworkCredential credential, string apiUrl)
+        //{
+        //    var client = new HttpClient(new HttpClientHandler() { Credentials = credential })
+        //    {
+        //        BaseAddress = new Uri(apiUrl),
+        //        Timeout = new TimeSpan(0, 2, 0)
+        //    };
+        //    return client;
+        //}
 
         /// <summary>
         /// 
@@ -106,43 +111,43 @@ namespace CrmSdkLibrary
             ClientId = clientId;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="userName"></param>
-        /// <param name="password"></param>
-        /// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
-        /// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId</param>
-        /// <returns></returns>
-        public static Task<HttpClient> GetWebApiHttpClient(string userName, string password, string resourceUrl,
-            string authorityUrl = "https://login.microsoftonline.com/common")
-        {
-            return GetWebApiHttpClient(new UserPasswordCredential(userName, password), resourceUrl, authorityUrl);
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <see href="https://rajeevpentyala.com/2018/09/18/code-snippet-authenticate-and-perform-operations-using-d365-web-api-and-c/"/>
-        /// <see href="https://community.dynamics.com/crm/f/microsoft-dynamics-crm-forum/305276/crud-operations-using-web-api-in-console-app?pifragment-97030=1#responses"/>
-        /// <param name="credential"></param>
-        /// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
-        /// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId</param>
-        /// <returns></returns>
-        public static async Task<HttpClient> GetWebApiHttpClient(UserPasswordCredential credential, string resourceUrl, string authorityUrl = "https://login.microsoftonline.com/common")
-        {
-            //var credentials = new UserPasswordCredential(userName, password);
-            var context = new AuthenticationContext(authorityUrl);
-            var authResult = await context.AcquireTokenAsync(resourceUrl, Api.ClientId, credential);
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="userName"></param>
+        ///// <param name="password"></param>
+        ///// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
+        ///// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId</param>
+        ///// <returns></returns>
+        //public static Task<HttpClient> GetWebApiHttpClient(string userName, string password, string resourceUrl,
+        //    string authorityUrl = "https://login.microsoftonline.com/common")
+        //{
+        //    return GetWebApiHttpClient(UserPasswordCredential(userName, password), resourceUrl, authorityUrl);
+        //}
+        ///// <summary>
+        ///// UserPasswordCredential Not support in net core or net standard
+        ///// </summary>
+        ///// <see href="https://rajeevpentyala.com/2018/09/18/code-snippet-authenticate-and-perform-operations-using-d365-web-api-and-c/"/>
+        ///// <see href="https://community.dynamics.com/crm/f/microsoft-dynamics-crm-forum/305276/crud-operations-using-web-api-in-console-app?pifragment-97030=1#responses"/>
+        ///// <param name="credential"></param>
+        ///// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
+        ///// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId</param>
+        ///// <returns></returns>
+        //public static async Task<HttpClient> GetWebApiHttpClient(UserPasswordCredential credential, string resourceUrl, string authorityUrl = "https://login.microsoftonline.com/common")
+        //{
+        //    //var credentials = new UserPasswordCredential(userName, password);
+        //    var context = new AuthenticationContext(authorityUrl);
+        //    var authResult = await context.AcquireTokenAsync(resourceUrl, Api.ClientId, credential);
 
-            var httpClient = new HttpClient() { BaseAddress = new Uri(resourceUrl), Timeout = new TimeSpan(0, 2, 0) };
+        //    var httpClient = new HttpClient() { BaseAddress = new Uri(resourceUrl), Timeout = new TimeSpan(0, 2, 0) };
 
-            httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
-            httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authResult.AccessTokenType, authResult.AccessToken);
-            //httpClient.DefaultRequestHeaders.Add("Prefer", "odata.include-annotations=OData.Community.Display.V1.FormattedValue")
-            return httpClient;
-        }
+        //    httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
+        //    httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
+        //    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        //    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authResult.AccessTokenType, authResult.AccessToken);
+        //    //httpClient.DefaultRequestHeaders.Add("Prefer", "odata.include-annotations=OData.Community.Display.V1.FormattedValue")
+        //    return httpClient;
+        //}
 
 
         /// <summary>
@@ -167,6 +172,9 @@ namespace CrmSdkLibrary
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authResult.AccessTokenType, authResult.AccessToken);
             //httpClient.DefaultRequestHeaders.Add("Prefer", "odata.include-annotations=OData.Community.Display.V1.FormattedValue")
+
+            //After work
+            _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = Api.GetAllEntitySetName(httpClient).Result);
             return httpClient;
         }
 
@@ -179,17 +187,17 @@ namespace CrmSdkLibrary
         /// <param name="password"></param>
         /// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
         /// <param name="secret">If your app is a public client, then the client_secret cannot be included</param>
-        /// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId</param>
+        /// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId, https://graph.windows.net/</param>
         /// <returns></returns>
-        public static async Task<HttpClient> GetWebApiHttpClient(string username, string password, string resourceUrl, 
+        public static async Task<HttpClient> GetWebApiHttpClient(string username, string password, string resourceUrl,
             string authorityUrl = "https://login.microsoftonline.com/common", string secret = "")
         {
             var httpClient = new HttpClient()
             {
                 BaseAddress = new Uri(resourceUrl),
-                Timeout = new TimeSpan(0,0,15)
+                Timeout = new TimeSpan(0, 0, 15)
             };
-            var content = new FormUrlEncodedContent(new []{
+            var content = new FormUrlEncodedContent(new[]{
                 new KeyValuePair<string, string>("client_id", Api.ClientId),
                 new KeyValuePair<string, string>("resource", resourceUrl),
                 new KeyValuePair<string, string>("username", username),
@@ -199,20 +207,64 @@ namespace CrmSdkLibrary
             });
             //content type is application/json
 
-            
 
-            var result = await httpClient.PostAsync($"{authorityUrl}/oauth2/token", content);
-            var responsebody = result.Content.ReadAsStringAsync().Result;
-            var accessToken = JObject.Parse(responsebody).GetValue("access_token").ToString();
-            var accessTokenType = JObject.Parse(responsebody).GetValue("token_type").ToString();
 
-            httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
-            httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(accessTokenType, accessToken);
+            using (HttpResponseMessage response = await httpClient.PostAsync($"{authorityUrl}/oauth2/token", content))
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    var responsebody = response.Content.ReadAsStringAsync().Result;
+                    var accessToken = JObject.Parse(responsebody).GetValue("access_token").ToString();
+                    var accessTokenType = JObject.Parse(responsebody).GetValue("token_type").ToString();
+
+                    httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
+                    httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(accessTokenType, accessToken);
+
+                    //After work
+                    _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = Api.GetAllEntitySetName(httpClient).Result);
+                }
+            }
+
 
             return httpClient;
         }
+
+        //public static async Task<HttpClient> GetGraphHttpClient(string username, string password)
+        //{
+        //    var httpClient = new HttpClient()
+        //    {
+        //        BaseAddress = new Uri("https://graph.windows.net/"),
+        //        Timeout = new TimeSpan(0, 0, 15)
+        //    };
+        //    var content = new FormUrlEncodedContent(new[]{
+        //        new KeyValuePair<string, string>("client_id", Api.ClientId),
+        //        new KeyValuePair<string, string>("resource", "https://graph.windows.net/"),
+        //        new KeyValuePair<string, string>("username", username),
+        //        new KeyValuePair<string, string>("password", password),
+        //        new KeyValuePair<string, string>("grant_type", "password")
+        //    });
+        //    //content type is application/json
+        //    using (HttpClient client = new HttpClient())
+        //    {
+        //        var tokenEndpoint = $"https://login.windows.net/1fd4863a-b5bc-42b2-9617-56a7d222fad7/oauth2/token";
+        //        var accept = "application/json";
+
+        //        client.DefaultRequestHeaders.Add("Accept", accept);
+        //        string postBody = $"resource=https://graph.windows.net/&client_id={Api.ClientId}&grant_type=password&username={username}&password={password}";
+        //        using (HttpResponseMessage response = await client.PostAsync(tokenEndpoint, new StringContent(postBody, System.Text.Encoding.UTF8, "application/x-www-form-urlencoded")))
+        //        {
+        //            if (response.IsSuccessStatusCode)
+        //            {
+        //                var jsonresult = JObject.Parse(await response.Content.ReadAsStringAsync());
+        //                var token = (string)jsonresult["access_token"];
+        //            }
+        //        }
+        //    }
+
+        //    return httpClient;
+        //}
 
         /// <summary>
         /// resourceUrl(ResourceUrl)
@@ -231,7 +283,7 @@ namespace CrmSdkLibrary
 
                 foreach (var segment in new Uri(ap.Authority).Segments)
                 {
-                    if (Guid.TryParse(segment.Replace("/",""), out tenantId))
+                    if (Guid.TryParse(segment.Replace("/", ""), out tenantId))
                     {
                         break;
                     }
@@ -239,7 +291,7 @@ namespace CrmSdkLibrary
 
                 return tenantId;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }
@@ -247,11 +299,16 @@ namespace CrmSdkLibrary
         }
         // For ActiveDirectory 3.13.9 lowest : https://community.dynamics.com/crm/f/microsoft-dynamics-crm-forum/274605/steps-to-retrieve-token-dynamics-crm-365-online-webapi
         // (https://stackoverflow.com/questions/53502733/powerbi-aadsts90002-tenant-authorize-not-found)
+        // cutomwebui : http://thewindowsupdate.com/2019/04/14/how-to-use-active-directory-authentication-library-adal-for-net-on-net-core-3-0-wpf-apps/
+        // PlatformParameters : https://github.com/AzureAD/azure-activedirectory-library-for-dotnet/wiki/Acquiring-tokens-interactively---Public-client-application-flows
+        //https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-acquire-token?tabs=dotnet
+        // customwebui e.g. : https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/blob/053a98d16596be7e9ca1ab916924e5736e341fe8/tests/Microsoft.Identity.Test.Integration/Infrastructure/SeleniumWebUI.cs#L15-L160
         /// <summary>
         /// </summary>
         /// <param name="apiUrl">e.g.) https://tester200317.api.crm5.dynamics.com/api/data/</param>
+        /// <param name="customWebUi">cannot be null</param>
         /// <returns></returns>
-        public static async Task<string> GetToken(string apiUrl)
+        public static async Task<string> GetToken(string apiUrl, ICustomWebUi customWebUi)
         {
             Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext authContext = null;
             try
@@ -262,7 +319,7 @@ namespace CrmSdkLibrary
                 AuthenticationParameters ap = AuthenticationParameters.CreateFromUrlAsync(new Uri(apiUrl)).Result;
 
                 string resourceUrl = ap.Resource;
-                string authorityUrl =  DiscoverAuthority(ap.Resource);//$"https://login.microsoftonline.com/{GetTenantId(resourceUrl)}";
+                string authorityUrl = DiscoverAuthority(ap.Resource);//$"https://login.microsoftonline.com/{GetTenantId(resourceUrl)}";
 
                 //Generate the Authority context .. For the sake of simplicity for the post, I haven't splitted these
                 // in to multiple methods. Ideally, you would want to use some sort of design pattern to generate the context and store
@@ -273,7 +330,7 @@ namespace CrmSdkLibrary
                 {
                     //Check if we can get the authentication token w/o prompting for credentials.
                     //With this system will try to get the token from the cache if there is any, if it is not there then will throw error
-                    var authToken = await authContext.AcquireTokenAsync(resourceUrl, Api.ClientId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Never));
+                    var authToken = await authContext.AcquireTokenAsync(resourceUrl, Api.ClientId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Never, customWebUi));
                     return authToken.AccessToken;
                 }
                 catch (AdalException e)
@@ -283,7 +340,7 @@ namespace CrmSdkLibrary
                     {
                         // We are here means, there is no cached token, So get it from the service.
                         // You should see a prompt for User Id & Password at this place.
-                        var authToken = await authContext.AcquireTokenAsync(resourceUrl, Api.ClientId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Auto));
+                        var authToken = await authContext.AcquireTokenAsync(resourceUrl, Api.ClientId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Auto, customWebUi));
                         return authToken.AccessToken;
                     }
                     else
@@ -337,6 +394,42 @@ namespace CrmSdkLibrary
             }
         }
 
+        public static async Task<Dictionary<string, string>> GetAllEntitySetName(HttpClient httpClient)
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                using (var response =
+                    await httpClient.GetAsync("api/data/v9.0/EntityDefinitions?$select=LogicalName,EntitySetName", HttpCompletionOption.ResponseContentRead))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception(
+                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    }
+
+                    var jObject = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+                    jObject.Add("ODataContext", jObject["@odata.context"]);
+                    jObject.Remove("@odata.context");
+                    var entityMetadatas = jObject["value"] as JArray;
+
+                    return entityMetadatas.Children<JObject>().ToDictionary(
+                        x => x.Property("LogicalName").Value.ToString(),
+                        x => x.Property("EntitySetName").Value.ToString());
+                    //delegate (EntityMetadata metadata) { return metadata.LogicalName; },
+                    //delegate (EntityMetadata metadata) { return metadata.EntitySetName; });
+                }
+
+                //First obtain the user's ID.
+                //Guid myUserId = (Guid)whoAmIresp["UserId"];
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
         /// <summary>
         /// Get User Using WebAPI
         /// </summary>
@@ -366,7 +459,7 @@ namespace CrmSdkLibrary
 
                 //First obtain the user's ID.
                 //Guid myUserId = (Guid)whoAmIresp["UserId"];
-                
+
             }
             catch (Exception ex)
             {
@@ -418,9 +511,9 @@ namespace CrmSdkLibrary
             try
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-                
+
                 using (var response =
-                    await httpClient.GetAsync($@"api/data/v8.0/CalculateRollupField(Target=@tid,FieldName=@fname)?@tid={{'@odata.id':'{target.ToEntitySetPath()}({target.Id})'}}&@fname='{fieldName}'", HttpCompletionOption.ResponseContentRead))
+                    await httpClient.GetAsync($@"api/data/v8.0/CalculateRollupField(Target=@tid,FieldName=@fname)?@tid={{'@odata.id':'{Api.EntitySetPaths[target.LogicalName]}({target.Id})'}}&@fname='{fieldName}'", HttpCompletionOption.ResponseContentRead))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
@@ -467,7 +560,7 @@ namespace CrmSdkLibrary
                         //throw new Exception(
                         //    $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                     }
-                    
+
                     var jObj = JsonConvert.DeserializeObject<JObject>(await
                         response.Content.ReadAsStringAsync());
                     jObj.Add("ODataContext", jObj["@odata.context"]);
@@ -539,7 +632,7 @@ namespace CrmSdkLibrary
 
                     if (parsed.Error != null)
                     {
-                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}",parsed.Error.InnerError);
+                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
                     }
                     return parsed.value.First.ObjectTypeCode;
                 }
@@ -557,7 +650,7 @@ namespace CrmSdkLibrary
         /// <param name="httpClient"></param>
         /// <param name="accessType"></param>
         /// <returns></returns>
-        public static async Task<Microsoft.Xrm.Sdk.Organization.OrganizationDetail> GetCurrentOrganization(HttpClient httpClient,Microsoft.Xrm.Sdk.Organization.EndpointAccessType accessType)
+        public static async Task<Microsoft.Xrm.Sdk.Organization.OrganizationDetail> GetCurrentOrganization(HttpClient httpClient, Microsoft.Xrm.Sdk.Organization.EndpointAccessType accessType)
         {
             try
             {
@@ -597,12 +690,11 @@ namespace CrmSdkLibrary
                     {
                         var key = keys[i] as JValue;
                         var value = values[i] as JValue;
-                        EndpointType endpointType;
-                        EndpointType.TryParse(key.Value.ToString(), out endpointType);
+                        Enum.TryParse(key.Value.ToString(), out EndpointType endpointType);
                         endpoints.Add(endpointType, value.Value.ToString());
                     }
 
-                    dd.Property("Endpoints").Remove(); 
+                    dd.Property("Endpoints").Remove();
                     #endregion
                     var dddd = dd.ToObject<Microsoft.Xrm.Sdk.Organization.OrganizationDetail>();
                     dddd.Endpoints.AddRange(endpoints);
@@ -702,7 +794,7 @@ namespace CrmSdkLibrary
         }
     }
 
-    
+
     public class ODataResponse<T>
 
     {

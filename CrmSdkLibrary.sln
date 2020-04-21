@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary", "CrmSdkLibr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{05E8AADE-2C0D-47F0-8088-C0692EDB3460}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi", "WebApi\WebApi.csproj", "{59E338CE-8F44-43BC-8062-68146D117405}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{05E8AADE-2C0D-47F0-8088-C0692EDB3460}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05E8AADE-2C0D-47F0-8088-C0692EDB3460}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05E8AADE-2C0D-47F0-8088-C0692EDB3460}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59E338CE-8F44-43BC-8062-68146D117405}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59E338CE-8F44-43BC-8062-68146D117405}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59E338CE-8F44-43BC-8062-68146D117405}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59E338CE-8F44-43BC-8062-68146D117405}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

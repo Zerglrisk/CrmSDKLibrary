@@ -118,7 +118,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Api.cs" />
     <Compile Include="AsyncExtention.cs" />
     <Compile Include="Bulk.cs" />
     <Compile Include="Common.cs" />
