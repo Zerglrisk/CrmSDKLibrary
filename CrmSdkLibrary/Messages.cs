@@ -80,6 +80,189 @@ namespace CrmSdkLibrary
         //    }
         //}
 
+        #region A
+
+        /// <summary>
+        /// Contains the data that is needed to add app components to a business app.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addappcomponentsrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="appId"></param>
+        /// <param name="components"></param>
+        public static void AddAppComponents(IOrganizationService service, Guid appId, EntityReferenceCollection components)
+        {
+            _ = ((AddAppComponentsResponse)service.Execute(new AddAppComponentsRequest
+            {
+                AppId = appId,
+                Components = components
+            }));
+        }
+
+        /// <summary>
+        /// For internal use only.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addchannelaccessprofileprivilegesrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="channelAccessProfileid"></param>
+        /// <param name="privileges"></param>
+        public static void AddChannelAccessProfilePrivileges(IOrganizationService service, Guid channelAccessProfileid, IEnumerable<ChannelAccessProfilePrivilege> privileges)
+        {
+            _ = ((AddChannelAccessProfilePrivilegesResponse)service.Execute(new AddChannelAccessProfilePrivilegesRequest
+            {
+                ChannelAccessProfileId = channelAccessProfileid,
+                Privileges = privileges.ToArray()
+            }));
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add an item to a campaign activity.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.additemcampaignactivityrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="campaignActivityId"></param>
+        /// <param name="entityName"></param>
+        /// <param name="itemId"></param>
+        public static void AddItemCampaignActivity(IOrganizationService service, Guid campaignActivityId, string entityName, Guid itemId)
+        {
+            _ = ((AddItemCampaignActivityResponse)service.Execute(new AddItemCampaignActivityRequest
+            {
+                CampaignActivityId = campaignActivityId,
+                EntityName = entityName,
+                ItemId = itemId
+            }));
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add members to the list.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addlistmemberslistrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="listId"></param>
+        /// <param name="memberIds"></param>
+        public static void AddListMembersList(IOrganizationService service, Guid listId, IEnumerable<Guid> memberIds)
+        {
+            _ = ((AddListMembersListResponse)service.Execute(new AddListMembersListRequest{ 
+                ListId = listId,
+                MemberIds = memberIds.ToArray()
+            }));
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add a member to a list (marketing list).
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addmemberlistrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="listId"></param>
+        /// <param name="entityId"></param>
+        /// <returns>Gets the ID of the resulting list member.</returns>
+        public static Guid AddMemberList(IOrganizationService service, Guid listId, Guid entityId)
+        {
+            return ((AddMemberListResponse)service.Execute(new AddMemberListRequest { 
+                ListId = listId,
+                EntityId = entityId
+            })).Id;
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add members to a team.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addmembersteamrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="teamId"></param>
+        /// <param name="memberIds"></param>
+        public static void AddMembersTeam(IOrganizationService service, Guid teamId, IEnumerable<Guid> memberIds)
+        {
+            _ = ((AddMembersTeamResponse)service.Execute(new AddMembersTeamRequest { 
+                TeamId = teamId,
+                MemberIds = memberIds.ToArray()
+            }));
+        }
+
+        /// <summary>
+        /// Contains the data to add the specified principal to the list of queue members. If the principal is a team, add each team member to the queue.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addprincipaltoqueuerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="principal"></param>
+        /// <param name="queueId"></param>
+        public static void AddPrincipalToQueue(IOrganizationService service, Entity principal, Guid queueId)
+        {
+            _ = ((AddPrincipalToQueueResponse)service.Execute(new AddPrincipalToQueueRequest { 
+                Principal = principal,
+                QueueId = queueId
+            }));
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add a set of existing privileges to an existing role.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addprivilegesrolerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="roleId"></param>
+        /// <param name="privileges"></param>
+        /// <returns>There is no return value from this operation.</returns>
+        public static void AddPrivilegesRole(IOrganizationService service, Guid roleId, IEnumerable<RolePrivilege> privileges)
+        {
+            _ = (AddPrivilegesRoleResponse)service.Execute(new AddPrivilegesRoleRequest()
+            {
+                RoleId = roleId,
+                Privileges = privileges.ToArray()
+            });
+        }
+
+        /// <summary>
+        /// Deprecated. Use the <see cref="ProductAssociation"/> entity. Contains the data that is needed to add a product to a kit.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addproducttokitrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="productId"></param>
+        /// <param name="kitId"></param>
+        public static void AddProductToKit(IOrganizationService service, Guid productId, Guid kitId)
+        {
+            _ = (AddProductToKitResponse)service.Execute(new AddProductToKitRequest { 
+                ProductId = productId,
+                KitId = kitId
+            });
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add recurrence information to an existing appointment.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addrecurrencerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="appointmentId"></param>
+        /// <param name="target"></param>
+        /// <returns>Gets the ID of the newly created recurring appointment.</returns>
+        public static Guid AddRecurrence(IOrganizationService service, Guid appointmentId, Entity target)
+        {
+            return ((AddRecurrenceResponse)service.Execute(new AddRecurrenceRequest { 
+                AppointmentId = appointmentId,
+                Target = target
+            })).id;
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add a solution component to an unmanaged solution.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addsolutioncomponentrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="addRequiredComponents">Gets or sets a value that indicates whether other solution components that are required by the solution component that you are adding should also be added to the unmanaged solution. Required.</param>
+        /// <param name="componentType">Gets or sets the value that represents the solution component that you are adding.Required.</param>
+        /// <param name="componentId">Gets or sets the ID of the solution component. Required.</param>
+        /// <param name="solutionUniqueName">Gets or sets the unique name of the solution you are adding the solution component to. Required.</param>
+        /// <returns></returns>
+        public static Guid AddSolutionComponent(IOrganizationService service, bool addRequiredComponents, int componentType, Guid componentId, string solutionUniqueName)
+        {
+            return ((AddSolutionComponentResponse)service.Execute(new AddSolutionComponentRequest {
+                AddRequiredComponents = addRequiredComponents,
+                ComponentType = componentType,
+                ComponentId = componentId,
+                SolutionUniqueName = solutionUniqueName,
+
+            })).id;
+        }
+        #endregion
+
         /// <summary>
         /// Get Current Microsoft Dynamics CRM version
         /// </summary>
@@ -121,7 +304,7 @@ namespace CrmSdkLibrary
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievecurrentorganizationrequest?view=dynamics-general-ce-9"/>
         /// <param name="service"></param>
         /// <returns></returns>
-        public static OrganizationDetail GetCurrentOrganization(IOrganizationService service)
+        public static OrganizationDetail RetrieveCurrentOrganization(IOrganizationService service)
         {
             try
             {
@@ -192,7 +375,7 @@ namespace CrmSdkLibrary
         /// <param name="businessEntity">Gets or sets a record for which the duplicates are retrieved.Required.</param>
         /// <param name="pagingInfo">Gets or sets a paging information for the retrieved duplicates.Required.</param>
         /// <returns>Gets a collection of duplicate entity instances.</returns>
-        public static EntityCollection RetrieveDuplicatesEntities(IOrganizationService service, Entity businessEntity, PagingInfo pagingInfo)
+        public static EntityCollection RetrieveDuplicates(IOrganizationService service, Entity businessEntity, PagingInfo pagingInfo)
         {
             try
             {
@@ -220,31 +403,7 @@ namespace CrmSdkLibrary
 
         }
 
-        /// <summary>
-        /// Contains the data that is needed to add a set of existing privileges to an existing role.
-        /// 
-        /// </summary>
-        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addprivilegesrolerequest?view=dynamics-general-ce-9"/>
-        /// <param name="service"></param>
-        /// <param name="privileges"></param>
-        /// <param name="roleId"></param>
-        public static void AddPrivilegesRole(IOrganizationService service, RolePrivilege[] privileges, Guid roleId)
-        {
-            try
-            {
-                var response = (AddPrivilegesRoleResponse)service.Execute(new AddPrivilegesRoleRequest()
-                {
-                    Privileges = privileges,
-                    RoleId = roleId
-                });
-
-
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-        }
+        
 
         /// <summary>
         /// Contains the data needed to retrieve the privileges a system user (user) has through his or her roles in the specified business unit.
@@ -463,29 +622,7 @@ namespace CrmSdkLibrary
             
         }
 
-        /// <summary>
-        /// Contains the data that is needed to add a set of existing privileges to an existing role.
-        /// </summary>
-        /// <see cref=""/>
-        /// <param name="service"></param>
-        /// <param name="roleId"></param>
-        /// <param name="privileges"></param>
-        /// <returns>There is no return value from this operation.</returns>
-        public static void AddPrivilegesRole(IOrganizationService service, Guid roleId, IEnumerable<RolePrivilege> privileges)
-        {
-            try
-            {
-                var response = (AddPrivilegesRoleResponse)service.Execute(new AddPrivilegesRoleRequest()
-                {
-                    RoleId = roleId,
-                    Privileges = privileges.ToArray()
-                });
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
+        
 
         /// <summary>
         /// Retrieve the privileges that are assigned to the specified role.
@@ -1108,5 +1245,53 @@ namespace CrmSdkLibrary
                 service.Execute(setStateRequest);
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveprincipalaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        public static AccessRights RetrievePrincipalAccessRequest(IOrganizationService service, EntityReference target, EntityReference principal)
+        {
+            return ((RetrievePrincipalAccessResponse)service.Execute(new RetrievePrincipalAccessRequest
+            {
+                Principal = principal,
+                Target = target
+            })).AccessRights;
+            
+            
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievesharedprincipalsandaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccessRequest(IOrganizationService service, EntityReference target)
+        {
+            return ((RetrieveSharedPrincipalsAndAccessResponse)service.Execute(new RetrieveSharedPrincipalsAndAccessRequest
+            {
+                Target = target
+            })).PrincipalAccesses;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.grantaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="principalAccess"></param>
+        /// <param name="target"></param>
+        public static void GrantAccessRequest(IOrganizationService service, PrincipalAccess principalAccess, EntityReference target)
+        {
+            //new PrincipalAccess { AccessMask = AccessRights.ReadAccess, Principal = systemUser1Ref }, Target = leadReference
+            var response = (GrantAccessResponse)service.Execute(new GrantAccessRequest { 
+                PrincipalAccess = principalAccess,
+                Target = target
+            });
+        }
+
     }
 }
