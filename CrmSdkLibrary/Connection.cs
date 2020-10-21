@@ -144,12 +144,14 @@ namespace CrmSdkLibrary
             AuthType = {authType:G};
             UserName = {userName};
             Password = {password};
-            RequireNewInstance = True"; //GenerateConString();
+            RequireNewInstance = True;"; //GenerateConString();
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             var svc = new CrmServiceClient(conn);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             svc.OrganizationServiceProxy.Authenticate();
             OrgService = svc;
+            //OrgService = svc.OrganizationWebProxyClient ?? (IOrganizationService)svc.OrganizationServiceProxy;
             OrgServiceType = svc.GetType();
+            
 
             return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
         }

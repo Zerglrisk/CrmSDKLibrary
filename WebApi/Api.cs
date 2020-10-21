@@ -19,6 +19,11 @@ namespace WebApi
 {
 
     //https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade
+    //https://digitalflow.github.io/Xrm-WebApi-Client/WebApiClient.Requests.js.html
+
+    //POSTman
+    //https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/webapi/setup-postman-environment?view=dynamics-ce-odata-9
+    //http://techcommunity.softwareag.com/pwiki/-/wiki/Main/Register%20Dynamics%20CRM%20App%20with%20Azure%20for%20OAuth%202.0%20Authentication
     public class Api
     {
         //https://stackoverflow.com/questions/50795500/authenticate-to-dynamics-365-using-adal-v3-using-clientid/51305491
@@ -408,6 +413,16 @@ namespace WebApi
                             $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                     }
 
+                    //var jObject = JsonSerializer.Deserialize<JsonDocument>(await
+                    //    response.Content.ReadAsStringAsync(), new JsonSerializerOptions() { WriteIndented = true });
+                    //var stream = new MemoryStream();
+                    //var writer = new Utf8JsonWriter(stream);
+                    //jObject.RootElement.WriteTo(writer);
+                    ////https://devblogs.microsoft.com/dotnet/try-the-new-system-text-json-apis/
+                    ////https://docs.microsoft.com/ko-kr/dotnet/standard/serialization/system-text-json-how-to
+                    ////https://github.com/dotnet/runtime/tree/master/src/libraries/System.Text.Json
+                    //writer.WriteStartObject();
+
                     var jObject = JsonConvert.DeserializeObject<JObject>(await
                         response.Content.ReadAsStringAsync());
                     jObject.Add("ODataContext", jObject["@odata.context"]);
@@ -782,6 +797,24 @@ namespace WebApi
             catch (Exception ex)
             {
                 throw ex;
+            }
+        }
+
+        public static async Task<string> FetchXmlToQueryExpression(HttpClient httpClient, string fetchXml)
+        {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
+            using (var response = await httpClient.GetAsync($"api/data/v9.0/FetchXmlToQueryExpression(FetchXml=@p1)?@p1='{fetchXml}'", HttpCompletionOption.ResponseContentRead))
+            {
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception(
+                        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                }
+
+                var resp = JsonConvert.DeserializeObject<JObject>(await
+                    response.Content.ReadAsStringAsync());
+
+                return resp.ToString();
             }
         }
 

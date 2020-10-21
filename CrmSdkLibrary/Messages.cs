@@ -11,6 +11,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Metadata.Query;
 using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Workflow.Activities;
@@ -162,6 +163,24 @@ namespace CrmSdkLibrary
                 EntityId = entityId
             })).Id;
         }
+        /// <summary>
+        /// Remove member to marketing list.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.removememberlistrequest?view=dynamics-general-ce-9"/>
+        /// <param name="listId">Marketing List Id</param>
+        /// <param name="memberId">Member Id</param>
+        /// <returns>
+        /// <see cref="RemoveMemberListResponse"/>
+        /// </returns>
+        public static void RemoveMemberList(IOrganizationService service, Guid listId, Guid memberId)
+        {
+            _ = ((RemoveMemberListResponse)service.Execute(new RemoveMemberListRequest()
+            {
+                ListId = listId,
+                EntityId = memberId
+            }));
+
+        }
 
         /// <summary>
         /// Contains the data that is needed to add members to a team.
@@ -172,7 +191,24 @@ namespace CrmSdkLibrary
         /// <param name="memberIds"></param>
         public static void AddMembersTeam(IOrganizationService service, Guid teamId, IEnumerable<Guid> memberIds)
         {
-            _ = ((AddMembersTeamResponse)service.Execute(new AddMembersTeamRequest { 
+            _ = ((AddMembersTeamResponse)service.Execute(new AddMembersTeamRequest
+            {
+                TeamId = teamId,
+                MemberIds = memberIds.ToArray()
+            }));
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to add members to a team.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.removemembersteamrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="teamId"></param>
+        /// <param name="memberIds"></param>
+        public static void RemoveMembersTeam(IOrganizationService service, Guid teamId, IEnumerable<Guid> memberIds)
+        {
+            _ = ((RemoveMembersTeamResponse)service.Execute(new RemoveMembersTeamRequest
+            {
                 TeamId = teamId,
                 MemberIds = memberIds.ToArray()
             }));
@@ -208,6 +244,16 @@ namespace CrmSdkLibrary
                 RoleId = roleId,
                 Privileges = privileges.ToArray()
             });
+        }
+
+        public static void ReplacePrivilegesRole(IOrganizationService service, Guid roleId,
+            IEnumerable<RolePrivilege> privileges)
+        {
+            _ = ((ReplacePrivilegesRoleResponse) service.Execute(new ReplacePrivilegesRoleRequest
+            {
+                RoleId = roleId,
+                Privileges = privileges.ToArray()
+            }));
         }
 
         /// <summary>
@@ -280,6 +326,12 @@ namespace CrmSdkLibrary
             }
         }
 
+        /// <summary>
+        /// Get EntityTypeCode from EntityLgoicalName
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
         public static int GetEntityTypeCode(IOrganizationService service, string entityLogicalName)
         {
             try
@@ -295,6 +347,95 @@ namespace CrmSdkLibrary
             catch (Exception)
             {
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Get LogicalName from ObjectTypeCode
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityTypeCode"></param>
+        /// <returns></returns>
+        public static string GetEntityLogicalNameFromTypeCode(IOrganizationService service, int entityTypeCode)
+        {
+            try
+            {
+                var response = ((RetrieveMetadataChangesResponse)service.Execute(new RetrieveMetadataChangesRequest()
+                {
+                    Query = new EntityQueryExpression()
+                    {
+                        Criteria = new MetadataFilterExpression()
+                        {
+                            Conditions =
+                            {
+                                new MetadataConditionExpression("ObjectTypeCode", MetadataConditionOperator.Equals, entityTypeCode)
+                            }
+                        },
+                        Properties = new MetadataPropertiesExpression()
+                        {
+                            AllProperties = false,
+                            PropertyNames = { "LogicalName" }
+                        },
+                        //AttributeQuery = new AttributeQueryExpression()
+                        //{
+                        //    Criteria = new MetadataFilterExpression(),
+                        //    Properties = new MetadataPropertiesExpression()
+                        //},
+                        //LabelQuery = new LabelQueryExpression()
+                    },
+                    ClientVersionStamp = null,
+                    //DeletedMetadataFilters = DeletedMetadataFilters.OptionSet
+                }));
+
+                return response.EntityMetadata.Any() ? response.EntityMetadata.FirstOrDefault()?.LogicalName : null;
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        /// <summary>
+        /// Get EntityMetadata from ObjectTypeCode
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityTypeCode"></param>
+        /// <returns></returns>
+        public static EntityMetadata GetEntityMetadataFromTypeCode(IOrganizationService service, int entityTypeCode)
+        {
+            try
+            {
+                var response = ((RetrieveMetadataChangesResponse)service.Execute(new RetrieveMetadataChangesRequest()
+                {
+                    Query = new EntityQueryExpression()
+                    {
+                        Criteria = new MetadataFilterExpression()
+                        {
+                            Conditions =
+                            {
+                                new MetadataConditionExpression("ObjectTypeCode", MetadataConditionOperator.Equals, entityTypeCode)
+                            }
+                        },
+                        Properties = new MetadataPropertiesExpression()
+                        {
+                            AllProperties = true
+                        },
+                        //AttributeQuery = new AttributeQueryExpression()
+                        //{
+                        //    Criteria = new MetadataFilterExpression(),
+                        //    Properties = new MetadataPropertiesExpression()
+                        //},
+                        //LabelQuery = new LabelQueryExpression()
+                    },
+                    ClientVersionStamp = null,
+                    //DeletedMetadataFilters = DeletedMetadataFilters.OptionSet
+                }));
+
+                return response.EntityMetadata.Any() ? response.EntityMetadata.FirstOrDefault() : null;
+            }
+            catch (Exception e)
+            {
+                throw e;
             }
         }
 
@@ -927,7 +1068,7 @@ namespace CrmSdkLibrary
         /// <param name="servie"></param>
         /// <param name="globalOptionSetName"></param>
         /// <returns></returns>
-        public static OptionSetMetadataBase RetrieveOptionSet(IOrganizationService service, string globalOptionSetName)
+        public static OptionSetMetadata RetrieveOptionSet(IOrganizationService service, string globalOptionSetName)
         {
             try
             {
@@ -936,7 +1077,7 @@ namespace CrmSdkLibrary
                     Name = globalOptionSetName, 
                     RetrieveAsIfPublished = true
                 });
-                return response.OptionSetMetadata;
+                return response.OptionSetMetadata as OptionSetMetadata;
             }
             catch (Exception)
             {
@@ -1293,5 +1434,39 @@ namespace CrmSdkLibrary
             });
         }
 
+        public static IEnumerable<Guid> RetrieveAllMembers(IOrganizationService service, Guid listId)
+        {
+            var qe = new QueryExpression("listmember")
+            {
+                ColumnSet = new ColumnSet(true),
+                Criteria = new FilterExpression()
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("listid", ConditionOperator.Equal, listId)
+                    }
+                },
+                PageInfo = new PagingInfo()
+                {
+                    Count = 5000,
+                    PageNumber = 1,
+                }
+            };
+
+            var ec = service.RetrieveMultiple(qe);
+
+            List<Guid> memberList = ec.Entities.Select(entity => entity.ToCrmValue<EntityReference>("entityid").Id).ToList();
+
+            while (ec.MoreRecords)
+            {
+                qe.PageInfo.PageNumber += 1;
+                qe.PageInfo.PagingCookie = ec.PagingCookie;
+                ec = service.RetrieveMultiple(qe);
+                
+                memberList.AddRange(ec.Entities.Select(entity => entity.ToCrmValue<EntityReference>("entityid").Id));
+            }
+
+            return memberList;
+        }
     }
 }
