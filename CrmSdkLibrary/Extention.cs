@@ -551,7 +551,7 @@ namespace CrmSdkLibrary
                 case "salesliteratureitem": return "";
                 case "salesorder": return "";
                 case "salesorderdetail": return "";
-                case "savedquery": return "";
+                case "savedquery": return "savedqueries";
                 case "savedqueryvisualization": return "";
                 case "sdkmessage": return "";
                 case "sdkmessagefilter": return "";

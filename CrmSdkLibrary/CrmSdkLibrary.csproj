@@ -140,6 +140,8 @@
     <Compile Include="Entities.cs" />
     <Compile Include="Entities\Account.cs" />
     <Compile Include="Entities\Contact.cs" />
+    <Compile Include="Entities\Privilege.cs" />
+    <Compile Include="Entities\SecurityRoles.cs" />
     <Compile Include="Entities\SystemUser.cs" />
     <Compile Include="Entities\SystemView.cs" />
     <Compile Include="Extention.cs" />
