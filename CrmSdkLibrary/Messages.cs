@@ -339,10 +339,10 @@ namespace CrmSdkLibrary
                 var metaData = RetrieveEntity(service, entityLogicalName);
                 if (!metaData.ObjectTypeCode.HasValue)
                 {
-                    throw new Exception("ObjectTypeCode is nUll");
+                    throw new Exception("ObjectTypeCode is null.");
                 }
 
-                return (int) metaData.ObjectTypeCode;
+                return metaData.ObjectTypeCode.Value;
             }
             catch (Exception)
             {
@@ -1467,6 +1467,12 @@ namespace CrmSdkLibrary
             }
 
             return memberList;
+        }
+
+        public static void test(IOrganizationService service)
+        {
+            //var a = (ImportFileUploadResponse)service.Execute(new ImportFileUploadRequest(){})
+            //ImportXmlRequest 
         }
     }
 }
