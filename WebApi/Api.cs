@@ -17,6 +17,8 @@ using Newtonsoft.Json.Linq;
 
 namespace WebApi
 {
+    //azrue active directory에 app 등록 방법
+    //https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/walkthrough-register-app-azure-active-directory
 
     //https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade
     //https://digitalflow.github.io/Xrm-WebApi-Client/WebApiClient.Requests.js.html
@@ -202,17 +204,19 @@ namespace WebApi
                 BaseAddress = new Uri(resourceUrl),
                 Timeout = new TimeSpan(0, 0, 15)
             };
-            var content = new FormUrlEncodedContent(new[]{
+            
+            HttpContent content = new FormUrlEncodedContent(new[]{
                 new KeyValuePair<string, string>("client_id", Api.ClientId),
                 new KeyValuePair<string, string>("resource", resourceUrl),
                 new KeyValuePair<string, string>("username", username),
                 new KeyValuePair<string, string>("password", password),
+                ///new KeyValuePair<string, string>("scope", "https://graph.microsoft.com/.default"),
                 new KeyValuePair<string, string>("client_secret", secret),
                 new KeyValuePair<string, string>("grant_type", "password")
+                //error : currently if set grant_type password, response always return 400, bad_request, idk why
             });
             //content type is application/json
-
-
+            httpClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
 
             using (HttpResponseMessage response = await httpClient.PostAsync($"{authorityUrl}/oauth2/token", content))
             {
@@ -229,6 +233,56 @@ namespace WebApi
 
                     //After work
                     _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = Api.GetAllEntitySetName(httpClient).Result);
+                }
+                else
+                {
+                    throw new Exception(
+                        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                }
+            }
+
+
+            return httpClient;
+        }
+
+        public static async Task<HttpClient> GetWebApiHttpClient2(string resourceUrl,
+            string authorityUrl = "https://login.microsoftonline.com/common", string secret = "")
+        {
+            var httpClient = new HttpClient()
+            {
+                BaseAddress = new Uri(resourceUrl),
+                Timeout = new TimeSpan(0, 0, 15)
+            };
+            HttpContent content = new FormUrlEncodedContent(new[]{
+                new KeyValuePair<string, string>("client_id", Api.ClientId),
+                new KeyValuePair<string, string>("resource", resourceUrl),
+                new KeyValuePair<string, string>("scope", "https://graph.microsoft.com/.default"),
+                new KeyValuePair<string, string>("client_secret", secret),
+                new KeyValuePair<string, string>("grant_type", "client_credentials")
+            });
+            //content type is application/json
+            httpClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+
+            using (HttpResponseMessage response = await httpClient.PostAsync($"{authorityUrl}/oauth2/token", content))
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    var responsebody = response.Content.ReadAsStringAsync().Result;
+                    var accessToken = JObject.Parse(responsebody).GetValue("access_token").ToString();
+                    var accessTokenType = JObject.Parse(responsebody).GetValue("token_type").ToString();
+
+                    httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
+                    httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(accessTokenType, accessToken);
+
+                    //After work
+                    _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = Api.GetAllEntitySetName(httpClient).Result);
+                }
+                else
+                {
+                    throw new Exception(
+                        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                 }
             }
 
@@ -270,6 +324,26 @@ namespace WebApi
 
         //    return httpClient;
         //}
+
+        /// <summary>
+        /// If you are connecting using an secret configured for the application, 
+        /// you will use the ClientCredential class passing in the clientId and clientSecret rather than a UserCredential with userName and password parameters.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/authenticate-oauth#connect-using-the-application-secret"/>
+        /// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
+        /// <param name="secret">If your app is a public client, then the client_secret cannot be included</param>
+        /// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId, https://graph.windows.net/</param>
+        /// <returns></returns>
+        public static async Task<string> GetAccessTokenToken(string resourceUrl, string secret, string authorityUrl = "https://login.microsoftonline.com/common")
+        {
+            //"https://login.microsoftonline.com/<Tenant-ID-here>"
+            AuthenticationContext authContext = new AuthenticationContext(authorityUrl);
+            ClientCredential credential = new ClientCredential(Api.ClientId, secret);
+
+            AuthenticationResult result = await authContext.AcquireTokenAsync(resourceUrl, credential);
+
+            return result.AccessToken;
+        }
 
         /// <summary>
         /// resourceUrl(ResourceUrl)

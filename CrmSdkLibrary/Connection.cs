@@ -18,7 +18,7 @@ namespace CrmSdkLibrary
     public class Connection
     {
         public static IOrganizationService OrgService { get; private set; }
-        public static Type OrgServiceType { get;private set;}
+        public static Type OrgServiceType { get; private set; }
         public static ClientCredentials ClientCredentials;
         private ClientCredentials _deviceCredentials;
 
@@ -151,8 +151,34 @@ namespace CrmSdkLibrary
             OrgService = svc;
             //OrgService = svc.OrganizationWebProxyClient ?? (IOrganizationService)svc.OrganizationServiceProxy;
             OrgServiceType = svc.GetType();
-            
 
+
+            return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
+        }
+
+        /// <summary>
+        /// Connect using a certificate thumbprint
+        /// If you are connecting using a certificate and using the Microsoft.Xrm.Tooling.Connector.CrmServiceClient you can use this
+        /// 인증서의 지문을 이용하여 사용한다,
+        /// win + r  -> certmgr.msc -> 개인용 -> 인증서 선택 -> 제일 밑의 지문(thumbprint)
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/authenticate-oauth#connect-using-a-certificate-thumbprint"/>
+        /// <see cref="https://www.crmviking.com/2018/03/dynamics-365-s2s-oauth-authentication.html"/>
+        /// <param name="certThumbPrintId">e.g.) DC6C689022C905EA5F812B51F1574ED10F256FF6</param>
+        /// <param name="environmentUri">e.g.) https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">  e.g.) 545ce4df-95a6-4115-ac2f-e8e5546e79af</param>
+        public static Guid ConnectService(string certThumbPrintId, string environmentUri, string clientId)
+        {
+            string ConnectionStr = $@"AuthType=Certificate;
+                        SkipDiscovery=true;url={environmentUri};
+                        thumbprint={certThumbPrintId};
+                        ClientId={clientId};
+                        RequireNewInstance=true";
+            CrmServiceClient svc = new CrmServiceClient(ConnectionStr);
+            svc.OrganizationServiceProxy.Authenticate();
+
+            OrgService = svc;
+            OrgServiceType = svc.GetType();
             return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
         }
 
