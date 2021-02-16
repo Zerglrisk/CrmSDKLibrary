@@ -10,8 +10,8 @@ namespace CrmSdkLibrary.Entities
     {
         private static int? _entityTypeCode;
         public static int? EntityTypeCode =>
-            _entityTypeCode ?? (_entityTypeCode = Connection.OrgService != null
-                ? Messages.GetEntityTypeCode(Connection.OrgService, EntityLogicalName)
+            _entityTypeCode ?? (_entityTypeCode = Connection.Service != null
+                ? Messages.GetEntityTypeCode(Connection.Service, EntityLogicalName)
                 : _entityTypeCode);
         public const string EntityLogicalName = "userquery";
         public const string EntitySetPath = "userqueries";
@@ -46,21 +46,11 @@ namespace CrmSdkLibrary.Entities
                     qe.Criteria.Conditions.Add(new ConditionExpression("layoutxml", ConditionOperator.NotNull));
                 }
 
-                var a = Messages.QueryExpressionToFetchXml(service,qe);
-                if (Connection.OrgServiceType == typeof(OrganizationServiceProxy))
-                {
-                    var serviceProxy = (OrganizationServiceProxy)service;
+                var a = Messages.QueryExpressionToFetchXml(service, qe);
 
-                    serviceProxy.CallerId = Messages.GetCurrentUserId(service);
-                    return serviceProxy.RetrieveMultiple(qe);
-                }
-                else if (Connection.OrgServiceType == typeof(CrmServiceClient))
-                {
-                    var client = (CrmServiceClient)service;
-                    client.CallerId = Messages.GetCurrentUserId(service);
-                    return client.RetrieveMultiple(qe);
-                }
-                return service.RetrieveMultiple(qe);
+                var client = (CrmServiceClient)service;
+                client.CallerId = Messages.GetCurrentUserId(service);
+                return client.RetrieveMultiple(qe);
             }
             catch (Exception)
             {

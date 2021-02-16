@@ -1086,6 +1086,40 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
+        /// Contains the data that is needed to retrieve attribute metadata.
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveattributerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="logicalName"></param>
+        /// <param name="attributeName"></param>
+        /// <returns></returns>
+        public static AttributeMetadata RetrieveAttribute(IOrganizationService service, string logicalName ="", string attributeName = "")
+        {
+            try
+            {
+                //if (!string.IsNullOrWhiteSpace(logicalName))
+                //{
+                //    if (string.IsNullOrWhiteSpace(attributeName))
+                //    {
+                //        throw new Exception(;
+                //    }
+                //}
+
+                var response = (RetrieveAttributeResponse)service.Execute(new RetrieveAttributeRequest
+                {
+                    EntityLogicalName = logicalName, //optional
+                    LogicalName = attributeName, //optional
+                    RetrieveAsIfPublished = true,//required
+                });
+                return response.AttributeMetadata;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Contains the data that is needed to retrieve information about all global option sets.
         /// </summary>
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrievealloptionsetsrequest?view=dynamics-general-ce-9"/>
@@ -1467,6 +1501,22 @@ namespace CrmSdkLibrary
             }
 
             return memberList;
+        }
+
+        public static void CloseIncident(IOrganizationService service, Guid targetId, int statusCode)
+        {
+            _ = (CloseIncidentResponse)service.Execute(new CloseIncidentRequest
+            {
+                IncidentResolution = new Entity("incident")
+                {
+                    Id = targetId,
+                   // Attributes =
+                   //{
+                   //    ["Subject"] = subject
+                   //}
+                },
+                Status = new OptionSetValue(statusCode)
+            });
         }
 
         public static void test(IOrganizationService service)

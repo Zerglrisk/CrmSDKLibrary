@@ -11,8 +11,8 @@ namespace CrmSdkLibrary.Entities
     {
         private static int? _entityTypeCode;
         public static int? EntityTypeCode =>
-            _entityTypeCode ?? (_entityTypeCode = Connection.OrgService != null
-                ? Messages.GetEntityTypeCode(Connection.OrgService, EntityLogicalName)
+            _entityTypeCode ?? (_entityTypeCode = Connection.Service != null
+                ? Messages.GetEntityTypeCode(Connection.Service, EntityLogicalName)
                 : _entityTypeCode);
         public const string EntityLogicalName = "systemuser";
         public const string EntitySetPath = "systemusers";
