@@ -9,148 +9,65 @@ using Microsoft.Xrm.Sdk.Query;
 using System.Collections.Generic;
 using System.Net;
 using Microsoft.Xrm.Sdk.Client;
-using System.ServiceModel.Description;
 using Microsoft.Xrm.Tooling.Connector;
-using AuthenticationType = CrmSdkLibrary.Definition.Enum.AuthenticationType;
+using System.ServiceModel.Description;
+using AuthenticationType = Microsoft.Xrm.Tooling.Connector.AuthenticationType;
 
 namespace CrmSdkLibrary
 {
     public class Connection
     {
-        public static IOrganizationService OrgService { get; private set; }
-        public static Type OrgServiceType { get; private set; }
-        public static ClientCredentials ClientCredentials;
-        private ClientCredentials _deviceCredentials;
+        public static CrmServiceClient Service { get; private set; }
 
-        //CrmServiceClient를 사용하여 Microsoft Dynamics 365(온라인 및 온-프레미스) 웹 서비스에 연결한다.
-        /// <summary>
-        /// connect to the Organization service.
-        /// Connect to the Microsoft Dynamics 365 (online & on-premises) web service using the CrmServiceClient
-        /// </summary>
-        /// <see cref="https://msdn.microsoft.com/en-us/library/jj602970.aspx"/>
-        /// <seealso cref="https://rajeevpentyala.com/2016/12/11/code-snippet-connect-to-dynamics-crm-using-organization-service-c/"/>
-        /// <param name="connectionString">Provides service connection information</param>
-        /// <param name="orgName"></param>
-        /// <param name="userName"></param>
-        /// <param name="password"></param>
-        /// <param name="location"></param>
-        public Guid ConnectService(string orgName, string userName, string password, Definition.Enum.Location location)
-        {
-
-            var uri = new System.Uri($"https://{orgName}.api.crm{location.GetStringValue()}.dynamics.com/XRMServices/2011/Organization.svc");
-            #region Old Using Microsoft.Xrm.Tooling.Connector.CrmServiceClient
-            /*
-            //need string connectionString parameter
-            var conn = new CrmServiceClient(connectionString);
-
-            //Need to add reference assembly "System.ServiceModel"
-            _orgService = ((IOrganizationService)conn.OrganizationWebProxyClient != null) ? 
-                (IOrganizationService)conn.OrganizationWebProxyClient : (IOrganizationService)conn.OrganizationServiceProxy;
-            */
-            #endregion
-            //기본인증정보 설정.
-            if (!string.IsNullOrEmpty(userName) || !string.IsNullOrEmpty(password))
-            {
-                if (ClientCredentials == null)
-                    ClientCredentials = new ClientCredentials();
-                ClientCredentials.UserName.UserName = userName;
-                ClientCredentials.UserName.Password = password;
-            }
-
-            if (_deviceCredentials == null)
-                _deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
-
-            var organizationServiceProxy = new OrganizationServiceProxy(uri, null, ClientCredentials, _deviceCredentials);
-
-            OrgService = organizationServiceProxy;
-            OrgServiceType = organizationServiceProxy.GetType();
-
-            return ((WhoAmIResponse)organizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
-        }
-
-        /// <summary>
-        /// Set clientCredential and Connect Server by Client using OrganizationServiceProxy to Custom URL
-        /// </summary>
-        /// <param name="organizationServiceUri"></param>
-        /// <param name="userName"></param>
-        /// <param name="password"></param>
-        /// <returns></returns>
-        public Guid ConnectService(Uri organizationServiceUri, string userName, string password)
-        {
-            #region Old Using Microsoft.Xrm.Tooling.Connector.CrmServiceClient
-
-            /*
-            //need string connectionString parameter
-            var conn = new CrmServiceClient(connectionString);
-
-            //Need to add reference assembly "System.ServiceModel"
-            _orgService = ((IOrganizationService)conn.OrganizationWebProxyClient != null) ? 
-                (IOrganizationService)conn.OrganizationWebProxyClient : (IOrganizationService)conn.OrganizationServiceProxy;
-            */
-
-            #endregion
-
-            //기본인증정보 설정.
-            if (!string.IsNullOrEmpty(userName) || !string.IsNullOrEmpty(password))
-            {
-                if (ClientCredentials == null)
-                    ClientCredentials = new ClientCredentials();
-                ClientCredentials.UserName.UserName = userName;
-                ClientCredentials.UserName.Password = password;
-            }
-
-            if (_deviceCredentials == null)
-                _deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
-
-            OrganizationServiceProxy organizationServiceProxy = null;
-
-
-            ServicePointManager.SecurityProtocol =
-                SecurityProtocolType.Tls12 | SecurityProtocolType.Tls | SecurityProtocolType.Tls11;
-            try
-            {
-                organizationServiceProxy = new OrganizationServiceProxy(organizationServiceUri, null,
-                    ClientCredentials, _deviceCredentials);
-            }
-            catch
-            {
-                organizationServiceProxy = new OrganizationServiceProxy(organizationServiceUri, null,
-                    ClientCredentials, null);
-            }
-
-            organizationServiceProxy.Authenticate();
-
-            OrgService = organizationServiceProxy;
-            OrgServiceType = organizationServiceProxy.GetType();
-
-            return ((WhoAmIResponse)organizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
-        }
-
-        /// <summary>
-        /// Connect Service Using CrmServiceClient
-        /// Crm Online : Office365
-        /// </summary>
-        /// <see href="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/org-service/quick-start-org-service-console-app"/>
-        /// <param name="environmentUri"> e.g. https://test201018.crm5.dynamics.com</param>
-        /// <param name="userName"> e.g. you@yourorg.onmicrosoft.com </param>
-        /// <param name="password"> e.g. y0urp455w0rd </param>
-        /// <param name="authType">  </param>
-        /// <returns></returns>
-        public Guid ConnectService(string environmentUri, string userName, string password,
-            Definition.Enum.AuthenticationType authType = AuthenticationType.Office365) //Microsoft.Xrm.Tooling.Connector.AuthenticationType authType)
+        public Guid ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
         {
             string conn = $@" 
             Url = {environmentUri};
-            AuthType = {authType:G};
-            UserName = {userName};
-            Password = {password};
-            RequireNewInstance = True;"; //GenerateConString();
+            AuthType = {Microsoft.Xrm.Tooling.Connector.AuthenticationType.OAuth:G};
+            Username = {id};
+            Password = {pw};
+            AppId = {clientId};
+            RedirectUri = app://{tenantId};
+            RequireNewInstance = True;
+            LoginPrompt=Auto;"; //GenerateConString();
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             var svc = new CrmServiceClient(conn);
-            svc.OrganizationServiceProxy.Authenticate();
-            OrgService = svc;
+            if (svc.IsReady) //Connection is successful
+            {
+                //실행 대기시간 default 2분 -> 5분
+                svc.OrganizationWebProxyClient.InnerChannel.OperationTimeout = new TimeSpan(0, 5, 0);
+                
+            }
+
+            Service = svc;
             //OrgService = svc.OrganizationWebProxyClient ?? (IOrganizationService)svc.OrganizationServiceProxy;
-            OrgServiceType = svc.GetType();
+
+
+            return ((WhoAmIResponse)svc.Execute(new WhoAmIRequest())).UserId;
+        }
+
+        /// <summary>
+        /// idk it doesn't work (shows 403 error) check more 
+        /// </summary>
+        /// <param name="environmentUri"></param>
+        /// <param name="clientId"></param>
+        /// <param name="clientSecret"></param>
+        /// <returns></returns>
+        public Guid ConnectServiceCLientBased(string environmentUri, string clientId, string clientSecret)
+        {
+            string conn = $@" 
+            Url = {environmentUri};
+            AuthType = {AuthenticationType.ClientSecret:G};
+            ClientId = {clientId};
+            ClientSecret = {clientSecret};
+            RequireNewInstance = True; LoginPrompt=Never;"; //GenerateConString();
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            var svc = new CrmServiceClient(conn);
+            if (svc.IsReady) //Connection is successful
+            { }
+            svc.OrganizationServiceProxy.Authenticate();
+            Service = svc;
+            //OrgService = svc.OrganizationWebProxyClient ?? (IOrganizationService)svc.OrganizationServiceProxy;
 
 
             return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
@@ -177,11 +94,10 @@ namespace CrmSdkLibrary
             CrmServiceClient svc = new CrmServiceClient(ConnectionStr);
             svc.OrganizationServiceProxy.Authenticate();
 
-            OrgService = svc;
-            OrgServiceType = svc.GetType();
+            Service = svc;
             return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
         }
-
+        
         //Similer WhoAmI Method
         /// <summary>
         /// Obtain information about the logged on user from the web service.
@@ -193,12 +109,12 @@ namespace CrmSdkLibrary
             try
             {
 
-                var userid = ((Microsoft.Crm.Sdk.Messages.WhoAmIResponse)OrgService.Execute(new Microsoft.Crm.Sdk.Messages.WhoAmIRequest())).UserId;
+                var userid = ((Microsoft.Crm.Sdk.Messages.WhoAmIResponse)Service.Execute(new Microsoft.Crm.Sdk.Messages.WhoAmIRequest())).UserId;
                 //var systemUser = (SystemUser)_orgService.Retrieve("systemuser", userid,
                 //   new ColumnSet(new string[] { "firstname", "lastname" }));
 
                 //User = "Logged on user is " + systemUser.FirstName + " " + systemUser.LastName + ".";
-                User = OrgService.Retrieve("systemuser", userid, new ColumnSet("fullname")).GetAttributeValue<string>("fullname");
+                User = Service.Retrieve("systemuser", userid, new ColumnSet("fullname")).GetAttributeValue<string>("fullname");
 
             }
             catch (Exception)
@@ -217,7 +133,7 @@ namespace CrmSdkLibrary
             var version = string.Empty;
             try
             {
-                version = ((RetrieveVersionResponse)OrgService.Execute(new RetrieveVersionRequest())).Version;
+                version = ((RetrieveVersionResponse)Service.Execute(new RetrieveVersionRequest())).Version;
 
             }
             catch (Exception)

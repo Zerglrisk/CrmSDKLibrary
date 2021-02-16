@@ -15,7 +15,7 @@ namespace CrmSdkLibrary.Definition
     {
         public static SqlWrapper Convert(string fetchXml, string layoutXml = "")
         {
-            return Convert(Messages.FetchXmlToQueryExpression(Connection.OrgService, fetchXml), layoutXml);
+            return Convert(Messages.FetchXmlToQueryExpression(Connection.Service, fetchXml), layoutXml);
         }
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace CrmSdkLibrary.Definition
 
             #region Columns
 
-            var attrs = Messages.RetrieveEntity(Connection.OrgService, queryExpression.EntityName, EntityFilters.Attributes);
+            var attrs = Messages.RetrieveEntity(Connection.Service, queryExpression.EntityName, EntityFilters.Attributes);
             foreach (var attrMetadata in queryExpression.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x=>x.LogicalName == column)).Where(attr => attr != null))
             {
                 sqlWrapper.Columns.Add(attrMetadata.LogicalName, attrMetadata.DisplayName.UserLocalizedLabel.Label);
@@ -84,7 +84,7 @@ namespace CrmSdkLibrary.Definition
                 JoinToAttributeName = entity.LinkToAttributeName,
                 Alias = entity.EntityAlias
             };
-            var attrs = Messages.RetrieveEntity(Connection.OrgService, entity.LinkToEntityName, EntityFilters.Attributes);
+            var attrs = Messages.RetrieveEntity(Connection.Service, entity.LinkToEntityName, EntityFilters.Attributes);
             foreach (var attrMetadata in entity.Columns.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column)).Where(attr => attr != null))
             {
                 sqlJoinWrapper.Columns.Add(attrMetadata.LogicalName, attrMetadata.DisplayName.UserLocalizedLabel.Label);

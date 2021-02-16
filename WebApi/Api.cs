@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using CrmSdkLibrary.Definition;
+using CrmSdkLibrary.Definition.Model;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.IdentityModel.Clients.ActiveDirectory.Extensibility;
 using Microsoft.Xrm.Sdk;
@@ -14,6 +15,7 @@ using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WebApi.Definition.Model;
 
 namespace WebApi
 {
@@ -26,6 +28,10 @@ namespace WebApi
     //POSTman
     //https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/webapi/setup-postman-environment?view=dynamics-ce-odata-9
     //http://techcommunity.softwareag.com/pwiki/-/wiki/Main/Register%20Dynamics%20CRM%20App%20with%20Azure%20for%20OAuth%202.0%20Authentication
+
+    //httpclient
+    // https://github.com/anilvem1/CrmWebApiOAuth
+
     public class Api
     {
         //https://stackoverflow.com/questions/50795500/authenticate-to-dynamics-365-using-adal-v3-using-clientid/51305491
@@ -158,8 +164,10 @@ namespace WebApi
 
 
         /// <summary>
-        /// 
+        /// client credential need application user
+        /// if dont have application user, when try call others(e.g.)whoami) will return 403(forbidden) error)
         /// </summary>
+        /// <see cref="https://community.dynamics.com/crm/b/magnetismsolutionscrmblog/posts/dynamics-365-online-authenticate-with-client-credentials"/>
         /// <see cref="https://www.c-sharpcorner.com/article/generate-access-token-for-dynamics-365-single-tenant-server-to-server-authentica/"/>
         /// <param name="secret"></param>
         /// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
@@ -204,7 +212,7 @@ namespace WebApi
                 BaseAddress = new Uri(resourceUrl),
                 Timeout = new TimeSpan(0, 0, 15)
             };
-            
+
             HttpContent content = new FormUrlEncodedContent(new[]{
                 new KeyValuePair<string, string>("client_id", Api.ClientId),
                 new KeyValuePair<string, string>("resource", resourceUrl),
@@ -213,16 +221,16 @@ namespace WebApi
                 ///new KeyValuePair<string, string>("scope", "https://graph.microsoft.com/.default"),
                 new KeyValuePair<string, string>("client_secret", secret),
                 new KeyValuePair<string, string>("grant_type", "password")
-                //error : currently if set grant_type password, response always return 400, bad_request, idk why
             });
             //content type is application/json
             httpClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
 
             using (HttpResponseMessage response = await httpClient.PostAsync($"{authorityUrl}/oauth2/token", content))
             {
+                //error : possible 400 error if set grant_type password when you have not permmision or wrong password etc that response always return 400, bad_request, idk why
                 if (response.IsSuccessStatusCode)
                 {
-                    var responsebody = response.Content.ReadAsStringAsync().Result;
+                    var responsebody = await response.Content.ReadAsStringAsync();
                     var accessToken = JObject.Parse(responsebody).GetValue("access_token").ToString();
                     var accessTokenType = JObject.Parse(responsebody).GetValue("token_type").ToString();
 
@@ -245,6 +253,16 @@ namespace WebApi
             return httpClient;
         }
 
+        /// <summary>
+        /// client credential need application user
+        /// if dont have application user, in ropc response is 200 but when try call others(e.g.)whoami) will return 403(forbidden) error)
+        /// </summary>
+        /// <see cref="https://community.dynamics.com/crm/b/magnetismsolutionscrmblog/posts/dynamics-365-online-authenticate-with-client-credentials"/>
+        /// <see cref="https://www.c-sharpcorner.com/article/generate-access-token-for-dynamics-365-single-tenant-server-to-server-authentica/"/>
+        /// <param name="resourceUrl"></param>
+        /// <param name="authorityUrl"></param>
+        /// <param name="secret"></param>
+        /// <returns></returns>
         public static async Task<HttpClient> GetWebApiHttpClient2(string resourceUrl,
             string authorityUrl = "https://login.microsoftonline.com/common", string secret = "")
         {
@@ -256,7 +274,7 @@ namespace WebApi
             HttpContent content = new FormUrlEncodedContent(new[]{
                 new KeyValuePair<string, string>("client_id", Api.ClientId),
                 new KeyValuePair<string, string>("resource", resourceUrl),
-                new KeyValuePair<string, string>("scope", "https://graph.microsoft.com/.default"),
+                //new KeyValuePair<string, string>("scope", "openid offline_access admin.services.crm.dynamics.com/user_impersonation"), //"https://graph.microsoft.com/.default"),
                 new KeyValuePair<string, string>("client_secret", secret),
                 new KeyValuePair<string, string>("grant_type", "client_credentials")
             });
@@ -267,7 +285,7 @@ namespace WebApi
             {
                 if (response.IsSuccessStatusCode)
                 {
-                    var responsebody = response.Content.ReadAsStringAsync().Result;
+                    var responsebody = await response.Content.ReadAsStringAsync();
                     var accessToken = JObject.Parse(responsebody).GetValue("access_token").ToString();
                     var accessTokenType = JObject.Parse(responsebody).GetValue("token_type").ToString();
 
@@ -892,6 +910,49 @@ namespace WebApi
             }
         }
 
+        public static async Task<System.IO.Stream> GetImageBlob(HttpClient httpClient, string targetId)
+        {
+            try
+            {
+
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                using (var response =
+                    await httpClient.GetAsync("api/data/v9.0/msdyn_richtextfiles(" + targetId + ")/msdyn_imageblob/$value?size=full", HttpCompletionOption.ResponseContentRead))
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception(
+                            "StatusCode : " + response.StatusCode + ", ReasonPhrase : " + response.ReasonPhrase);
+                    }
+
+                    //var jObject = JsonSerializer.Deserialize<JsonDocument>(await
+                    //    response.Content.ReadAsStringAsync(), new JsonSerializerOptions() { WriteIndented = true });
+                    //var stream = new MemoryStream();
+                    //var writer = new Utf8JsonWriter(stream);
+                    //jObject.RootElement.WriteTo(writer);
+                    ////https://devblogs.microsoft.com/dotnet/try-the-new-system-text-json-apis/
+                    ////https://docs.microsoft.com/ko-kr/dotnet/standard/serialization/system-text-json-how-to
+                    ////https://github.com/dotnet/runtime/tree/master/src/libraries/System.Text.Json
+                    //writer.WriteStartObject();
+
+                    var jObject = await response.Content.ReadAsByteArrayAsync();
+                    System.IO.Stream stream = new System.IO.MemoryStream(jObject);
+
+                    return stream;//jObject;
+                    //delegate (EntityMetadata metadata) { return metadata.LogicalName; },
+                    //delegate (EntityMetadata metadata) { return metadata.EntitySetName; });
+                }
+
+                //First obtain the user's ID.
+                //Guid myUserId = (Guid)whoAmIresp["UserId"];
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         public void ErrorCheck(ApiException error)
         {
             if (error.InnerError.Type == "Microsoft.OData.ODataException")
@@ -899,9 +960,58 @@ namespace WebApi
                 //throw new Microsoft.OData.ODataException();
             }
         }
+
+        /// <summary>
+        /// For Plugins Debuging
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/powerapps/developer/data-platform/debug-plug-in"/>
+        /// <param name="httpClient"></param>
+        /// <returns></returns>
+        public static async Task<PluginTraceLogs> GetPluginTraceLogs(HttpClient httpClient)
+        {
+            try
+            {
+                ////api/data/v9.0/plugintracelogs?$select=messageblock&$filter=typename eq 'BasicPlugin.FollowUpPlugin'
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                using (var response = await httpClient.GetAsync($@"api/data/v9.0/plugintracelogs?$select=messageblock&$filter=typename eq 'BasicPlugin.FollowUpPlugin')", HttpCompletionOption.ResponseContentRead))
+                {
+                    //오류 페이지 내용을 가져오므로 정말 안될 때 쓰여야한다
+                    //if (!response.IsSuccessStatusCode)
+                    //{
+                    //    throw new Exception(
+                    //        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    //}R
+
+                    var jObj = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+                    jObj.Add("ODataContext", jObj["@odata.context"]);
+                    jObj.Remove("@odata.context");
+                    //jObj.Add("value",jObj["Detail"]);
+                    var parsed = jObj.ToObject<JObjectParsed>();
+
+                    if (parsed.Error != null)
+                    {
+                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
+                    }
+
+                    //Count 부분 때문에 오브젝트로 변경이 안됨.
+                    var dd = jObj["Detail"] as JObject;
+
+                    var whoAmI = JsonConvert.DeserializeObject<JObject>(await
+                        response.Content.ReadAsStringAsync());
+                    whoAmI.Add("ODataContext", whoAmI["@odata.context"]);
+                    whoAmI.Remove("@odata.context");
+
+                    return whoAmI.ToObject<PluginTraceLogs>();
+                    //return parsed.value.First.ObjectTypeCode;
+                }
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
     }
-
-
     public class ODataResponse<T>
 
     {
