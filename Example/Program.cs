@@ -1,29 +1,9 @@
-﻿using CrmSdkLibrary;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Organization;
-using Microsoft.Xrm.Sdk.Query;
-using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.IdentityModel.Tokens;
-using System.Linq;
-using System.Net;
+﻿using System;
 using System.Net.Http;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
-using System.Xml;
-using CrmSdkLibrary.Definition;
 using CrmSdkLibrary.Definition.Enum;
 using CrmSdkLibrary.Entities;
-using Microsoft.IdentityModel.Clients.ActiveDirectory.Extensibility;
-using Microsoft.Xrm.Sdk;
 using WebApi;
-using AuthenticationContext = Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext;
-using AuthenticationType = CrmSdkLibrary.Definition.Enum.AuthenticationType;
 
 namespace Example
 {
@@ -32,22 +12,16 @@ namespace Example
         static void Main(string[] args)
         {
             CrmSdkLibrary.Connection conn = new CrmSdkLibrary.Connection();
-            //Login Case 1
-            //var myid = conn.ConnectService("tester200420", "tester200420@tester200420.onmicrosoft.com", "tester201018@",
-            //    Location.NorthAmerica);
-            //Login Case 2
-            var myid = conn.ConnectService(new Uri("https://avk-onex-service-test/CRM/XRMServices/2011/Organization.svc"),
-                "avk-onex\\crmadmin", "Password#1");
-            //Login Case 3
-            //var myid = conn.ConnectService("https://tester200420.crm.dynamics.com",
-            //    "tester200420@tester200420.onmicrosoft.com", "tester201018@", AuthenticationType.Office365);
-            Console.WriteLine(myid);
-            //var cc = Messages.RetrieveAllEntities(Connection.OrgService);
-            //var count = 0;
+            var myid = conn.ConnectServiceOAuth("https://test.crm5.dynamics.com", "clientid", "id", "pw", "tenantid");
+
 
             #region SecurityRoles
 
+
+
             var role = new SecurityRoles();
+
+
             var privilegesRole = new Privilege();
             //var list = role.RetrieveSecurityRolesList(Connection.OrgService);
 
@@ -57,19 +31,19 @@ namespace Example
 
             //}
 
-            var currentPrivileges = role.RetrievePrivilegesRole(Connection.OrgService, new Guid("84e8f3e2-de6c-ea11-b817-005056a1b19b"));
+            //var currentPrivileges = role.RetrievePrivilegesRole(Connection.OrgService, new Guid("84e8f3e2-de6c-ea11-b817-005056a1b19b"));
 
-            //foreach (var privilege in privileges)
+            ////foreach (var privilege in privileges)
+            ////{
+            ////    Console.WriteLine($"{privilege.PrivilegeId}({privilege.Depth})");
+            ////}
+
+            //var priv = privilegesRole.RetrievePrivileges(Connection.OrgService, currentPrivileges);
+            //foreach (var entity in priv)
             //{
-            //    Console.WriteLine($"{privilege.PrivilegeId}({privilege.Depth})");
+            //    if(entity[Privilege.PrimaryKeyAttribute].ToString().ToLower().Contains("contact"))
+            //    Console.WriteLine($"{entity.Id}({entity[Privilege.PrimaryKeyAttribute]})");
             //}
-
-            var priv = privilegesRole.RetrievePrivileges(Connection.OrgService, currentPrivileges);
-            foreach (var entity in priv)
-            {
-                if(entity[Privilege.PrimaryKeyAttribute].ToString().ToLower().Contains("contact"))
-                Console.WriteLine($"{entity.Id}({entity[Privilege.PrimaryKeyAttribute]})");
-            }
 
             #endregion
 
@@ -151,7 +125,6 @@ namespace Example
             ////}
 
             Program app = new Program();
-            Api.SetClientId("65ca5727-7553-4436-b291-690eb89adea8");
             Task.WaitAll(Task.Run(async () => await app.RunAsync()));
 
             //Console.WriteLine(converted.GenerateSql());
@@ -161,20 +134,25 @@ namespace Example
 
         public async Task RunAsync()
         {
-            //HttpClient client = CrmSdkLibrary.Api.getCrmAPIHttpClient("tester200317@tester200317.onmicrosoft.com", "tester201018@",
+            Api.SetClientId("clientid");
+            //HttpClient client = Api.getCrmAPIHttpClient("tester200317@tester200317.onmicrosoft.com", "tester201018@",
             //    "test191020.onmicrosoft.com", "https://tester200317.crm5.dynamics.com/");
-            var tenantid = Api.GetTenantId("https://tester200420.crm.dynamics.com");
-            HttpClient client = await Api.GetWebApiHttpClient("tester200420@tester200420.onmicrosoft.com",
-                "tester201018@",
-                "https://tester200420.crm.dynamics.com",
-                "https://login.microsoftonline.com/1fd4863a-b5bc-42b2-9617-56a7d222fad7", secret: "E:6-@t12F_E2ITO6Xaz1N0?TAdDzz6_W");
+            var tenantid = Api.GetTenantId("https://test.crm5.dynamics.com/");
+            HttpClient client = await Api.GetWebApiHttpClient("id",
+                "pw",
+                "https://test.crm5.dynamics.com/",
+                $"https://login.microsoftonline.com/{tenantid}", secret: "secret");
 
-            var cli = await Api.GetWebApiHttpClient("E:6-@t12F_E2ITO6Xaz1N0?TAdDzz6_W",
-                "https://tester200420.crm.dynamics.com",
-                "https://login.microsoftonline.com/1fd4863a-b5bc-42b2-9617-56a7d222fad7");
+            //var aa = await Api.GetImageBlob(client, "8deff917-1035-eb11-a813-000d3a085bd4");
+            //Console.WriteLine(aa);
+            //var id = await Api.GetAccessTokenToken("https://text201218.crm5.dynamics.com", "Be-m71px1YC-rsH4bCQUyoK19LEFXX.M.H", "https://login.microsoftonline.com/19098be0-47c0-4627-a814-f69548323a3d");
+            //var client = await Api.GetWebApiHttpClient(
+            //    resourceUrl: "https://text201218.crm5.dynamics.com",
+            //    authorityUrl: "https://login.microsoftonline.com/19098be0-47c0-4627-a814-f69548323a3d", secret: "E1p3~8~~1i46Id7QSflzmeZcRHRuE-Usy-");
+
             //Load All EntiySetName To Memory
-            var entitySetPaths = Api.EntitySetPaths;
-            //Console.WriteLine(await Api.User(client));
+            //var entitySetPaths = Api.EntitySetPaths;
+            Console.WriteLine(await Api.User(client));
 
             //var organizationDetail = await Api.GetCurrentOrganization(client, EndpointAccessType.Default);
             //var qe = new QueryExpression("opportunity") {ColumnSet = new ColumnSet(true)};

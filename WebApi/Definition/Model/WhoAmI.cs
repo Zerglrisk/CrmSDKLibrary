@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CrmSdkLibrary.Definition
+namespace CrmSdkLibrary.Definition.Model
 {
     /// <summary>
     /// Use For Web API

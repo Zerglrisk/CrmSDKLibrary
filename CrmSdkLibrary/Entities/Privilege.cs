@@ -13,8 +13,8 @@ namespace CrmSdkLibrary.Entities
     {
         private int? _entityTypeCode;
         public int? EntityTypeCode =>
-            _entityTypeCode ?? (_entityTypeCode = Connection.OrgService != null
-                ? Messages.GetEntityTypeCode(Connection.OrgService, EntityLogicalName)
+            _entityTypeCode ?? (_entityTypeCode = Connection.Service != null
+                ? Messages.GetEntityTypeCode(Connection.Service, EntityLogicalName)
                 : _entityTypeCode);
         public const string EntityLogicalName = "privilege";
         public const string EntitySetPath = "privileges";

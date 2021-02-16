@@ -15,7 +15,7 @@ namespace CrmSdkLibrary
 
         public static void UpdateBulk(EntityCollection ec, bool continueOnError = true)
         {
-            var service = Connection.OrgService;
+            var service = Connection.Service;
 
             var loopCount = (ec.Entities.Count / 1000) + (ec.Entities.Count % 1000 != 0 ? 1 : 0);
 
@@ -82,7 +82,7 @@ namespace CrmSdkLibrary
 
         public static void CreateBulk(EntityCollection ec, bool continueOnError = true)
         {
-            var service = Connection.OrgService;
+            var service = Connection.Service;
 
             var loopCount = (ec.Entities.Count / 1000) + (ec.Entities.Count % 1000 != 0 ? 1 : 0);
 
@@ -146,7 +146,7 @@ namespace CrmSdkLibrary
 
         public static void DeleteBulk(EntityCollection ec, bool continueOnError = true)
         {
-            var service = Connection.OrgService;
+            var service = Connection.Service;
 
             var loopCount = (ec.Entities.Count / 1000) + (ec.Entities.Count % 1000 != 0 ? 1 : 0);
 
@@ -219,7 +219,7 @@ namespace CrmSdkLibrary
         /// <param name="continueOnError"></param>
         public static void AddMemberList(Guid listId, EntityCollection ec,bool continueOnError = true)
         {
-            var service = Connection.OrgService;
+            var service = Connection.Service;
             try
             {
                 var loopCount= (ec.Entities.Count / 1000) + (ec.Entities.Count % 1000 != 0 ? 1 : 0);

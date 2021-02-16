@@ -39,7 +39,7 @@ namespace CrmSdkLibrary
             try
             {
                 //retrieve the parent record
-                var parentRecord = CrmSdkLibrary.Connection.OrgService.Retrieve(logicalName, parentRecordId, new ColumnSet(true));
+                var parentRecord = CrmSdkLibrary.Connection.Service.Retrieve(logicalName, parentRecordId, new ColumnSet(true));
 
                 //Clone the Account Record using Clone function;
                 //Clone function takes a bool parameter which relates the Related Entities of the parent
@@ -68,7 +68,7 @@ namespace CrmSdkLibrary
                 }
 
                 //create the cloned record and return child account ID
-                return CrmSdkLibrary.Connection.OrgService.Create(childRecord);
+                return CrmSdkLibrary.Connection.Service.Create(childRecord);
 
 
             }
@@ -111,7 +111,7 @@ namespace CrmSdkLibrary
                 filter.AddCondition($"{logicalName.ToLower()}id",ConditionOperator.Equal,recordId);
             }
             qe.Criteria.Filters.Add(filter);
-            var retrieve = CrmSdkLibrary.Connection.OrgService.RetrieveMultiple(qe);
+            var retrieve = CrmSdkLibrary.Connection.Service.RetrieveMultiple(qe);
 
             foreach (var childRecord in retrieve.Entities)
             {
@@ -138,7 +138,7 @@ namespace CrmSdkLibrary
                 }
 
                 //Don't Use Bulk For get Ids 
-                clonedRecordIds.Add(CrmSdkLibrary.Connection.OrgService.Create(childRecord));
+                clonedRecordIds.Add(CrmSdkLibrary.Connection.Service.Create(childRecord));
             }
             return clonedRecordIds;
         }
