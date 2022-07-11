@@ -9,9 +9,8 @@ using Microsoft.Xrm.Sdk.Query;
 using System.Collections.Generic;
 using System.Net;
 using Microsoft.Xrm.Sdk.Client;
+using System.Threading.Tasks;
 using Microsoft.Xrm.Tooling.Connector;
-using System.ServiceModel.Description;
-using AuthenticationType = Microsoft.Xrm.Tooling.Connector.AuthenticationType;
 
 namespace CrmSdkLibrary
 {
@@ -19,7 +18,17 @@ namespace CrmSdkLibrary
     {
         public static CrmServiceClient Service { get; private set; }
 
-        public Guid ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
+        /// <summary>
+        /// Connect with specific crm user.
+        /// You must set AllowPublicClient in AAD, AppRegistration, Manifest.
+        /// </summary>
+        /// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">from aad, app registration</param>
+        /// <param name="id">crm id</param>
+        /// <param name="pw">crm pw</param>
+        /// <param name="tenantId">from aad, app registration </param>
+        /// <returns></returns>
+        public (CrmServiceClient, Guid) ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
         {
             string conn = $@" 
             Url = {environmentUri};
@@ -29,48 +38,62 @@ namespace CrmSdkLibrary
             AppId = {clientId};
             RedirectUri = app://{tenantId};
             RequireNewInstance = True;
-            LoginPrompt=Auto;"; //GenerateConString();
+            LoginPrompt=Never;"; //GenerateConString();
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+
+            //실행 대기시간 default 2분 -> 5분
+            CrmServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+
             var svc = new CrmServiceClient(conn);
             if (svc.IsReady) //Connection is successful
             {
-                //실행 대기시간 default 2분 -> 5분
-                svc.OrganizationWebProxyClient.InnerChannel.OperationTimeout = new TimeSpan(0, 5, 0);
                 
+            }
+            else
+            {
+                throw svc.LastCrmException;
             }
 
             Service = svc;
-            //OrgService = svc.OrganizationWebProxyClient ?? (IOrganizationService)svc.OrganizationServiceProxy;
 
-
-            return ((WhoAmIResponse)svc.Execute(new WhoAmIRequest())).UserId;
+            return (svc, svc.GetMyCrmUserId());
         }
 
         /// <summary>
-        /// idk it doesn't work (shows 403 error) check more 
+        /// If you are connecting using an secret configured for the application, you will use the "ClientCredential" class passing in the 'clientId' and 'clientSecret' rather than a "UserCredential" with 'userName' and 'password' parameters.
+        /// it need application user on CRM(have to create)
         /// </summary>
-        /// <param name="environmentUri"></param>
-        /// <param name="clientId"></param>
-        /// <param name="clientSecret"></param>
+        /// <see href="https://www.ashishvishwakarma.com/Connect-CrmServiceClient-Authenticate-Azure-AD-ClientId-ClientSecret/"/>
+        /// <see href="https://docs.microsoft.com/en-us/powerapps/developer/data-platform/authenticate-oauth#connect-using-the-application-secret"/>
+        /// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">from aad, app registration</param>
+        /// <param name="clientSecret">from aad, app registration</param>
         /// <returns></returns>
-        public Guid ConnectServiceCLientBased(string environmentUri, string clientId, string clientSecret)
+        public (CrmServiceClient, Guid) ConnectServiceApplicationUser(string environmentUri, string clientId, string clientSecret)
         {
             string conn = $@" 
             Url = {environmentUri};
-            AuthType = {AuthenticationType.ClientSecret:G};
+            AuthType = {Microsoft.Xrm.Tooling.Connector.AuthenticationType.ClientSecret:G};
             ClientId = {clientId};
             ClientSecret = {clientSecret};
             RequireNewInstance = True; LoginPrompt=Never;"; //GenerateConString();
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+
+            //실행 대기시간 default 2분 -> 5분
+            CrmServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+
             var svc = new CrmServiceClient(conn);
             if (svc.IsReady) //Connection is successful
-            { }
-            svc.OrganizationServiceProxy.Authenticate();
+            {
+
+            }
+            else
+            {
+                throw svc.LastCrmException;
+            }
             Service = svc;
-            //OrgService = svc.OrganizationWebProxyClient ?? (IOrganizationService)svc.OrganizationServiceProxy;
 
-
-            return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
+            return (svc, svc.GetMyCrmUserId());
         }
 
         /// <summary>
@@ -79,21 +102,35 @@ namespace CrmSdkLibrary
         /// 인증서의 지문을 이용하여 사용한다,
         /// win + r  -> certmgr.msc -> 개인용 -> 인증서 선택 -> 제일 밑의 지문(thumbprint)
         /// </summary>
-        /// <see cref="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/authenticate-oauth#connect-using-a-certificate-thumbprint"/>
-        /// <see cref="https://www.crmviking.com/2018/03/dynamics-365-s2s-oauth-authentication.html"/>
+        /// <see href="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/authenticate-oauth#connect-using-a-certificate-thumbprint"/>
+        /// <see href="https://www.crmviking.com/2018/03/dynamics-365-s2s-oauth-authentication.html"/>
         /// <param name="certThumbPrintId">e.g.) DC6C689022C905EA5F812B51F1574ED10F256FF6</param>
         /// <param name="environmentUri">e.g.) https://yourorg.crm.dynamics.com</param>
         /// <param name="clientId">  e.g.) 545ce4df-95a6-4115-ac2f-e8e5546e79af</param>
-        public static Guid ConnectService(string certThumbPrintId, string environmentUri, string clientId)
+        public static Guid ConnectServiceThumbprint(string certThumbPrintId, string environmentUri, string clientId)
         {
             string ConnectionStr = $@"AuthType=Certificate;
                         SkipDiscovery=true;url={environmentUri};
                         thumbprint={certThumbPrintId};
                         ClientId={clientId};
                         RequireNewInstance=true";
-            CrmServiceClient svc = new CrmServiceClient(ConnectionStr);
-            svc.OrganizationServiceProxy.Authenticate();
 
+            ////실행 대기시간 default 2분 -> 5분
+            //CrmServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+            CrmServiceClient svc = new CrmServiceClient(ConnectionStr);
+            
+            if (svc.IsReady)
+            {
+                //실행 대기시간 default 2분 -> 5분
+                //if (svc.OrganizationWebProxyClient != null)
+                //{
+                //    svc.OrganizationWebProxyClient.InnerChannel.OperationTimeout = new TimeSpan(0, 5, 0);
+                //}
+                //else if(svc.OrganizationServiceProxy != null)
+                //{
+                //    svc.OrganizationServiceProxy.Timeout = new TimeSpan(0, 5, 0);
+                //}
+            }
             Service = svc;
             return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
         }
@@ -120,6 +157,7 @@ namespace CrmSdkLibrary
             catch (Exception)
             {
                 //will add logger
+                throw;
             }
             return User;
         }
@@ -128,8 +166,14 @@ namespace CrmSdkLibrary
         /// Retrieve the version of Microsoft Dynamics CRM.
         /// </summary>
         /// <returns></returns>
-        public string RetrieveCRMVersion()
+        [Obsolete("RetrieveCRMVersion is Deprecated. Please use CrmServiceClient.ConnectedOrgVersion")]
+        public string RetrieveCRMVersion(CrmServiceClient service = null)
         {
+            if(service == null)
+            {
+                service = Service;
+            }
+            //return Service.ConnectedOrgVersion.ToString();
             var version = string.Empty;
             try
             {
@@ -234,6 +278,125 @@ namespace CrmSdkLibrary
             }
 
             return authCredentials;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see href="https://gp23.com.au/2019/01/18/d365-authentication-connect-my-apps/"/>
+        public class AuthHook : Microsoft.Xrm.Tooling.Connector.IOverrideAuthHookWrapper
+        {
+            /// <summary>
+            /// In memory cache of access tokens
+            /// </summary>
+            Dictionary<string, Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult> accessTokens = new Dictionary<string, Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult>();
+            private string EnvironmentUrl { get; set; }
+            /// <summary>
+            ///  This is the Application ID from your App Registration
+            /// </summary>
+            private string ClientId { get; set; }   
+            /// <summary>
+            /// The Client Secret from your App Registration
+            /// </summary>
+            private string ClientSecret { get; set; } 
+            private string AADInstance { get; set; }
+            /// <summary>
+            /// The GUID of your Azure Tenant ID. See the article above for details on finding this value.
+            /// </summary>
+            private string TenantId { get; set; }    
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="environmentUrl">"https://myD365instance.crm6.dynamics.com"</param>
+            /// <param name="clientId">00000000-0000-0000-0000-000000000001/param>
+            /// <param name="clientSecret">the client secret for your app</param>
+            /// <param name="tenantId">00000000-0000-0000-0000-000000000001</param>
+            /// <param name="aadInstance">https://login.microsoftonline.com/</param>
+            public AuthHook(string environmentUrl, string clientId, string clientSecret, string tenantId, string aadInstance = "https://login.microsoftonline.com/")
+            {
+                this.EnvironmentUrl = environmentUrl;
+                this.ClientId = clientId;
+                this.ClientSecret = clientSecret;
+                this.TenantId = tenantId;
+                this.AADInstance = aadInstance;
+            }
+
+            public void AddAccessToken(Uri orgUri, Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult accessToken)
+            {
+                // Access tokens can be matched on the hostname,
+                // different endpoints in the same organization can use the same access token
+                accessTokens[orgUri.Host] = accessToken;
+            }
+
+            public string GetAuthToken(Uri connectedUri)
+            {
+                // Check if you have an access token for this host
+                if (accessTokens.ContainsKey(connectedUri.Host) && accessTokens[connectedUri.Host].ExpiresOn > DateTime.Now)
+                {
+                    return accessTokens[connectedUri.Host].AccessToken;
+                }
+                else
+                {
+                    accessTokens[connectedUri.Host] = GetAccessTokenFromAzureADAsync(connectedUri).Result;
+                }
+                return accessTokens[connectedUri.Host].AccessToken;
+            }
+
+            private async Task<Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult> GetAccessTokenFromAzureADAsync(Uri orgUrl)
+            {
+                var clientcred = new Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential(this.ClientId, this.ClientSecret);
+                var authenticationContext = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(this.AADInstance + this.TenantId);
+                var authenticationResult = await authenticationContext.AcquireTokenAsync(this.EnvironmentUrl, clientcred);
+                
+                // Save into memory
+                accessTokens[new Uri(this.EnvironmentUrl).Host] = authenticationResult;
+
+                return authenticationResult;
+            }
+
+            public CrmServiceClient Connect()
+            {
+                // Register the hook with the CrmServiceClient
+                CrmServiceClient.AuthOverrideHook = this;
+
+                // Create a new instance of CrmServiceClient, pass your organization url and make sure useUniqueInstance = true!
+                var client = new CrmServiceClient(new Uri(this.EnvironmentUrl), useUniqueInstance: true);
+
+                // Test with a basic WhoAmI request first
+                OrganizationRequest request2 = new OrganizationRequest()
+                {
+                    RequestName = "WhoAmI"
+                };
+                OrganizationResponse response2 = client.Execute(request2);
+
+                Entity entity1 = client.Retrieve("account", new Guid("92348762-0D32-E611-80EC-B38A27891203"), new Microsoft.Xrm.Sdk.Query.ColumnSet("name", "preferredcontactmethodcode"));
+                return null;
+            }
+
+            public Microsoft.Xrm.Sdk.WebServiceClient.OrganizationWebProxyClient Connects()
+            {
+                var requestedToken = this.GetAuthToken(new Uri(EnvironmentUrl));
+
+                using (var webProxyClient = new Microsoft.Xrm.Sdk.WebServiceClient.OrganizationWebProxyClient(new Uri($"{this.EnvironmentUrl}/XRMServices/2011/Organization.svc/web"), false))
+                {
+                    webProxyClient.HeaderToken = requestedToken;
+
+                    // Test with a basic WhoAmI request first
+                    OrganizationRequest request1 = new OrganizationRequest()
+                    {
+                        RequestName = "WhoAmI"
+                    };
+                    OrganizationResponse response1 = webProxyClient.Execute(request1);
+
+                    // We are also able to create an instance of the OrganizationService and run queries against it
+                    IOrganizationService organizationService = webProxyClient as IOrganizationService;
+
+                    Entity entity = organizationService.Retrieve("account", new Guid("92348762-0D32-E611-80EC-B38A27891203"), new Microsoft.Xrm.Sdk.Query.ColumnSet("name", "preferredcontactmethodcode"));
+
+                }
+                return null;
+            }
         }
     }
 }

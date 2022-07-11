@@ -1,9 +1,8 @@
 ﻿using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Tooling.Connector;
 
 // How to Make AutoGenerate File  :
 //  .\CrmSvcUtil.exe /url:https://orgname.api.crm5.dynamics.com/XRMServices/2011/Organization.svc /username:domain\crmadmin /password:pass /out:CRMSdkTypes.cs
@@ -8588,12 +8587,13 @@ namespace CrmSdkLibrary.Entities
             }
         }
 
-        public string GetCurrentUserName(IOrganizationService service)
+        public string GetCurrentUserName(CrmServiceClient service)
         {
             try
             {
                 // Get a system user
-                var userId = Messages.GetCurrentUserId(service);
+                //var userId = Messages.GetCurrentUserId(service);
+                var userId = service.GetMyCrmUserId();
 
                 // Lookup User
                 return GetCurrentUserName(service, userId);
