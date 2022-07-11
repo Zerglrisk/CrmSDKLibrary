@@ -1,14 +1,9 @@
-﻿
-using Microsoft.Crm.Sdk.Messages;
+﻿using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Tooling.Connector;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.ServiceModel.Description;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CrmSdkLibrary
 {
@@ -66,8 +61,6 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public Guid ConnectService(Uri organizationServiceUri, string userName, string password)
         {
-            return Guid.Empty;
-
             //기본인증정보 설정.
             if (!string.IsNullOrEmpty(userName) || !string.IsNullOrEmpty(password))
             {

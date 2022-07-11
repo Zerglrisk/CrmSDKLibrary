@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -7,14 +8,6 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using CrmSdkLibrary.Definition;
 using CrmSdkLibrary.Definition.Model;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Microsoft.IdentityModel.Clients.ActiveDirectory.Extensibility;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Metadata;
-using Microsoft.Xrm.Sdk.Organization;
-using Microsoft.Xrm.Sdk.Query;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using WebApi.Definition.Model;
 
 namespace WebApi
@@ -668,16 +661,17 @@ namespace WebApi
                         //    $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                     }
 
-                    var jObj = JsonConvert.DeserializeObject<JObject>(await
+                    var jObj = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(await
                         response.Content.ReadAsStringAsync());
-                    jObj.Add("ODataContext", jObj["@odata.context"]);
-                    jObj.Remove("@odata.context");
-                    var parsed = jObj.ToObject<JObjectParsed>();
+                    //jObj.Add("ODataContext", jObj["@odata.context"]);
+                    //jObj.Remove("@odata.context");
+                    //var parsed = jObj.ToObject<JObjectParsed>();
 
-                    if (parsed.Error != null)
-                    {
-                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
-                    }
+                    //if (parsed.Error != null)
+                    //{
+                    //    throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
+                    //}
+
                     //{"@odata.context":"https://test201018.crm5.dynamics.com/api/data/v9.0/$metadata#opportunities","value":[]}
                     return false;
                     //return whoAmI.ToObject<WhoAmI>();
@@ -1024,3 +1018,6 @@ namespace WebApi
 
 //create 부분사용 
 //https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/webapi/web-api-samples-csharp
+
+
+

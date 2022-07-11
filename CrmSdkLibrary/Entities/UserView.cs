@@ -49,7 +49,8 @@ namespace CrmSdkLibrary.Entities
                 var a = Messages.QueryExpressionToFetchXml(service, qe);
 
                 var client = (CrmServiceClient)service;
-                client.CallerId = Messages.GetCurrentUserId(service);
+                //client.CallerId = Messages.GetCurrentUserId(service);
+                client.CallerId = ((CrmServiceClient)service).GetMyCrmUserId();
                 return client.RetrieveMultiple(qe);
             }
             catch (Exception)

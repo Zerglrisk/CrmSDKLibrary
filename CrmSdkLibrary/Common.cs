@@ -5,7 +5,6 @@ using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 /*
  * Add a button to create a new related record
@@ -298,5 +297,7 @@ namespace CrmSdkLibrary
 
             return (from o in attributeMetadata.OptionSet.Options select o).ToList();
         }
+
+
     }
 }
