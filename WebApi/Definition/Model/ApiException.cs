@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CrmSdkLibrary.Definition
+namespace WebApi_ADAL.Definition.Model
 {
     public class ApiExceptionWrapper
     {

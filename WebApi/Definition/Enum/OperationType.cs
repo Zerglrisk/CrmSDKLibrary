@@ -1,13 +1,13 @@
 ﻿using System;
-using WebApi.Definition.Attribute;
+using WebApi_ADAL.Definition.Attribute;
 
-namespace WebApi.Definition.Enum
+namespace WebApi_ADAL.Definition.Enum
 {
     [Flags]
-    public enum OperationType : Int32
+    public enum OperationType : int
     {
         [LabelValue("Unknown")]
-        Unknown  = 0,
+        Unknown = 0,
         [LabelValue("Plug-in")]
         PlugIn = 1,
         [LabelValue("Workflow Activity")]

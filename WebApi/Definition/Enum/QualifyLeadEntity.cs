@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CrmSdkLibrary.Definition.Enum
+namespace WebApi_ADAL.Definition.Enum
 {
     [Flags]
     public enum QualifyLeadEntity

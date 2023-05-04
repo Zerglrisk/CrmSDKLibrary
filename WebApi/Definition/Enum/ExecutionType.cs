@@ -1,11 +1,11 @@
 ﻿using System;
 
-namespace WebApi.Definition.Enum
+namespace WebApi_ADAL.Definition.Enum
 {
     /// <summary>
     /// Mode
     /// </summary>
-    public enum ExecutionType : Int32
+    public enum ExecutionType : int
     {
         Synchronous = 0,
         Asynchronous = 1

@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary", "CrmSdkLibr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{05E8AADE-2C0D-47F0-8088-C0692EDB3460}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "WebApi\WebApi.csproj", "{59E338CE-8F44-43BC-8062-68146D117405}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi_ADAL", "WebApi\WebApi_ADAL.csproj", "{59E338CE-8F44-43BC-8062-68146D117405}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrmSdkLibrary_Core", "CrmSdkLibrary_Core\CrmSdkLibrary_Core.csproj", "{B1B47554-8430-45AC-AE1B-F584B3E82A95}"
 EndProject
