@@ -975,7 +975,7 @@ namespace WebApi_ADAL
         //        //{
         //        //    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
         //        //}
-        //        //https://yourorg.crm.dynamics.com/api/data/v9.1/userqueries?$filter=returnedtypecode%20eq%20%272%27%20and%20layoutxml%20ne%20null
+        //        //https://trueinfo.crm5.dynamics.com/api/data/v9.1/userqueries?$filter=returnedtypecode%20eq%20%272%27%20and%20layoutxml%20ne%20null
         //        var isAllString = isAll ? string.Empty : " and layoutxml ne null";
         //        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
         //        using (var response = await httpClient.GetAsync($"api/data/v9.0/userqueries?$filter=returnedtypecode eq '{entityLogicalName}'" + isAllString, HttpCompletionOption.ResponseContentRead))

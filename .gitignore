@@ -241,3 +241,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /MigrationBackup
+/CrmSdkLibrary_NUnitTest_Core/secrets.json
+/CrmSdkLibrary_UnitTest/secrets.json

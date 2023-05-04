@@ -61,7 +61,7 @@ namespace WebApi_ADAL.Definition.Model
 
 /*
  {
-  "@odata.context": "https://yourorg.crm.dynamics.com/api/data/v9.0/$metadata#plugintracelogs",
+  "@odata.context": "https://trueinfo.crm5.dynamics.com/api/data/v9.0/$metadata#plugintracelogs",
   "value": [
     {
       "organizationid": "4ae824f9-043d-41be-82f3-a17efbee4b26",
