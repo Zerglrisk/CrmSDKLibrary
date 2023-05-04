@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
-using WebApi.Definition.Attribute;
+using WebApi_ADAL.Definition.Attribute;
 
-namespace WebApi.Definition
+namespace WebApi_ADAL.Definition
 {
     public static class Extention
     {

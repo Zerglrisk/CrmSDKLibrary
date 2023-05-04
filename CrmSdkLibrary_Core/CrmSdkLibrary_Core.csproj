@@ -1,16 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.0.4" />
-    <PackageReference Include="System.Text.Json" Version="6.0.5" />
+    <Compile Remove="Services\**" />
+    <EmbeddedResource Remove="Services\**" />
+    <None Remove="Services\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\" />
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.0.26" />
+    <PackageReference Include="System.Text.Json" Version="6.0.7" />
   </ItemGroup>
 
 </Project>

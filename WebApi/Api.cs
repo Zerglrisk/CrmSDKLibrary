@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security;
+using System.Text.Json;
 using System.Threading.Tasks;
-using CrmSdkLibrary.Definition;
-using CrmSdkLibrary.Definition.Model;
-using WebApi.Definition.Model;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using WebApi_ADAL.Definition.Model;
 
-namespace WebApi
+namespace WebApi_ADAL
 {
     //azrue active directory에 app 등록 방법
     //https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/walkthrough-register-app-azure-active-directory
@@ -166,10 +169,10 @@ namespace WebApi
         /// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
         /// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId</param>
         /// <returns></returns>
-        public static async Task<HttpClient> GetWebApiHttpClient(string secret, string resourceUrl, string authorityUrl = "https://login.microsoftonline.com/common")
+        public static async Task<HttpClient> GetWebApiHttpClientSecret(string secret, string resourceUrl, string authorityUrl = "https://login.microsoftonline.com/common")
         {
-            var clientCredential = new ClientCredential(Api.ClientId, secret); // );"_Xqg[Fw7-J3j9D:CacUojLjm2Gc8[RU=");
-            var context = new AuthenticationContext(authorityUrl);
+            var clientCredential = new ClientCredential(ClientId, secret); // );"_Xqg[Fw7-J3j9D:CacUojLjm2Gc8[RU=");
+            var context = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(authorityUrl);
 
             var authResult = await context.AcquireTokenAsync(resourceUrl, clientCredential);
 
@@ -182,9 +185,42 @@ namespace WebApi
             //httpClient.DefaultRequestHeaders.Add("Prefer", "odata.include-annotations=OData.Community.Display.V1.FormattedValue")
 
             //After work
-            _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = Api.GetAllEntitySetName(httpClient).Result);
+            _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = GetAllEntitySetName(httpClient).Result);
             return httpClient;
         }
+
+        ///// <summary>
+        ///// https://stackoverflow.com/a/56449292
+        ///// </summary>
+        ///// <param name="clientId"></param>
+        ///// <param name="tenantId"></param>
+        ///// <param name="id"></param>
+        ///// <param name="pw"></param>
+        ///// <returns></returns>
+        //public static async Task<HttpClient> GetMSAL(string clientId, string tenantId, string id, string pw)
+        //{
+        //    IPublicClientApplication app = null;
+        //    if(app == null)
+        //    {
+        //        app = PublicClientApplicationBuilder.CreateWithApplicationOptions(new PublicClientApplicationOptions()
+        //        {
+        //            ClientId = clientId,
+        //            TenantId = tenantId,
+        //            AzureCloudInstance = AzureCloudInstance.AzurePublic
+        //        }).Build();
+
+        //        var scopes = new List<string>() { "https://graph.microsoft.com/.default" };
+        //        // As I wanted to log in using username and password, I have to use this:
+        //        //var token = await app.AcquireTokenInteractive(scopes).ExecuteAsync();
+
+        //        // if I want to log in using code, I can also use this:
+        //        var token = await app.AcquireTokenByUsernamePassword(scopes, id, pw).ExecuteAsync();
+
+        //        HttpClient httpClient = new HttpClient();
+        //        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token.AccessToken);
+        //    }
+        //    return null;
+        //}
 
         /// <summary>
         /// 
@@ -203,11 +239,13 @@ namespace WebApi
             var httpClient = new HttpClient()
             {
                 BaseAddress = new Uri(resourceUrl),
-                Timeout = new TimeSpan(0, 0, 15)
+                Timeout = new TimeSpan(0, 5, 0)
             };
 
+            // FormUrlEncodedContent class Encode form data in utf8 encoding
+            // A container for name/value tuples encoded using application/x-www-form-urlencoded MIME type.
             HttpContent content = new FormUrlEncodedContent(new[]{
-                new KeyValuePair<string, string>("client_id", Api.ClientId),
+                new KeyValuePair<string, string>("client_id", ClientId),
                 new KeyValuePair<string, string>("resource", resourceUrl),
                 new KeyValuePair<string, string>("username", username),
                 new KeyValuePair<string, string>("password", password),
@@ -215,25 +253,57 @@ namespace WebApi
                 new KeyValuePair<string, string>("client_secret", secret),
                 new KeyValuePair<string, string>("grant_type", "password")
             });
+            //= new StringContent(jsonObject.ToString(), Encoding.UTF8, "application/json");
+
             //content type is application/json
             httpClient.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
-
             using (HttpResponseMessage response = await httpClient.PostAsync($"{authorityUrl}/oauth2/token", content))
             {
                 //error : possible 400 error if set grant_type password when you have not permmision or wrong password etc that response always return 400, bad_request, idk why
                 if (response.IsSuccessStatusCode)
                 {
-                    var responsebody = await response.Content.ReadAsStringAsync();
-                    var accessToken = JObject.Parse(responsebody).GetValue("access_token").ToString();
-                    var accessTokenType = JObject.Parse(responsebody).GetValue("token_type").ToString();
+                    // must came in utf8json as stream
+                    var responsebody = await response.Content.ReadAsStreamAsync();
+                    
+                    var result = JsonSerializer.Deserialize<WebApi_ADAL.Definition.Model.Token>(responsebody, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+                    #region [System.Net.Http.Json]
+
+                    //var responsebody = await response.Content.ReadAsStringAsync();
+
+                    #region Using JsonElement (Dynamic)
+
+                    //var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+                    //if (!result.TryGetProperty("access_token", out var accessToken))
+                    //{
+                    //    throw new Exception(
+                    //   $"Message: \"cannot found access_token property.\", StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    //}
+                    //if (!result.TryGetProperty("token_type", out var accessTokenType))
+                    //{
+                    //    throw new Exception(
+                    //   $"Message: \"cannot found token_type property.\", StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    //} 
+
+                    // ...
+                    // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(accessTokenType.GetString(), accessToken.GetString());
+
+                    #endregion
+
+                    //var result = await response.Content.ReadFromJsonAsync<WebApi_ADAL.Definition.Model.Token>(); 
+
+                    // ...
+                    // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(result.TokenType, result.AccessToken);
+
+                    #endregion
 
                     httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
                     httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
                     httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(accessTokenType, accessToken);
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(result.TokenType, result.AccessToken);
 
                     //After work
-                    _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = Api.GetAllEntitySetName(httpClient).Result);
+                    _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = GetAllEntitySetName(httpClient).Result);
                 }
                 else
                 {
@@ -262,10 +332,10 @@ namespace WebApi
             var httpClient = new HttpClient()
             {
                 BaseAddress = new Uri(resourceUrl),
-                Timeout = new TimeSpan(0, 0, 15)
+                Timeout = new TimeSpan(0, 5, 0)
             };
             HttpContent content = new FormUrlEncodedContent(new[]{
-                new KeyValuePair<string, string>("client_id", Api.ClientId),
+                new KeyValuePair<string, string>("client_id", ClientId),
                 new KeyValuePair<string, string>("resource", resourceUrl),
                 //new KeyValuePair<string, string>("scope", "openid offline_access admin.services.crm.dynamics.com/user_impersonation"), //"https://graph.microsoft.com/.default"),
                 new KeyValuePair<string, string>("client_secret", secret),
@@ -278,17 +348,48 @@ namespace WebApi
             {
                 if (response.IsSuccessStatusCode)
                 {
-                    var responsebody = await response.Content.ReadAsStringAsync();
-                    var accessToken = JObject.Parse(responsebody).GetValue("access_token").ToString();
-                    var accessTokenType = JObject.Parse(responsebody).GetValue("token_type").ToString();
+                    // must came in utf8json as stream
+                    var responsebody = await response.Content.ReadAsStreamAsync();
+
+                    var result = JsonSerializer.Deserialize<WebApi_ADAL.Definition.Model.Token>(responsebody, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+                    #region [System.Net.Http.Json]
+
+                    //var responsebody = await response.Content.ReadAsStringAsync();
+
+                    #region Using JsonElement (Dynamic)
+
+                    //var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+                    //if (!result.TryGetProperty("access_token", out var accessToken))
+                    //{
+                    //    throw new Exception(
+                    //   $"Message: \"cannot found access_token property.\", StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    //}
+                    //if (!result.TryGetProperty("token_type", out var accessTokenType))
+                    //{
+                    //    throw new Exception(
+                    //   $"Message: \"cannot found token_type property.\", StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    //} 
+
+                    // ...
+                    // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(accessTokenType.GetString(), accessToken.GetString());
+
+                    #endregion
+
+                    //var result = await response.Content.ReadFromJsonAsync<WebApi_ADAL.Definition.Model.Token>(); 
+
+                    // ...
+                    // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(result.TokenType, result.AccessToken);
+
+                    #endregion
 
                     httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
                     httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
                     httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(accessTokenType, accessToken);
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(result.TokenType, result.AccessToken);
 
                     //After work
-                    _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = Api.GetAllEntitySetName(httpClient).Result);
+                    _entitySetPaths = _entitySetPaths ?? (_entitySetPaths = GetAllEntitySetName(httpClient).Result);
                 }
                 else
                 {
@@ -348,8 +449,8 @@ namespace WebApi
         public static async Task<string> GetAccessTokenToken(string resourceUrl, string secret, string authorityUrl = "https://login.microsoftonline.com/common")
         {
             //"https://login.microsoftonline.com/<Tenant-ID-here>"
-            AuthenticationContext authContext = new AuthenticationContext(authorityUrl);
-            ClientCredential credential = new ClientCredential(Api.ClientId, secret);
+            var authContext = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(authorityUrl);
+            ClientCredential credential = new ClientCredential(ClientId, secret);
 
             AuthenticationResult result = await authContext.AcquireTokenAsync(resourceUrl, credential);
 
@@ -398,58 +499,58 @@ namespace WebApi
         /// <param name="apiUrl">e.g.) https://tester200317.api.crm5.dynamics.com/api/data/</param>
         /// <param name="customWebUi">cannot be null</param>
         /// <returns></returns>
-        public static async Task<string> GetToken(string apiUrl, ICustomWebUi customWebUi)
-        {
-            Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext authContext = null;
-            try
-            {
-                // Get the Resource Url & Authority Url using the Api method. This is the best way to get authority URL
-                // for any Azure service api.
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-                AuthenticationParameters ap = AuthenticationParameters.CreateFromUrlAsync(new Uri(apiUrl)).Result;
+        //public static async Task<string> GetToken(string apiUrl, Microsoft.IdentityModel.Clients.ActiveDirectory.Extensibility.ICustomWebUi customWebUi)
+        //{
+        //    Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext authContext = null;
+        //    try
+        //    {
+        //        // Get the Resource Url & Authority Url using the Api method. This is the best way to get authority URL
+        //        // for any Azure service api.
+        //        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        //        var ap = Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationParameters.CreateFromUrlAsync(new Uri(apiUrl)).Result;
 
-                string resourceUrl = ap.Resource;
-                string authorityUrl = DiscoverAuthority(ap.Resource);//$"https://login.microsoftonline.com/{GetTenantId(resourceUrl)}";
+        //        string resourceUrl = ap.Resource;
+        //        string authorityUrl = DiscoverAuthority(ap.Resource);//$"https://login.microsoftonline.com/{GetTenantId(resourceUrl)}";
 
-                //Generate the Authority context .. For the sake of simplicity for the post, I haven't splitted these
-                // in to multiple methods. Ideally, you would want to use some sort of design pattern to generate the context and store
-                // till the end of the program.
-                authContext = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(authorityUrl, false);
+        //        //Generate the Authority context .. For the sake of simplicity for the post, I haven't splitted these
+        //        // in to multiple methods. Ideally, you would want to use some sort of design pattern to generate the context and store
+        //        // till the end of the program.
+        //        authContext = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(authorityUrl, false);
 
-                try
-                {
-                    //Check if we can get the authentication token w/o prompting for credentials.
-                    //With this system will try to get the token from the cache if there is any, if it is not there then will throw error
-                    var authToken = await authContext.AcquireTokenAsync(resourceUrl, Api.ClientId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Never, customWebUi));
-                    return authToken.AccessToken;
-                }
-                catch (AdalException e)
-                {
+        //        try
+        //        {
+        //            //Check if we can get the authentication token w/o prompting for credentials.
+        //            //With this system will try to get the token from the cache if there is any, if it is not there then will throw error
+        //            var authToken = await authContext.AcquireTokenAsync(resourceUrl, ClientId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Never, customWebUi));
+        //            return authToken.AccessToken;
+        //        }
+        //        catch (AdalException e)
+        //        {
 
-                    if (e.ErrorCode == "user_interaction_required")
-                    {
-                        // We are here means, there is no cached token, So get it from the service.
-                        // You should see a prompt for User Id & Password at this place.
-                        var authToken = await authContext.AcquireTokenAsync(resourceUrl, Api.ClientId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Auto, customWebUi));
-                        return authToken.AccessToken;
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+        //            if (e.ErrorCode == "user_interaction_required")
+        //            {
+        //                // We are here means, there is no cached token, So get it from the service.
+        //                // You should see a prompt for User Id & Password at this place.
+        //                var authToken = await authContext.AcquireTokenAsync(resourceUrl, ClientId, new Uri("ms-console-app://consoleapp"), new PlatformParameters(PromptBehavior.Auto, customWebUi));
+        //                return authToken.AccessToken;
+        //            }
+        //            else
+        //            {
+        //                throw;
+        //            }
+        //        }
 
-                Console.WriteLine("Got the authentication token, Getting data from Webapi !!");
+        //        Console.WriteLine("Got the authentication token, Getting data from Webapi !!");
 
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Some thing unexpected happened here, Please see the exception details : {ex.ToString()}");
-            }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Some thing unexpected happened here, Please see the exception details : {ex.ToString()}");
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
         /// <summary>
         /// 
         /// </summary>
@@ -470,12 +571,12 @@ namespace WebApi
             {
                 throw new Exception("An HTTP request exception occurred during authority discovery.", e);
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 // This exception ocurrs when the service is not configured for OAuth.
                 if (e.HResult == -2146233088)
                 {
-                    return String.Empty;
+                    return string.Empty;
                 }
                 else
                 {
@@ -508,15 +609,21 @@ namespace WebApi
                     ////https://github.com/dotnet/runtime/tree/master/src/libraries/System.Text.Json
                     //writer.WriteStartObject();
 
-                    var jObject = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
-                    jObject.Add("ODataContext", jObject["@odata.context"]);
-                    jObject.Remove("@odata.context");
-                    var entityMetadatas = jObject["value"] as JArray;
+                    // must came in utf8json as stream
+                    var responsebody = await response.Content.ReadAsStreamAsync();
 
-                    return entityMetadatas.Children<JObject>().ToDictionary(
-                        x => x.Property("LogicalName").Value.ToString(),
-                        x => x.Property("EntitySetName").Value.ToString());
+                    var result = JsonSerializer.Deserialize<WebApi_ADAL.Definition.Model.EntityDefinitions>(responsebody, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+                    return result.Values.ToDictionary(k => k.LogicalName, v => v.EntitySetName);
+                    //var jObject = JsonConvert.DeserializeObject<JObject>(await
+                    //    response.Content.ReadAsStringAsync());
+                    //jObject.Add("ODataContext", jObject["@odata.context"]);
+                    //jObject.Remove("@odata.context");
+                    //var entityMetadatas = jObject["value"] as JArray;
+
+                    //return entityMetadatas.Children<JObject>().ToDictionary(
+                    //    x => x.Property("LogicalName").Value.ToString(),
+                    //    x => x.Property("EntitySetName").Value.ToString());
                     //delegate (EntityMetadata metadata) { return metadata.LogicalName; },
                     //delegate (EntityMetadata metadata) { return metadata.EntitySetName; });
                 }
@@ -530,6 +637,7 @@ namespace WebApi
                 throw ex;
             }
         }
+
         /// <summary>
         /// Get User Using WebAPI
         /// </summary>
@@ -549,23 +657,20 @@ namespace WebApi
                             $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                     }
 
-                    var whoAmI = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
-                    whoAmI.Add("ODataContext", whoAmI["@odata.context"]);
-                    whoAmI.Remove("@odata.context");
+                    // must came in utf8json as stream
+                    var responsebody = await response.Content.ReadAsStreamAsync();
 
-                    return whoAmI.ToObject<WhoAmI>();
+                    var result = JsonSerializer.Deserialize<WebApi_ADAL.Definition.Model.WhoAmI>(responsebody, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+                    return result;
                 }
-
-                //First obtain the user's ID.
-                //Guid myUserId = (Guid)whoAmIresp["UserId"];
-
             }
             catch (Exception ex)
             {
                 throw ex;
             }
         }
+
         //5000개 레코드 이상 가져오는지 확인
         public static async Task<string> GetDataAsJson(HttpClient httpClient)
         {
@@ -580,10 +685,9 @@ namespace WebApi
                             $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                     }
 
-                    var resp = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
+                    var responsebody = await response.Content.ReadAsStringAsync();
 
-                    return resp.ToString();
+                    return responsebody;
                 }
                 //First obtain the user's ID.
                 //Guid myUserId = (Guid)whoAmIresp["UserId"];
@@ -602,18 +706,18 @@ namespace WebApi
         /// <see cref="https://community.dynamics.com/365/b/leichtbewoelkt/posts/calculaterollupfield-with-webapi-function-in-javascript"/>
         /// <see cref="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/mt718083%28v%3dcrm.8%29"/>
         /// <param name="httpClient"></param>
-        /// <param name="target"></param>
-        /// <param name="fieldName"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="entityRecordId"></param>
+        /// <param name="attributeName">The logical name of the attribute to calculate.</param>
         /// <returns></returns>
-        public static async Task<string> CalculateRollupField(HttpClient httpClient, EntityReference target,
-            string fieldName)
+        public static async Task<CalculateRollupFieldResponse> CalculateRollupField(HttpClient httpClient, string entityLogicalName, string entityRecordId, string attributeName)
         {
             try
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
                 using (var response =
-                    await httpClient.GetAsync($@"api/data/v8.0/CalculateRollupField(Target=@tid,FieldName=@fname)?@tid={{'@odata.id':'{Api.EntitySetPaths[target.LogicalName]}({target.Id})'}}&@fname='{fieldName}'", HttpCompletionOption.ResponseContentRead))
+                    await httpClient.GetAsync($@"api/data/v8.0/CalculateRollupField(Target=@tid,FieldName=@fname)?@tid={{'@odata.id':'{EntitySetPaths[entityLogicalName]}({entityRecordId})'}}&@fname='{attributeName}'", HttpCompletionOption.ResponseContentRead))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
@@ -621,10 +725,16 @@ namespace WebApi
                         //var aa = whoAmI.ToObject<ApiExceptionWrapper>(); //에러
                     }
 
-                    var whoAmI = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
+                    var responsebody = await response.Content.ReadAsStringAsync();
+                    responsebody = responsebody.Replace($"\"{attributeName}", "\"attribute");
+                    responsebody = responsebody.Replace($"\"{entityLogicalName}id", "\"recordid");
+                    var result = JsonSerializer.Deserialize<WebApi_ADAL.Definition.Model.CalculateRollupFieldResponse>(responsebody, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                    result.AttributeName = attributeName;
+                    return result;
+                    //var whoAmI = JsonConvert.DeserializeObject<JObject>(await
+                    //    response.Content.ReadAsStringAsync());
 
-                    return whoAmI.ToObject<string>();
+                    //return whoAmI.ToObject<string>();
                 }
 
                 //First obtain the user's ID.
@@ -643,17 +753,18 @@ namespace WebApi
         /// </summary>
         /// <see cref="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/mt683537%28v%3dcrm.8%29"/>
         /// <param name="httpClient"></param>
-        /// <param name="businessEntity"></param>
-        /// <param name="matchingEntityName"></param>
-        /// <param name="pagingInfo"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="entityRecordId"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageCount"></param>
         /// <returns></returns>
-        public static async Task<bool> RetrieveDuplicates(HttpClient httpClient, Entity businessEntity, PagingInfo pagingInfo)
+        public static async Task<JObjectParsed> RetrieveDuplicates(HttpClient httpClient, string entityLogicalName, string entityRecordId, int pageNumber = 1, int pageCount= 20)
         {
             try
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 using (var response =
-                    await httpClient.GetAsync($@"api/data/v9.0/RetrieveDuplicates(BusinessEntity=@p1,MatchingEntityName=@p2,PagingInfo=@p3)?@p2='{businessEntity.LogicalName}'&@p1={{'@odata.id':'{Api.EntitySetPaths[businessEntity.LogicalName]}({businessEntity.Id})'}}&@p3={{'PageNumber':{pagingInfo.PageNumber},'Count':{pagingInfo.Count}}}", HttpCompletionOption.ResponseContentRead))
+                    await httpClient.GetAsync($@"api/data/v9.0/RetrieveDuplicates(BusinessEntity=@p1,MatchingEntityName=@p2,PagingInfo=@p3)?@p2='{entityLogicalName}'&@p1={{'@odata.id':'{EntitySetPaths[entityLogicalName]}({entityRecordId})'}}&@p3={{'PageNumber':{pageNumber},'Count':{pageCount}}}", HttpCompletionOption.ResponseContentRead))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
@@ -661,11 +772,8 @@ namespace WebApi
                         //    $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                     }
 
-                    var jObj = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(await
-                        response.Content.ReadAsStringAsync());
-                    //jObj.Add("ODataContext", jObj["@odata.context"]);
-                    //jObj.Remove("@odata.context");
-                    //var parsed = jObj.ToObject<JObjectParsed>();
+                    var responsebody = await response.Content.ReadAsStreamAsync();
+                    var jObj = JsonSerializer.Deserialize<JObjectParsed>(await response.Content.ReadAsStringAsync(), new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
                     //if (parsed.Error != null)
                     //{
@@ -673,7 +781,7 @@ namespace WebApi
                     //}
 
                     //{"@odata.context":"https://test201018.crm5.dynamics.com/api/data/v9.0/$metadata#opportunities","value":[]}
-                    return false;
+                    return jObj;
                     //return whoAmI.ToObject<WhoAmI>();
                 }
 
@@ -690,18 +798,18 @@ namespace WebApi
         /// <summary>
         /// 
         /// </summary>
-        /// <see cref=""/>
-        /// <see cref="http://butenko.pro/2018/07/11/how-to-call-queryschedule-using-webapi/"/>
-        /// <param name="httpClient"></param>
-        /// <param name="userId"></param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <param name="TimeCodes"></param>
-        /// <returns></returns>
-        //public static async Task<string> QuerySchedule(HttpClient httpClient, Guid userId, DateTime startDate, DateTime endDate, string TimeCodes)
-        //{
-        //    return null;
-        //}
+        /// <see cref = "" />
+        /// < see cref="http://butenko.pro/2018/07/11/how-to-call-queryschedule-using-webapi/"/>
+        /// <param name = "httpClient" ></ param >
+        /// < param name="userId"></param>
+        /// <param name = "startDate" ></ param >
+        /// < param name="endDate"></param>
+        /// <param name = "TimeCodes" ></ param >
+        /// < returns ></ returns >
+        public static async Task<string> QuerySchedule(HttpClient httpClient, Guid userId, DateTime startDate, DateTime endDate, string TimeCodes)
+        {
+            return null;
+        }
 
 
         /// <summary>
@@ -711,198 +819,203 @@ namespace WebApi
         /// <param name="httpClient"></param>
         /// <param name="entityLogicalName"></param>
         /// <returns></returns>
-        public static async Task<int> GetObjectTypeCode(HttpClient httpClient, string entityLogicalName)
+        public static async Task<int?> GetObjectTypeCode(HttpClient httpClient, string entityLogicalName)
         {
             try
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 using (var response = await httpClient.GetAsync($@"api/data/v9.0/EntityDefinitions?$filter=LogicalName eq '{entityLogicalName}'&$select=ObjectTypeCode", HttpCompletionOption.ResponseContentRead))
                 {
-                    //오류 페이지 내용을 가져오므로 정말 안될 때 쓰여야한다
-                    //if (!response.IsSuccessStatusCode)
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new Exception(
+                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    }
+
+                    var responsebody = await response.Content.ReadAsStreamAsync();
+
+                    var result = JsonSerializer.Deserialize<WebApi_ADAL.Definition.Model.EntityDefinitions>(responsebody, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+                    return result.Values.FirstOrDefault().ObjectTypeCode;
+
+                    //var jObj = JsonConvert.DeserializeObject<JObject>(await
+                    //    response.Content.ReadAsStringAsync());
+                    //jObj.Add("ODataContext", jObj["@odata.context"]);
+                    //jObj.Remove("@odata.context");
+                    //var parsed = jObj.ToObject<JObjectParsed>();
+
+                    //if (parsed.Error != null)
                     //{
-                    //    throw new Exception(
-                    //        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+                    //    throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
                     //}
-
-                    var jObj = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
-                    jObj.Add("ODataContext", jObj["@odata.context"]);
-                    jObj.Remove("@odata.context");
-                    var parsed = jObj.ToObject<JObjectParsed>();
-
-                    if (parsed.Error != null)
-                    {
-                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
-                    }
-                    return parsed.value.First.ObjectTypeCode;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <see cref="https://crmtipoftheday.com/757/passing-enumerated-values-to-web-api/"/>
-        /// <param name="httpClient"></param>
-        /// <param name="accessType"></param>
-        /// <returns></returns>
-        public static async Task<Microsoft.Xrm.Sdk.Organization.OrganizationDetail> GetCurrentOrganization(HttpClient httpClient, Microsoft.Xrm.Sdk.Organization.EndpointAccessType accessType)
-        {
-            try
-            {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-                using (var response = await httpClient.GetAsync($@"api/data/v9.0/RetrieveCurrentOrganization(AccessType=Microsoft.Dynamics.CRM.EndpointAccessType'{accessType}')", HttpCompletionOption.ResponseContentRead))
-                {
-                    //오류 페이지 내용을 가져오므로 정말 안될 때 쓰여야한다
-                    //if (!response.IsSuccessStatusCode)
-                    //{
-                    //    throw new Exception(
-                    //        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
-                    //}R
-
-                    var jObj = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
-                    jObj.Add("ODataContext", jObj["@odata.context"]);
-                    jObj.Remove("@odata.context");
-                    //jObj.Add("value",jObj["Detail"]);
-                    var parsed = jObj.ToObject<JObjectParsed>();
-
-                    if (parsed.Error != null)
-                    {
-                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
-                    }
-
-                    //Count 부분 때문에 오브젝트로 변경이 안됨.
-                    var dd = jObj["Detail"] as JObject;
-
-                    #region EndPoints
-                    var obj = dd["Endpoints"] as JObject;
-                    var count = dd["Endpoints"]["Count"] as JValue;
-                    var keys = dd["Endpoints"]["Keys"] as JArray;
-                    var values = dd["Endpoints"]["Values"] as JArray;
-                    //var end = dd["Endpoints"].ToObject<Microsoft.Xrm.Sdk.Organization.EndpointCollection>();
-                    var endpoints = new Microsoft.Xrm.Sdk.Organization.EndpointCollection();
-                    for (var i = 0; i < (long)count.Value; ++i)
-                    {
-                        var key = keys[i] as JValue;
-                        var value = values[i] as JValue;
-                        Enum.TryParse(key.Value.ToString(), out EndpointType endpointType);
-                        endpoints.Add(endpointType, value.Value.ToString());
-                    }
-
-                    dd.Property("Endpoints").Remove();
-                    #endregion
-                    var dddd = dd.ToObject<Microsoft.Xrm.Sdk.Organization.OrganizationDetail>();
-                    dddd.Endpoints.AddRange(endpoints);
-                    return dddd;
                     //return parsed.value.First.ObjectTypeCode;
                 }
             }
-            catch (Exception e)
-            {
-                throw e;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <see cref="https://stackoverflow.com/a/39001154"/>
-        /// <param name="httpClient"></param>
-        /// <param name="entityLogicalName"></param>
-        /// <returns></returns>
-        public static async Task<string> RetrieveSystemViews(HttpClient httpClient, string entityLogicalName)
-        {
-            try
-            {
-                //var entityLogicalNameSetPath = EntitySetPaths.Where(x => x.Key == entityLogicalName).Select(x => x.Value).FirstOrDefault();
-                //if (string.IsNullOrWhiteSpace(entityLogicalNameSetPath))
-                //{
-                //    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
-                //}
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
-                using (var response = await httpClient.GetAsync($"api/data/v9.0/savedqueries?$filter=returnedtypecode eq '{entityLogicalName}'", HttpCompletionOption.ResponseContentRead))
-                {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        throw new Exception(
-                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
-                    }
-
-                    var resp = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
-
-                    return resp.ToString();
-                }
-
-            }
             catch (Exception ex)
             {
                 throw ex;
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="httpClient"></param>
-        /// <param name="entityLogicalName"></param>
-        /// <returns></returns>
-        public static async Task<string> RetrieveUserViews(HttpClient httpClient, string entityLogicalName, bool isAll = false)
-        {
-            try
-            {
-                //var entityLogicalNameSetPath = EntitySetPaths.Where(x => x.Key == entityLogicalName).Select(x => x.Value).FirstOrDefault();
-                //if (string.IsNullOrWhiteSpace(entityLogicalNameSetPath))
-                //{
-                //    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
-                //}
-                //https://yourorg.crm.dynamics.com/api/data/v9.1/userqueries?$filter=returnedtypecode%20eq%20%272%27%20and%20layoutxml%20ne%20null
-                var isAllString = isAll ? string.Empty : " and layoutxml ne null";
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
-                using (var response = await httpClient.GetAsync($"api/data/v9.0/userqueries?$filter=returnedtypecode eq '{entityLogicalName}'" + isAllString, HttpCompletionOption.ResponseContentRead))
-                {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        throw new Exception(
-                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
-                    }
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <see cref="https://crmtipoftheday.com/757/passing-enumerated-values-to-web-api/"/>
+        ///// <param name="httpClient"></param>
+        ///// <param name="accessType"></param>
+        ///// <returns></returns>
+        //public static async Task<Microsoft.Xrm.Sdk.Organization.OrganizationDetail> GetCurrentOrganization(HttpClient httpClient, Microsoft.Xrm.Sdk.Organization.EndpointAccessType accessType)
+        //{
+        //    try
+        //    {
+        //        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+        //        using (var response = await httpClient.GetAsync($@"api/data/v9.0/RetrieveCurrentOrganization(AccessType=Microsoft.Dynamics.CRM.EndpointAccessType'{accessType}')", HttpCompletionOption.ResponseContentRead))
+        //        {
+        //            //오류 페이지 내용을 가져오므로 정말 안될 때 쓰여야한다
+        //            //if (!response.IsSuccessStatusCode)
+        //            //{
+        //            //    throw new Exception(
+        //            //        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+        //            //}R
 
-                    var resp = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
+        //            var jObj = JsonConvert.DeserializeObject<JObject>(await
+        //                response.Content.ReadAsStringAsync());
+        //            jObj.Add("ODataContext", jObj["@odata.context"]);
+        //            jObj.Remove("@odata.context");
+        //            //jObj.Add("value",jObj["Detail"]);
+        //            var parsed = jObj.ToObject<JObjectParsed>();
 
-                    return resp.ToString();
-                }
+        //            if (parsed.Error != null)
+        //            {
+        //                throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
+        //            }
 
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
+        //            //Count 부분 때문에 오브젝트로 변경이 안됨.
+        //            var dd = jObj["Detail"] as JObject;
 
-        public static async Task<string> FetchXmlToQueryExpression(HttpClient httpClient, string fetchXml)
-        {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
-            using (var response = await httpClient.GetAsync($"api/data/v9.0/FetchXmlToQueryExpression(FetchXml=@p1)?@p1='{fetchXml}'", HttpCompletionOption.ResponseContentRead))
-            {
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new Exception(
-                        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
-                }
+        //            #region EndPoints
+        //            var obj = dd["Endpoints"] as JObject;
+        //            var count = dd["Endpoints"]["Count"] as JValue;
+        //            var keys = dd["Endpoints"]["Keys"] as JArray;
+        //            var values = dd["Endpoints"]["Values"] as JArray;
+        //            //var end = dd["Endpoints"].ToObject<Microsoft.Xrm.Sdk.Organization.EndpointCollection>();
+        //            var endpoints = new Microsoft.Xrm.Sdk.Organization.EndpointCollection();
+        //            for (var i = 0; i < (long)count.Value; ++i)
+        //            {
+        //                var key = keys[i] as JValue;
+        //                var value = values[i] as JValue;
+        //                Enum.TryParse(key.Value.ToString(), out EndpointType endpointType);
+        //                endpoints.Add(endpointType, value.Value.ToString());
+        //            }
 
-                var resp = JsonConvert.DeserializeObject<JObject>(await
-                    response.Content.ReadAsStringAsync());
+        //            dd.Property("Endpoints").Remove();
+        //            #endregion
+        //            var dddd = dd.ToObject<Microsoft.Xrm.Sdk.Organization.OrganizationDetail>();
+        //            dddd.Endpoints.AddRange(endpoints);
+        //            return dddd;
+        //            //return parsed.value.First.ObjectTypeCode;
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        throw e;
+        //    }
+        //}
 
-                return resp.ToString();
-            }
-        }
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <see cref="https://stackoverflow.com/a/39001154"/>
+        ///// <param name="httpClient"></param>
+        ///// <param name="entityLogicalName"></param>
+        ///// <returns></returns>
+        //public static async Task<string> RetrieveSystemViews(HttpClient httpClient, string entityLogicalName)
+        //{
+        //    try
+        //    {
+        //        //var entityLogicalNameSetPath = EntitySetPaths.Where(x => x.Key == entityLogicalName).Select(x => x.Value).FirstOrDefault();
+        //        //if (string.IsNullOrWhiteSpace(entityLogicalNameSetPath))
+        //        //{
+        //        //    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
+        //        //}
+        //        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
+        //        using (var response = await httpClient.GetAsync($"api/data/v9.0/savedqueries?$filter=returnedtypecode eq '{entityLogicalName}'", HttpCompletionOption.ResponseContentRead))
+        //        {
+        //            if (!response.IsSuccessStatusCode)
+        //            {
+        //                throw new Exception(
+        //                    $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+        //            }
+
+        //            var resp = JsonConvert.DeserializeObject<JObject>(await
+        //                response.Content.ReadAsStringAsync());
+
+        //            return resp.ToString();
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
+        //}
+
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <param name="httpClient"></param>
+        ///// <param name="entityLogicalName"></param>
+        ///// <returns></returns>
+        //public static async Task<string> RetrieveUserViews(HttpClient httpClient, string entityLogicalName, bool isAll = false)
+        //{
+        //    try
+        //    {
+        //        //var entityLogicalNameSetPath = EntitySetPaths.Where(x => x.Key == entityLogicalName).Select(x => x.Value).FirstOrDefault();
+        //        //if (string.IsNullOrWhiteSpace(entityLogicalNameSetPath))
+        //        //{
+        //        //    throw new ArgumentOutOfRangeException($"Can not find entity Set Path from {entityLogicalName}");
+        //        //}
+        //        //https://yourorg.crm.dynamics.com/api/data/v9.1/userqueries?$filter=returnedtypecode%20eq%20%272%27%20and%20layoutxml%20ne%20null
+        //        var isAllString = isAll ? string.Empty : " and layoutxml ne null";
+        //        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
+        //        using (var response = await httpClient.GetAsync($"api/data/v9.0/userqueries?$filter=returnedtypecode eq '{entityLogicalName}'" + isAllString, HttpCompletionOption.ResponseContentRead))
+        //        {
+        //            if (!response.IsSuccessStatusCode)
+        //            {
+        //                throw new Exception(
+        //                    $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+        //            }
+
+        //            var resp = JsonConvert.DeserializeObject<JObject>(await
+        //                response.Content.ReadAsStringAsync());
+
+        //            return resp.ToString();
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
+        //}
+
+        //public static async Task<string> FetchXmlToQueryExpression(HttpClient httpClient, string fetchXml)
+        //{
+        //    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;//?$select=name,accountnumber
+        //    using (var response = await httpClient.GetAsync($"api/data/v9.0/FetchXmlToQueryExpression(FetchXml=@p1)?@p1='{fetchXml}'", HttpCompletionOption.ResponseContentRead))
+        //    {
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            throw new Exception(
+        //                $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
+        //        }
+
+        //        var resp = JsonConvert.DeserializeObject<JObject>(await
+        //            response.Content.ReadAsStringAsync());
+
+        //        return resp.ToString();
+        //    }
+        //}
 
         public static async Task<System.IO.Stream> GetImageBlob(HttpClient httpClient, string targetId)
         {
@@ -961,43 +1074,25 @@ namespace WebApi
         /// <see href="https://docs.microsoft.com/en-us/powerapps/developer/data-platform/debug-plug-in"/>
         /// <param name="httpClient"></param>
         /// <returns></returns>
-        public static async Task<PluginTraceLogs> GetPluginTraceLogs(HttpClient httpClient)
+        public static async Task<PluginTraceLogs> GetPluginTraceLogs(HttpClient httpClient, string pluginName = "")
         {
             try
             {
                 ////api/data/v9.0/plugintracelogs?$select=messageblock&$filter=typename eq 'BasicPlugin.FollowUpPlugin'
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-                using (var response = await httpClient.GetAsync($@"api/data/v9.0/plugintracelogs?$select=messageblock&$filter=typename eq 'BasicPlugin.FollowUpPlugin')", HttpCompletionOption.ResponseContentRead))
+                using (var response = await httpClient.GetAsync($@"api/data/v9.0/plugintracelogs{(!string.IsNullOrWhiteSpace(pluginName) ? $"?$filter=contains(typename,'{pluginName}')" : "")}", HttpCompletionOption.ResponseContentRead))
                 {
-                    //오류 페이지 내용을 가져오므로 정말 안될 때 쓰여야한다
-                    //if (!response.IsSuccessStatusCode)
-                    //{
-                    //    throw new Exception(
-                    //        $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
-                    //}R
-
-                    var jObj = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
-                    jObj.Add("ODataContext", jObj["@odata.context"]);
-                    jObj.Remove("@odata.context");
-                    //jObj.Add("value",jObj["Detail"]);
-                    var parsed = jObj.ToObject<JObjectParsed>();
-
-                    if (parsed.Error != null)
+                    if (!response.IsSuccessStatusCode)
                     {
-                        throw new Exception($"[{parsed.Error.InnerError.Type}({parsed.Error.Code})] {parsed.Error.Message}", parsed.Error.InnerError);
+                        throw new Exception(
+                            $"StatusCode : {response.StatusCode}, ReasonPhrase : {response.ReasonPhrase}");
                     }
 
-                    //Count 부분 때문에 오브젝트로 변경이 안됨.
-                    var dd = jObj["Detail"] as JObject;
+                    var responsebody = await response.Content.ReadAsStringAsync();
 
-                    var whoAmI = JsonConvert.DeserializeObject<JObject>(await
-                        response.Content.ReadAsStringAsync());
-                    whoAmI.Add("ODataContext", whoAmI["@odata.context"]);
-                    whoAmI.Remove("@odata.context");
+                    var result = JsonSerializer.Deserialize<WebApi_ADAL.Definition.Model.PluginTraceLogs>(responsebody, new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
-                    return whoAmI.ToObject<PluginTraceLogs>();
-                    //return parsed.value.First.ObjectTypeCode;
+                    return result;
                 }
             }
             catch (Exception e)

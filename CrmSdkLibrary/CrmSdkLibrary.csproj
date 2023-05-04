@@ -80,14 +80,11 @@
     <Compile Include="Definition\Enum\ConditionType.cs" />
     <Compile Include="Definition\Enum\JoinType.cs" />
     <Compile Include="Definition\Enum\SortDirection.cs" />
-    <Compile Include="Definition\Model\ApiException.cs" />
     <Compile Include="Definition\Attribute\StringValue.cs" />
     <Compile Include="Definition\Model\EmailFormat.cs" />
     <Compile Include="Definition\Enum\Location.cs" />
     <Compile Include="Definition\Enum\QualifyLeadEntity.cs" />
-    <Compile Include="Definition\Model\JObjectParsed.cs" />
     <Compile Include="Definition\Model\SqlWrapper.cs" />
-    <Compile Include="Definition\Model\WhoAmI.cs" />
     <Compile Include="Definition\SqlConverter.cs" />
     <Compile Include="Entities.cs" />
     <Compile Include="Entities\Account.cs" />
@@ -104,11 +101,7 @@
     <Compile Include="Entities\UserView.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="JS\new_js_common.js" />
-    <Content Include="Resources\logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies">

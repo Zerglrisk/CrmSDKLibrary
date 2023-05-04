@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace WebApi.Definition.Attribute
+namespace WebApi_ADAL.Definition.Attribute
 {
-    public class LabelValue :System.Attribute
+    public class LabelValue : System.Attribute
     {
         public string Value { get; set; }
         public LabelValue(string value)
         {
-            this.Value = value;
+            Value = value;
         }
         public static string GetLabelValue(object value)
         {

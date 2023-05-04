@@ -2,25 +2,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CrmSdkLibrary.Definition.Model
+namespace WebApi_ADAL.Definition.Model
 {
     /// <summary>
     /// Use For Web API
     /// </summary>
     public class WhoAmI
     {
-        public string ODataContext { get; set; }
+        [JsonPropertyName("@odata.context")]
+        public string OdataContext { get; set; }
+
+        [JsonPropertyName("BusinessUnitId")]
         public string BusinessUnitId { get; set; }
+
+        [JsonPropertyName("UserId")]
         public string UserId { get; set; }
+
+        [JsonPropertyName("OrganizationId")]
         public string OrganizationId { get; set; }
 
+        [JsonIgnore]
         public ApiException Error { get; set; }
-
-        public override string ToString()
-        {
-            return $"{{{{\"ODataContext\" : \"{ODataContext}\", \"BusinessUnitId\" : \"{BusinessUnitId}\", \"UserId\" : \"{UserId}\", \"OrganizationId\" : \"{OrganizationId}\"}}}}";
-        }
     }
 }
