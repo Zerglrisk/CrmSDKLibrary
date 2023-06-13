@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary_UnitTest", "C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrmSdkLibrary_NUnitTest_Core", "CrmSdkLibrary_NUnitTest_Core\CrmSdkLibrary_NUnitTest_Core.csproj", "{0525F69B-F5B2-4F8D-9EA0-9EFB3A8EEA35}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workflows", "Workflows\Workflows.csproj", "{DE335307-B330-47F2-B3CD-73525FE4E630}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{0525F69B-F5B2-4F8D-9EA0-9EFB3A8EEA35}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0525F69B-F5B2-4F8D-9EA0-9EFB3A8EEA35}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0525F69B-F5B2-4F8D-9EA0-9EFB3A8EEA35}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE335307-B330-47F2-B3CD-73525FE4E630}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE335307-B330-47F2-B3CD-73525FE4E630}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE335307-B330-47F2-B3CD-73525FE4E630}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE335307-B330-47F2-B3CD-73525FE4E630}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

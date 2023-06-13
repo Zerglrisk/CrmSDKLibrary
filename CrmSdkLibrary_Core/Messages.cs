@@ -16,7 +16,7 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace CrmSdkLibrary_Core
 {
-    public static class Messages
+    public static partial class Messages
     {
         /// <summary>
         /// Disable Duplication Detection (Default : false)
@@ -1092,6 +1092,21 @@ namespace CrmSdkLibrary_Core
         }
 
         /// <summary>
+        /// Contains the data that is needed to retrieves a list dependencies for solution components that directly depend on a solution component.
+        /// </summary>
+        /// <see href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievedependentcomponentsrequest?view=dataverse-sdk-latest"/>
+        /// <see href="https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/metadata-option-sets"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetId"></param>
+        /// <param name="componentType"></param>
+        /// <returns></returns>
+        public static EntityCollection RetrieveDependentComponents(in IOrganizationService service, Guid optionSetId, int componentType) => ((RetrieveDependentComponentsResponse)service.Execute(new RetrieveDependentComponentsRequest
+        {
+            ObjectId = optionSetId,
+            ComponentType = componentType
+        })).EntityCollection;
+
+        /// <summary>
         /// Contains the data that is needed to retrieve attribute metadata.
         /// </summary>
         /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveattributerequest?view=dynamics-general-ce-9"/>
@@ -1669,7 +1684,79 @@ namespace CrmSdkLibrary_Core
         public static AuditPartitionDetailCollection RetrieveAuditPartitionList(IOrganizationService service)
             => ((RetrieveAuditPartitionListResponse)service.Execute(new RetrieveAuditPartitionListRequest())).AuditPartitionDetailCollection;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see href="https://learn.microsoft.com/en-us/dynamics365/customerengagement/on-premises/developer/retrieve-detect-changes-metadata?view=op-9-1"/>
+        /// <param name="service"></param>
+        /// <param name="query"></param>
+        /// <param name="deletedMetadataFilters"></param>
+        /// <param name="clientVersionStamp"></param>
+        /// <param name="retrieveAllSettings"></param>
+        /// <returns></returns>
+        public static (EntityMetadataCollection, DeletedMetadataCollection) RetrieveMetadataChanges(in IOrganizationService service, EntityQueryExpression query, DeletedMetadataFilters deletedMetadataFilters, string clientVersionStamp, bool retrieveAllSettings)
+        {
+            var response = ((RetrieveMetadataChangesResponse)service.Execute(new RetrieveMetadataChangesRequest()
+            {
+                ClientVersionStamp = clientVersionStamp,
+                DeletedMetadataFilters = deletedMetadataFilters,
+                Query = query,
+                RetrieveAllSettings = retrieveAllSettings,
+            }));
+            return (response.EntityMetadata, response.DeletedMetadata);
+        }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName">Gets or sets the logical name of the entity that contains the attribute. Required.</param>
+        /// <param name="attributeLogicalName">Gets or sets the logical name of the attribute to delete.Required.</param>
+        public static void DeleteAttribute(in IOrganizationService service, string entityLogicalName, string attributeLogicalName)
+        {
+            _ = ((DeleteAttributeResponse)service.Execute(new DeleteAttributeRequest
+            {
+                EntityLogicalName = entityLogicalName,
+                LogicalName = attributeLogicalName
+            }));
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to create a new attribute, and optionally, to add it to a specified unmanaged solution.
+        /// </summary>
+        /// <see href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.createattributerequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName">Gets or sets the name of the entity for which you want to create an attribute. Required.</param>
+        /// <param name="attributeMetadata">Gets or sets the definition of the attribute type that you want to create. Required.</param>
+        /// <param name="solutionUniqueName">Gets or sets the name of the unmanaged solution to which you want to add this attribute. Optional.</param>
+        public static void CreateAttribute(in IOrganizationService service, string entityLogicalName, AttributeMetadata attributeMetadata, string solutionUniqueName = null)
+        {
+            _ = ((CreateAttributeResponse)service.Execute(new CreateAttributeRequest
+            {
+                EntityName = entityLogicalName,
+                Attribute = attributeMetadata,
+                SolutionUniqueName = solutionUniqueName
+            }));
+        }
+
+        /// <summary>
+        /// Contains the data that is needed to update the definition of an attribute.
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName">Gets or sets the logical name of the entity to which the attribute belongs. Required.</param>
+        /// <param name="attributeMetadata">Gets or sets the attribute metadata to be updated. Required.</param>
+        /// <param name="mergeLabels">Gets or sets whether the label metadata will be merged or overwritten. Required.</param>
+        /// <param name="solutionUniqueName">Gets or sets the name of the solution to associate the entity with. Optional.</param>
+        public static void UpdateAttribute(in IOrganizationService service, string entityLogicalName, AttributeMetadata attributeMetadata, bool mergeLabels, string solutionUniqueName = null)
+        {
+            _ = ((UpdateAttributeResponse)service.Execute(new UpdateAttributeRequest
+            {
+                EntityName= entityLogicalName,
+                Attribute = attributeMetadata,
+                MergeLabels = mergeLabels,
+                SolutionUniqueName = solutionUniqueName,
+            }));
+        }
 
         public static void test(IOrganizationService service)
         {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
+//using Newtonsoft.Json;
 using System;
 using System.IO;
 
@@ -16,10 +16,10 @@ namespace CrmSdkLibrary_UnitTest
 
         public UnitTest1()
         {
-            using (var reader = new StreamReader(Directory.GetCurrentDirectory() + "/secrets.json"))
-            {
-                Config = JsonConvert.DeserializeObject<AppSettings>(reader.ReadToEnd());
-            }
+            //using (var reader = new StreamReader(Directory.GetCurrentDirectory() + "/secrets.json"))
+            //{
+            //    Config = JsonConvert.DeserializeObject<AppSettings>(reader.ReadToEnd());
+            //}
         }
 
         [TestMethod]

@@ -12,12 +12,11 @@ namespace CrmSdkLibrary
     /// </summary>
     public class ConnectionOld
     {
-        public static CrmServiceClient Service { get; private set; }
         public static ClientCredentials ClientCredentials;
         private static ClientCredentials _deviceCredentials;
-
-        //CrmServiceClient를 사용하여 Microsoft Dynamics 365(온라인 및 온-프레미스) 웹 서비스에 연결한다.
+        public static CrmServiceClient Service { get; private set; }
         /// <summary>
+        /// CrmServiceClient를 사용하여 Microsoft Dynamics 365(온라인 및 온-프레미스) 웹 서비스에 연결한다.
         /// Deprecated (Ws-Trust)
         /// connect to the Organization service.
         /// Connect to the Microsoft Dynamics 365 (online & on-premises) web service using the CrmServiceClient

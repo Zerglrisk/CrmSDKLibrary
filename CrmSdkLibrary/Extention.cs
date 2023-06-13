@@ -12,51 +12,44 @@ namespace CrmSdkLibrary
 {
     public static class Extention
     {
-        public static string ToDigitString(this string str)
+        /// <summary>
+        /// Get System.ComponentModel.DescriptionAttribute  Value
+        /// </summary>
+        /// <see href="https://stackoverflow.com/a/479417"/>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="enumerationValue"></param>
+        /// <returns></returns>
+        public static string GetDescription<T>(this T enumerationValue) where T : struct
         {
-            var regex = new Regex(@"[^\d]");
-            return regex.Replace(str, "");
+            var type = enumerationValue.GetType();
+            if (!type.IsEnum)
+            {
+                throw new ArgumentException("EnumerationValue must be of Enum Type", "enumerationValue");
+            }
+
+            var memberInfo = type.GetMember(enumerationValue.ToString());
+            if (memberInfo.Length <= 0) return enumerationValue.ToString();
+            var attrs = memberInfo.First().GetCustomAttributes(typeof(DescriptionAttribute), false);
+            return attrs.Length > 0 ? ((DescriptionAttribute)attrs.First()).Description : enumerationValue.ToString();
         }
 
-        public static string ToDigitString(this object str)
+        public static string GetStringValue<T>(this T enumerationValue) where T : struct
         {
-            var regex = new Regex(@"[^\d]");
-            return regex.Replace(str.ToString(), "");
+            var type = enumerationValue.GetType();
+            if (!type.IsEnum)
+            {
+                throw new ArgumentException("EnumerationValue must be of Enum Type", "enumerationValue");
+            }
+
+            var memberInfo = type.GetMember(enumerationValue.ToString());
+            if (memberInfo.Length <= 0) return enumerationValue.ToString();
+            var attrs = memberInfo.First().GetCustomAttributes(typeof(StringValue), false);
+            return attrs.Length > 0 ? ((StringValue)attrs.First()).Value : enumerationValue.ToString();
         }
 
         public static AliasedValue ToAliasedValue(this object attr)
         {
             return ((AliasedValue)attr);
-        }
-        public static EntityReference ToEntityReference(this object attr, bool isAliasedValue = false)
-        {
-            return isAliasedValue ? (EntityReference)attr.ToAliasedValue().Value : (EntityReference)attr;
-        }
-
-        public static OptionSetValue ToOptionSetValue(this object attr, bool isAliasedValue = false)
-        {
-            return isAliasedValue ? (OptionSetValue)attr.ToAliasedValue().Value : (OptionSetValue)attr;
-        }
-
-        public static Money ToMoney(this object attr, bool isAliasedValue = false)
-        {
-            return isAliasedValue ? (Money)attr.ToAliasedValue().Value : (Money)attr;
-        }
-
-        public static KeyValuePair<Guid, string> ToKeyValuePair(this EntityReference attr)
-        {
-            return attr != null ? new KeyValuePair<Guid, string>(attr.Id, attr.Name) : new KeyValuePair<Guid, string>();
-        }
-        public static DateTime? ToDateTime(this object attr, bool isAliasedValue = false)
-        {
-            if (DateTime.TryParse(isAliasedValue ? attr.ToAliasedValue().Value.ToString() : attr.ToString(), out var temp))
-            {
-                return temp.AddHours(9);
-            }
-            else
-            {
-                return null;
-            }
         }
 
         public static T ToCrmValue<T>(this Entity entity, string attributeName, bool isFormattedValue = false)
@@ -145,6 +138,34 @@ namespace CrmSdkLibrary
             {
                 return (T)Convert.ChangeType(attr.ToString(), typeof(T));
             }
+        }
+
+        public static DateTime? ToDateTime(this object attr, bool isAliasedValue = false)
+        {
+            if (DateTime.TryParse(isAliasedValue ? attr.ToAliasedValue().Value.ToString() : attr.ToString(), out var temp))
+            {
+                return temp.AddHours(9);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public static string ToDigitString(this string str)
+        {
+            var regex = new Regex(@"[^\d]");
+            return regex.Replace(str, "");
+        }
+
+        public static string ToDigitString(this object str)
+        {
+            var regex = new Regex(@"[^\d]");
+            return regex.Replace(str.ToString(), "");
+        }
+        public static EntityReference ToEntityReference(this object attr, bool isAliasedValue = false)
+        {
+            return isAliasedValue ? (EntityReference)attr.ToAliasedValue().Value : (EntityReference)attr;
         }
 
         /// <summary>
@@ -620,39 +641,19 @@ namespace CrmSdkLibrary
             return attr.ToEntityReference().ToEntitySetPath();
         }
 
-        /// <summary>
-        /// Get System.ComponentModel.DescriptionAttribute  Value
-        /// </summary>
-        /// <see href="https://stackoverflow.com/a/479417"/>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="enumerationValue"></param>
-        /// <returns></returns>
-        public static string GetDescription<T>(this T enumerationValue) where T : struct
+        public static KeyValuePair<Guid, string> ToKeyValuePair(this EntityReference attr)
         {
-            var type = enumerationValue.GetType();
-            if (!type.IsEnum)
-            {
-                throw new ArgumentException("EnumerationValue must be of Enum Type", "enumerationValue");
-            }
-
-            var memberInfo = type.GetMember(enumerationValue.ToString());
-            if (memberInfo.Length <= 0) return enumerationValue.ToString();
-            var attrs = memberInfo.First().GetCustomAttributes(typeof(DescriptionAttribute), false);
-            return attrs.Length > 0 ? ((DescriptionAttribute)attrs.First()).Description : enumerationValue.ToString();
+            return attr != null ? new KeyValuePair<Guid, string>(attr.Id, attr.Name) : new KeyValuePair<Guid, string>();
         }
 
-        public static string GetStringValue<T>(this T enumerationValue) where T : struct
+        public static Money ToMoney(this object attr, bool isAliasedValue = false)
         {
-            var type = enumerationValue.GetType();
-            if (!type.IsEnum)
-            {
-                throw new ArgumentException("EnumerationValue must be of Enum Type", "enumerationValue");
-            }
+            return isAliasedValue ? (Money)attr.ToAliasedValue().Value : (Money)attr;
+        }
 
-            var memberInfo = type.GetMember(enumerationValue.ToString());
-            if (memberInfo.Length <= 0) return enumerationValue.ToString();
-            var attrs = memberInfo.First().GetCustomAttributes(typeof(StringValue), false);
-            return attrs.Length > 0 ? ((StringValue)attrs.First()).Value : enumerationValue.ToString();
+        public static OptionSetValue ToOptionSetValue(this object attr, bool isAliasedValue = false)
+        {
+            return isAliasedValue ? (OptionSetValue)attr.ToAliasedValue().Value : (OptionSetValue)attr;
         }
     }
 }

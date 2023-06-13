@@ -97,6 +97,7 @@
     <Compile Include="Entities\SystemView.cs" />
     <Compile Include="Extention.cs" />
     <Compile Include="Messages.cs" />
+    <Compile Include="Messages.Undocumented.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Entities\UserView.cs" />
   </ItemGroup>

@@ -19,44 +19,70 @@ namespace CrmSdkLibrary
         public static CrmServiceClient Service { get; private set; }
 
         /// <summary>
-        /// Connect with specific crm user.
-        /// You must set AllowPublicClient in AAD, AppRegistration, Manifest.
+        /// Connect using a certificate thumbprint
+        /// If you are connecting using a certificate and using the Microsoft.Xrm.Tooling.Connector.CrmServiceClient you can use this
+        /// 인증서의 지문을 이용하여 사용한다,
+        /// win + r  -> certmgr.msc -> 개인용 -> 인증서 선택 -> 제일 밑의 지문(thumbprint)
         /// </summary>
-        /// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
-        /// <param name="clientId">from aad, app registration</param>
-        /// <param name="id">crm id</param>
-        /// <param name="pw">crm pw</param>
-        /// <param name="tenantId">from aad, app registration </param>
-        /// <returns></returns>
-        public (CrmServiceClient, Guid) ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
+        /// <see href="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/authenticate-oauth#connect-using-a-certificate-thumbprint"/>
+        /// <see href="https://www.crmviking.com/2018/03/dynamics-365-s2s-oauth-authentication.html"/>
+        /// <param name="certThumbPrintId">e.g.) DC6C689022C905EA5F812B51F1574ED10F256FF6</param>
+        /// <param name="environmentUri">e.g.) https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">  e.g.) 545ce4df-95a6-4115-ac2f-e8e5546e79af</param>
+        public static Guid ConnectServiceThumbprint(string certThumbPrintId, string environmentUri, string clientId)
         {
-            string conn = $@" 
-            Url = {environmentUri};
-            AuthType = {Microsoft.Xrm.Tooling.Connector.AuthenticationType.OAuth:G};
-            Username = {id};
-            Password = {pw};
-            AppId = {clientId};
-            RedirectUri = app://{tenantId};
-            RequireNewInstance = True;
-            LoginPrompt=Never;"; //GenerateConString();
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            string ConnectionStr = $@"AuthType=Certificate;
+                        SkipDiscovery=true;url={environmentUri};
+                        thumbprint={certThumbPrintId};
+                        ClientId={clientId};
+                        RequireNewInstance=true";
 
-            //실행 대기시간 default 2분 -> 5분
-            CrmServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+            ////실행 대기시간 default 2분 -> 5분
+            //CrmServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+            CrmServiceClient svc = new CrmServiceClient(ConnectionStr);
 
-            var svc = new CrmServiceClient(conn);
-            if (svc.IsReady) //Connection is successful
+            if (svc.IsReady)
             {
-                
+                //실행 대기시간 default 2분 -> 5분
+                //if (svc.OrganizationWebProxyClient != null)
+                //{
+                //    svc.OrganizationWebProxyClient.InnerChannel.OperationTimeout = new TimeSpan(0, 5, 0);
+                //}
+                //else if(svc.OrganizationServiceProxy != null)
+                //{
+                //    svc.OrganizationServiceProxy.Timeout = new TimeSpan(0, 5, 0);
+                //}
             }
-            else
-            {
-                throw svc.LastCrmException;
-            }
-
             Service = svc;
+            return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
+        }
 
-            return (svc, svc.GetMyCrmUserId());
+        /// <summary>
+        /// Renew the token(if it is near expiration or has expired)
+        /// </summary>
+        /// <param name="_proxy"></param>
+        /// <see cref="https://alisharifiblog.wordpress.com/2017/02/13/refresh-security-token-for-microsoft-dynamics-crm/"/>
+        /// <see cref="https://stackoverflow.com/questions/27154282/is-there-an-organizationservice-connection-keep-alive-setting"/>
+        /// <see cref="https://blog.thomasfaulkner.nz/post/2015/03/crm-organization-service-(re)authentication"/>
+        public static void RenewTokenIfRequired(OrganizationServiceProxy _proxy)
+        {
+            if (null != _proxy.SecurityTokenResponse &&
+                DateTime.UtcNow.AddMinutes(15) >= _proxy.SecurityTokenResponse.Response.Lifetime.Expires)
+            {
+                try
+                {
+                    _proxy.Authenticate();
+                }
+                catch (CommunicationException)
+                {
+                    if (null == _proxy.SecurityTokenResponse ||
+                        DateTime.UtcNow >= _proxy.SecurityTokenResponse.Response.Lifetime.Expires)
+                    {
+                        throw;
+                    }
+                    // Ignore the exception 
+                }
+            }
         }
 
         /// <summary>
@@ -97,97 +123,45 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
-        /// Connect using a certificate thumbprint
-        /// If you are connecting using a certificate and using the Microsoft.Xrm.Tooling.Connector.CrmServiceClient you can use this
-        /// 인증서의 지문을 이용하여 사용한다,
-        /// win + r  -> certmgr.msc -> 개인용 -> 인증서 선택 -> 제일 밑의 지문(thumbprint)
+        /// Connect with specific crm user.
+        /// You must set AllowPublicClient in AAD, AppRegistration, Manifest.
         /// </summary>
-        /// <see href="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/authenticate-oauth#connect-using-a-certificate-thumbprint"/>
-        /// <see href="https://www.crmviking.com/2018/03/dynamics-365-s2s-oauth-authentication.html"/>
-        /// <param name="certThumbPrintId">e.g.) DC6C689022C905EA5F812B51F1574ED10F256FF6</param>
-        /// <param name="environmentUri">e.g.) https://yourorg.crm.dynamics.com</param>
-        /// <param name="clientId">  e.g.) 545ce4df-95a6-4115-ac2f-e8e5546e79af</param>
-        public static Guid ConnectServiceThumbprint(string certThumbPrintId, string environmentUri, string clientId)
+        /// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">from aad, app registration</param>
+        /// <param name="id">crm id</param>
+        /// <param name="pw">crm pw</param>
+        /// <param name="tenantId">from aad, app registration </param>
+        /// <returns></returns>
+        public (CrmServiceClient, Guid) ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
         {
-            string ConnectionStr = $@"AuthType=Certificate;
-                        SkipDiscovery=true;url={environmentUri};
-                        thumbprint={certThumbPrintId};
-                        ClientId={clientId};
-                        RequireNewInstance=true";
+            string conn = $@" 
+            Url = {environmentUri};
+            AuthType = {Microsoft.Xrm.Tooling.Connector.AuthenticationType.OAuth:G};
+            Username = {id};
+            Password = {pw};
+            AppId = {clientId};
+            RedirectUri = app://{tenantId};
+            RequireNewInstance = True;
+            LoginPrompt=Never;"; //GenerateConString();
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
-            ////실행 대기시간 default 2분 -> 5분
-            //CrmServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
-            CrmServiceClient svc = new CrmServiceClient(ConnectionStr);
-            
-            if (svc.IsReady)
+            //실행 대기시간 default 2분 -> 5분
+            CrmServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+
+            var svc = new CrmServiceClient(conn);
+            if (svc.IsReady) //Connection is successful
             {
-                //실행 대기시간 default 2분 -> 5분
-                //if (svc.OrganizationWebProxyClient != null)
-                //{
-                //    svc.OrganizationWebProxyClient.InnerChannel.OperationTimeout = new TimeSpan(0, 5, 0);
-                //}
-                //else if(svc.OrganizationServiceProxy != null)
-                //{
-                //    svc.OrganizationServiceProxy.Timeout = new TimeSpan(0, 5, 0);
-                //}
+                
             }
+            else
+            {
+                throw svc.LastCrmException;
+            }
+
             Service = svc;
-            return ((WhoAmIResponse)svc.OrganizationServiceProxy.Execute(new WhoAmIRequest())).UserId;
+
+            return (svc, svc.GetMyCrmUserId());
         }
-        
-        //Similer WhoAmI Method
-        /// <summary>
-        /// Obtain information about the logged on user from the web service.
-        /// </summary>
-        /// <returns></returns>
-        public string RetrieveLoggedUserInfo()
-        {
-            var User = string.Empty;
-            try
-            {
-
-                var userid = ((Microsoft.Crm.Sdk.Messages.WhoAmIResponse)Service.Execute(new Microsoft.Crm.Sdk.Messages.WhoAmIRequest())).UserId;
-                //var systemUser = (SystemUser)_orgService.Retrieve("systemuser", userid,
-                //   new ColumnSet(new string[] { "firstname", "lastname" }));
-
-                //User = "Logged on user is " + systemUser.FirstName + " " + systemUser.LastName + ".";
-                User = Service.Retrieve("systemuser", userid, new ColumnSet("fullname")).GetAttributeValue<string>("fullname");
-
-            }
-            catch (Exception)
-            {
-                //will add logger
-                throw;
-            }
-            return User;
-        }
-
-        /// <summary>
-        /// Retrieve the version of Microsoft Dynamics CRM.
-        /// </summary>
-        /// <returns></returns>
-        [Obsolete("RetrieveCRMVersion is Deprecated. Please use CrmServiceClient.ConnectedOrgVersion")]
-        public string RetrieveCRMVersion(CrmServiceClient service = null)
-        {
-            if(service == null)
-            {
-                service = Service;
-            }
-            //return Service.ConnectedOrgVersion.ToString();
-            var version = string.Empty;
-            try
-            {
-                version = ((RetrieveVersionResponse)Service.Execute(new RetrieveVersionRequest())).Version;
-
-            }
-            catch (Exception)
-            {
-                //will add logger
-            }
-
-            return version;
-        }
-
         /// <summary>
         /// Create an On-Premises User
         /// </summary>
@@ -195,34 +169,6 @@ namespace CrmSdkLibrary
         public void CreateOnPremisesUser()
         {
 
-        }
-
-        /// <summary>
-        /// Renew the token(if it is near expiration or has expired)
-        /// </summary>
-        /// <param name="_proxy"></param>
-        /// <see cref="https://alisharifiblog.wordpress.com/2017/02/13/refresh-security-token-for-microsoft-dynamics-crm/"/>
-        /// <see cref="https://stackoverflow.com/questions/27154282/is-there-an-organizationservice-connection-keep-alive-setting"/>
-        /// <see cref="https://blog.thomasfaulkner.nz/post/2015/03/crm-organization-service-(re)authentication"/>
-        public static void RenewTokenIfRequired(OrganizationServiceProxy _proxy)
-        {
-            if (null != _proxy.SecurityTokenResponse &&
-                DateTime.UtcNow.AddMinutes(15) >= _proxy.SecurityTokenResponse.Response.Lifetime.Expires)
-            {
-                try
-                {
-                    _proxy.Authenticate();
-                }
-                catch (CommunicationException)
-                {
-                    if (null == _proxy.SecurityTokenResponse ||
-                        DateTime.UtcNow >= _proxy.SecurityTokenResponse.Response.Lifetime.Expires)
-                    {
-                        throw;
-                    }
-                    // Ignore the exception 
-                }
-            }
         }
 
         /// <summary>
@@ -281,6 +227,58 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
+        /// Retrieve the version of Microsoft Dynamics CRM.
+        /// </summary>
+        /// <returns></returns>
+        [Obsolete("RetrieveCRMVersion is Deprecated. Please use CrmServiceClient.ConnectedOrgVersion")]
+        public string RetrieveCRMVersion(CrmServiceClient service = null)
+        {
+            if (service == null)
+            {
+                service = Service;
+            }
+            //return Service.ConnectedOrgVersion.ToString();
+            var version = string.Empty;
+            try
+            {
+                version = ((RetrieveVersionResponse)Service.Execute(new RetrieveVersionRequest())).Version;
+
+            }
+            catch (Exception)
+            {
+                //will add logger
+            }
+
+            return version;
+        }
+
+        /// <summary>
+        /// Obtain information about the logged on user from the web service.
+        /// Similer WhoAmI Method
+        /// </summary>
+        /// <returns></returns>
+        public string RetrieveLoggedUserInfo()
+        {
+            var User = string.Empty;
+            try
+            {
+
+                var userid = ((Microsoft.Crm.Sdk.Messages.WhoAmIResponse)Service.Execute(new Microsoft.Crm.Sdk.Messages.WhoAmIRequest())).UserId;
+                //var systemUser = (SystemUser)_orgService.Retrieve("systemuser", userid,
+                //   new ColumnSet(new string[] { "firstname", "lastname" }));
+
+                //User = "Logged on user is " + systemUser.FirstName + " " + systemUser.LastName + ".";
+                User = Service.Retrieve("systemuser", userid, new ColumnSet("fullname")).GetAttributeValue<string>("fullname");
+
+            }
+            catch (Exception)
+            {
+                //will add logger
+                throw;
+            }
+            return User;
+        }
+        /// <summary>
         /// 
         /// </summary>
         /// <see href="https://gp23.com.au/2019/01/18/d365-authentication-connect-my-apps/"/>
@@ -290,21 +288,6 @@ namespace CrmSdkLibrary
             /// In memory cache of access tokens
             /// </summary>
             Dictionary<string, Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult> accessTokens = new Dictionary<string, Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult>();
-            private string EnvironmentUrl { get; set; }
-            /// <summary>
-            ///  This is the Application ID from your App Registration
-            /// </summary>
-            private string ClientId { get; set; }   
-            /// <summary>
-            /// The Client Secret from your App Registration
-            /// </summary>
-            private string ClientSecret { get; set; } 
-            private string AADInstance { get; set; }
-            /// <summary>
-            /// The GUID of your Azure Tenant ID. See the article above for details on finding this value.
-            /// </summary>
-            private string TenantId { get; set; }    
-
             /// <summary>
             /// 
             /// </summary>
@@ -322,37 +305,27 @@ namespace CrmSdkLibrary
                 this.AADInstance = aadInstance;
             }
 
+            private string AADInstance { get; set; }
+            /// <summary>
+            ///  This is the Application ID from your App Registration
+            /// </summary>
+            private string ClientId { get; set; }
+
+            /// <summary>
+            /// The Client Secret from your App Registration
+            /// </summary>
+            private string ClientSecret { get; set; }
+
+            private string EnvironmentUrl { get; set; }
+            /// <summary>
+            /// The GUID of your Azure Tenant ID. See the article above for details on finding this value.
+            /// </summary>
+            private string TenantId { get; set; }    
             public void AddAccessToken(Uri orgUri, Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult accessToken)
             {
                 // Access tokens can be matched on the hostname,
                 // different endpoints in the same organization can use the same access token
                 accessTokens[orgUri.Host] = accessToken;
-            }
-
-            public string GetAuthToken(Uri connectedUri)
-            {
-                // Check if you have an access token for this host
-                if (accessTokens.ContainsKey(connectedUri.Host) && accessTokens[connectedUri.Host].ExpiresOn > DateTime.Now)
-                {
-                    return accessTokens[connectedUri.Host].AccessToken;
-                }
-                else
-                {
-                    accessTokens[connectedUri.Host] = GetAccessTokenFromAzureADAsync(connectedUri).Result;
-                }
-                return accessTokens[connectedUri.Host].AccessToken;
-            }
-
-            private async Task<Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult> GetAccessTokenFromAzureADAsync(Uri orgUrl)
-            {
-                var clientcred = new Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential(this.ClientId, this.ClientSecret);
-                var authenticationContext = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(this.AADInstance + this.TenantId);
-                var authenticationResult = await authenticationContext.AcquireTokenAsync(this.EnvironmentUrl, clientcred);
-                
-                // Save into memory
-                accessTokens[new Uri(this.EnvironmentUrl).Host] = authenticationResult;
-
-                return authenticationResult;
             }
 
             public CrmServiceClient Connect()
@@ -396,6 +369,32 @@ namespace CrmSdkLibrary
 
                 }
                 return null;
+            }
+
+            public string GetAuthToken(Uri connectedUri)
+            {
+                // Check if you have an access token for this host
+                if (accessTokens.ContainsKey(connectedUri.Host) && accessTokens[connectedUri.Host].ExpiresOn > DateTime.Now)
+                {
+                    return accessTokens[connectedUri.Host].AccessToken;
+                }
+                else
+                {
+                    accessTokens[connectedUri.Host] = GetAccessTokenFromAzureADAsync(connectedUri).Result;
+                }
+                return accessTokens[connectedUri.Host].AccessToken;
+            }
+
+            private async Task<Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationResult> GetAccessTokenFromAzureADAsync(Uri orgUrl)
+            {
+                var clientcred = new Microsoft.IdentityModel.Clients.ActiveDirectory.ClientCredential(this.ClientId, this.ClientSecret);
+                var authenticationContext = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(this.AADInstance + this.TenantId);
+                var authenticationResult = await authenticationContext.AcquireTokenAsync(this.EnvironmentUrl, clientcred);
+                
+                // Save into memory
+                accessTokens[new Uri(this.EnvironmentUrl).Host] = authenticationResult;
+
+                return authenticationResult;
             }
         }
     }

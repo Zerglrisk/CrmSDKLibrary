@@ -16,66 +16,12 @@ namespace CrmSdkLibrary
     public class Common
     {
         /// <summary>
-        /// get user's entityimage's uri string. only can use which Entity has entityimage field. 
-        /// you can use crm address + uri string
-        /// </summary>
-        public static string GetUserImageUri(IOrganizationService service, string entity, Guid userId)
-        {
-            //Image URL 가져오기
-            var strEntityImageURL = string.Empty;
-            //https://msdn.microsoft.com/ko-kr/library/dn817886.aspx
-            //http://mscrmtechie.blogspot.kr/2015/03/retrieve-entityimage-url-of-record-in.html
-            //guid - contactid
-            var entObject = service.Retrieve(entity, userId, new ColumnSet(new string[] { "entityimage_url" }));
-            if (entObject != null && entObject.Contains("entityimage_url"))
-            {
-                strEntityImageURL = entObject.Attributes["entityimage_url"].ToString();
-            }
-
-            return strEntityImageURL;
-        }
-
-        /// <summary>
         /// get all user entityimage's uri string. only can use which Entity has entityimage field. 
         /// you can use crm address + uri string
         /// </summary>
         public static string GetAllUserImageUri(IOrganizationService service, string entity)
         {
             return string.Empty;
-        }
-
-        //조건에 맞는 사용자의 엔티티 이미지 Uri 가져옴, entityimage 필드가 있는 엔티티에서만 사용 가능
-        //리턴으로 뒷부분 uri만 주므로 crm 어드레스 주소도 필요함
-        /// <summary>
-        /// get user entityimage's uri string that contain conditions. only can use which Entity has entityimage field. 
-        /// you can use crm address + uri string
-        /// </summary>
-        public static string GetUsersImageUri(IOrganizationService service, string entity, string[] conditions)
-        //컨디션 데이터타입 고치기
-        {
-            return string.Empty;
-        }
-
-        //CRM 서버에 연결하여 엔티티의 애트리뷰트의 타입명을 가져온다.
-        /// <summary>
-        /// Communicate to server for get entity's attribute's type name
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="entity"></param>
-        /// <param name="attribute"></param>
-        /// <returns></returns>
-        public static string GetAttributeType(IOrganizationService service, Entity entity, string attribute)
-        {
-            var attributeRequest = new RetrieveAttributeRequest
-            {
-                EntityLogicalName = entity.LogicalName,
-                LogicalName = attribute,
-                RetrieveAsIfPublished = true
-            };
-
-            var attributeResponse = (RetrieveAttributeResponse)service.Execute(attributeRequest);
-            //AttributeMetadata attrMetadata = (AttributeMetadata)attributeResponse.AttributeMetadata;
-            return attributeResponse.AttributeMetadata.AttributeType.ToString();
         }
 
         /// <summary>
@@ -99,13 +45,15 @@ namespace CrmSdkLibrary
 
             //For OptionSet and EtntiyReference and Virtual
 
-
             //Debug
             //Console.Write("\tDebug attributeType : " + entity[attribute].GetType().Name + "\t");
+
             #region Switch
+
             switch (entity[attribute].GetType().Name)
             {
                 #region OptionSet Switch
+
                 case "Byte[]": //이미지
                 case "OptionSetValue": //옵션 셋
                     OptionSetValue option = null;
@@ -156,8 +104,11 @@ namespace CrmSdkLibrary
                         }
                     }
                     break;
+
                 #endregion OptionSet Switch
+
                 #region EntityReference
+
                 case "EntityReference":
                     var attributeRequestEntity = new RetrieveAttributeRequest
                     {
@@ -186,6 +137,7 @@ namespace CrmSdkLibrary
                     }
                     break;
                 #endregion EntityReference
+
                 case "Enum": //Enum
                     break;
                 case "Memo": //여러 줄 텍스트
@@ -232,43 +184,32 @@ namespace CrmSdkLibrary
                     //TODO: Write Err Exception
                     break;
             }
+
             #endregion Switch
-
-            
-
 
             return strLabel;
         }
 
         /// <summary>
-        /// 지정한 엔티티의 메타데이터를 가져온 후 메타데이터에서 지정한 필드의 지정한 값과 연결된 이름을 가져오는 함수.
-        /// This function that get the metadata of a specified entity and then get the name associated with the specified value of the specified filed in the metadata.
+        /// Communicate to server for get entity's attribute's type name
+        /// CRM 서버에 연결하여 엔티티의 애트리뷰트의 타입명을 가져온다.
         /// </summary>
         /// <param name="service"></param>
-        /// <param name="entityName"></param>
-        /// <param name="attributeName"></param>
-        /// <param name="optionSetValue"></param>
-        /// <see href="https://www.codeproject.com/Tips/553178/Get-the-OptionsetValue-and-OptionsetText-for-Dynam"/>
-        /// <returns>string</returns>
-        public static string GetOptionSetText(IOrganizationService service, string entityName, string attributeName, int optionSetValue)
+        /// <param name="entity"></param>
+        /// <param name="attribute"></param>
+        /// <returns></returns>
+        public static string GetAttributeType(IOrganizationService service, Entity entity, string attribute)
         {
-            var retrieveDetails = new RetrieveEntityRequest
+            var attributeRequest = new RetrieveAttributeRequest
             {
-                EntityFilters = EntityFilters.All,
-                LogicalName = entityName,
+                EntityLogicalName = entity.LogicalName,
+                LogicalName = attribute,
                 RetrieveAsIfPublished = true
             };
-            var retrieveEntityResponseObj = (RetrieveEntityResponse)service.Execute(retrieveDetails);
-            var metadata = retrieveEntityResponseObj.EntityMetadata;
-            var pickListMetadata = metadata.Attributes.FirstOrDefault(attribute => string.Equals(attribute.LogicalName, attributeName, StringComparison.OrdinalIgnoreCase)) as Microsoft.Xrm.Sdk.Metadata.PicklistAttributeMetadata;
-            var options = pickListMetadata?.OptionSet;
-            
-            IList<OptionMetadata> optionsList = (from o in options?.Options
-                                                 where o.Value != null && o.Value.Value == optionSetValue
-                                                 select o).ToList();
-            var optionSetLabel = (optionsList.First()).Label.UserLocalizedLabel.Label;
 
-            return optionSetLabel;
+            var attributeResponse = (RetrieveAttributeResponse)service.Execute(attributeRequest);
+            //AttributeMetadata attrMetadata = (AttributeMetadata)attributeResponse.AttributeMetadata;
+            return attributeResponse.AttributeMetadata.AttributeType.ToString();
         }
 
         /// <summary>
@@ -298,6 +239,66 @@ namespace CrmSdkLibrary
             return (from o in attributeMetadata.OptionSet.Options select o).ToList();
         }
 
+        /// <summary>
+        /// 지정한 엔티티의 메타데이터를 가져온 후 메타데이터에서 지정한 필드의 지정한 값과 연결된 이름을 가져오는 함수.
+        /// This function that get the metadata of a specified entity and then get the name associated with the specified value of the specified filed in the metadata.
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityName"></param>
+        /// <param name="attributeName"></param>
+        /// <param name="optionSetValue"></param>
+        /// <see href="https://www.codeproject.com/Tips/553178/Get-the-OptionsetValue-and-OptionsetText-for-Dynam"/>
+        /// <returns>string</returns>
+        public static string GetOptionSetText(IOrganizationService service, string entityName, string attributeName, int optionSetValue)
+        {
+            var retrieveDetails = new RetrieveEntityRequest
+            {
+                EntityFilters = EntityFilters.All,
+                LogicalName = entityName,
+                RetrieveAsIfPublished = true
+            };
+            var retrieveEntityResponseObj = (RetrieveEntityResponse)service.Execute(retrieveDetails);
+            var metadata = retrieveEntityResponseObj.EntityMetadata;
+            var pickListMetadata = metadata.Attributes.FirstOrDefault(attribute => string.Equals(attribute.LogicalName, attributeName, StringComparison.OrdinalIgnoreCase)) as Microsoft.Xrm.Sdk.Metadata.PicklistAttributeMetadata;
+            var options = pickListMetadata?.OptionSet;
 
+            IList<OptionMetadata> optionsList = (from o in options?.Options
+                                                 where o.Value != null && o.Value.Value == optionSetValue
+                                                 select o).ToList();
+            var optionSetLabel = (optionsList.First()).Label.UserLocalizedLabel.Label;
+
+            return optionSetLabel;
+        }
+
+        /// <summary>
+        /// get user's entityimage's uri string. only can use which Entity has entityimage field. 
+        /// you can use crm address + uri string
+        /// </summary>
+        public static string GetUserImageUri(IOrganizationService service, string entity, Guid userId)
+        {
+            //Image URL 가져오기
+            var strEntityImageURL = string.Empty;
+            //https://msdn.microsoft.com/ko-kr/library/dn817886.aspx
+            //http://mscrmtechie.blogspot.kr/2015/03/retrieve-entityimage-url-of-record-in.html
+            //guid - contactid
+            var entObject = service.Retrieve(entity, userId, new ColumnSet(new string[] { "entityimage_url" }));
+            if (entObject != null && entObject.Contains("entityimage_url"))
+            {
+                strEntityImageURL = entObject.Attributes["entityimage_url"].ToString();
+            }
+
+            return strEntityImageURL;
+        }
+        /// <summary>
+        /// get user entityimage's uri string that contain conditions. only can use which Entity has entityimage field. 
+        /// you can use crm address + uri string
+        /// 조건에 맞는 사용자의 엔티티 이미지 Uri 가져옴, entityimage 필드가 있는 엔티티에서만 사용 가능
+        /// 리턴으로 뒷부분 uri만 주므로 crm 어드레스 주소도 필요함
+        /// </summary>
+        public static string GetUsersImageUri(IOrganizationService service, string entity, string[] conditions)
+        //컨디션 데이터타입 고치기
+        {
+            return string.Empty;
+        }
     }
 }
