@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using Newtonsoft.Json;
+using CrmSdkLibrary_Core;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace CrmSdkLibrary_NUnitTest_Core
 {
@@ -128,6 +130,49 @@ namespace CrmSdkLibrary_NUnitTest_Core
         public void Api_MSAL()
         {
 
+        }
+
+        [Test]
+        public async Task ExportAsync()
+        {
+            try
+            {
+                var service = CrmSdkLibrary_Core.Connection.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
+                    Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId).Item1;
+                var qe = new QueryExpression("savedquery")
+                {
+                    ColumnSet = new ColumnSet(true),
+                    Criteria = new FilterExpression()
+                    {
+                        Conditions =
+                    {
+                        //new ConditionExpression("solutionid", ConditionOperator.Equal, new Guid()),
+                        new ConditionExpression("returnedtypecode", ConditionOperator.Equal, "new_incident"),
+                        new ConditionExpression("isdefault", ConditionOperator.Equal, true),
+                        //new ConditionExpression("savedqueryid", ConditionOperator.Equal, new Guid()),
+                    }
+                    }
+                };
+
+                var defaultView = await service.RetrieveMultipleAsync(qe);
+
+                var view = defaultView.Entities.First().ToEntityReference();
+                string fetchXml = defaultView.Entities.First().GetAttributeValue<string>("fetchxml");
+                string layoutXml = defaultView.Entities.First().GetAttributeValue<string>("layoutxml");
+                string queryApi = defaultView.Entities.First().GetAttributeValue<string>("queryapi") ?? "";
+
+                var excel = Messages.Undocumented.ExportToExcel(service, view, fetchXml, layoutXml, queryApi);
+
+                if (excel != null)
+                {
+                    File.WriteAllBytes("test.xlsx", excel);
+                }
+                Assert.IsNotNull(excel);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }

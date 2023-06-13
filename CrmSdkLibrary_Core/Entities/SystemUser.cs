@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CrmSdkLibrary_Core;
-using Microsoft.Xrm.Sdk.Query;
+﻿using Microsoft.Xrm.Sdk.Query;
 
-namespace CrmSdkLibrary.Entities
+namespace CrmSdkLibrary_Core.Entities
 {
     public partial class SystemUser
     {

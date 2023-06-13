@@ -12,29 +12,6 @@ namespace CrmSdkLibrary
 {
     public class Audits
     {
-        public static bool? GetIsAuditEnabled(IOrganizationService service)
-        {
-            //Connection.Service.ConnectedOrgId 
-            //Connection.Service.OrganizationDetail.OrganizationId
-            var orgId = Connection.Service.ConnectedOrgId;
-            var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
-
-            if (org != null && org.Contains("isauditenabled"))
-            {
-                return org.GetAttributeValue<bool>("isauditenabled");
-            }
-            return null;
-        }
-
-        public static void EnableOrganizationAuditing(IOrganizationService service, bool isEnable)
-        {
-            var orgId = Connection.Service.ConnectedOrgId;
-            var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
-
-            org.Attributes["isauditenabled"] = isEnable;
-            service.Update(org);
-        }
-
         public static void EnableEntityAuditing(IOrganizationService service, string entityLogicalName, bool isEnable)
         {
             var entityMetadata = ((RetrieveEntityResponse)service.Execute(new RetrieveEntityRequest
@@ -49,6 +26,28 @@ namespace CrmSdkLibrary
             {
                 Entity = entityMetadata,
             });
+        }
+
+        public static void EnableOrganizationAuditing(IOrganizationService service, bool isEnable)
+        {
+            var orgId = Connection.Service.ConnectedOrgId;
+            var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
+
+            org.Attributes["isauditenabled"] = isEnable;
+            service.Update(org);
+        }
+
+        public static AuditDetail GetAuditDetail(IOrganizationService service, Guid auditId)
+        {
+            var retrieveAuditDetailsRequest = new RetrieveAuditDetailsRequest()
+            {
+                AuditId = auditId
+            };
+
+            var retrieveAuditDetailsResponse = (RetrieveAuditDetailsResponse)service.Execute(retrieveAuditDetailsRequest);
+            var detail = retrieveAuditDetailsResponse.AuditDetail;
+
+            return detail;
         }
 
         public static List<FieldHistory> GetFieldHistory(IOrganizationService service, string entityLogicalName, Guid recordId, string fieldName)
@@ -89,6 +88,19 @@ namespace CrmSdkLibrary
             return fieldHistory;
         }
 
+        public static bool? GetIsAuditEnabled(IOrganizationService service)
+        {
+            //Connection.Service.ConnectedOrgId 
+            //Connection.Service.OrganizationDetail.OrganizationId
+            var orgId = Connection.Service.ConnectedOrgId;
+            var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
+
+            if (org != null && org.Contains("isauditenabled"))
+            {
+                return org.GetAttributeValue<bool>("isauditenabled");
+            }
+            return null;
+        }
         public static AuditDetailCollection GetRecordHistory(IOrganizationService service, string entityLogicalName, Guid recordId)
         {
             var retrieveRecordChangeHistoryRequest = new RetrieveRecordChangeHistoryRequest()
@@ -101,20 +113,6 @@ namespace CrmSdkLibrary
 
             return details;
         }
-
-        public static AuditDetail GetAuditDetail(IOrganizationService service, Guid auditId)
-        {
-            var retrieveAuditDetailsRequest = new RetrieveAuditDetailsRequest()
-            {
-                AuditId = auditId
-            };
-
-            var retrieveAuditDetailsResponse = (RetrieveAuditDetailsResponse)service.Execute(retrieveAuditDetailsRequest);
-            var detail = retrieveAuditDetailsResponse.AuditDetail;
-
-            return detail;
-        }
-
         /// <summary>
         /// Restore Deleted Record using audit guid
         /// </summary>
@@ -205,8 +203,8 @@ namespace CrmSdkLibrary
         {
             public string ChangedBy { get; set; }
             public DateTime ChangedOn { get; set; }
-            public string Oldvalue { get; set; }
             public string NewValue { get; set; }
+            public string Oldvalue { get; set; }
         }
     }
 }

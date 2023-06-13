@@ -7,7 +7,7 @@ using Microsoft.PowerPlatform.Dataverse.Client.Extensions;
 
 // How to Make AutoGenerate File  :
 //  .\CrmSvcUtil.exe /url:https://orgname.api.crm5.dynamics.com/XRMServices/2011/Organization.svc /username:domain\crmadmin /password:pass /out:CRMSdkTypes.cs
-namespace CrmSdkLibrary.Entities
+namespace CrmSdkLibrary_Core.Entities
 {
     /// <summary>
     /// 고객 회사 또는 잠재 고객 회사를 나타내며, 비즈니스 거래에서 청구 대상이 되는 회사입니다.
