@@ -2,18 +2,24 @@
 using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CrmSdkLibrary
 {
     public static class AsyncExtention
     {
-        public static async Task AssociateAsync(this IOrganizationService service, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
+        public static async Task AssociateAsync(this IOrganizationService service, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken = default)
         {
             var t = Task.Factory.StartNew(() =>
             {
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                //Wait 0.1 Sec Who Cancel Command - Cuz cannot revert doing Execute
+                Thread.Sleep(100);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
                 service.Associate(entityName, entityId, relationship, relatedEntities);
-            }).ContinueWith(task =>
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
             });
@@ -21,12 +27,17 @@ namespace CrmSdkLibrary
             await t;
         }
 
-        public static async Task AuthenticateAsync(this ServiceProxy<IOrganizationService> sdk)
+        public static async Task AuthenticateAsync(this ServiceProxy<IOrganizationService> service, CancellationToken cancellationToken = default)
         {
             var t = Task.Factory.StartNew(() =>
             {
-                sdk.Authenticate();
-            }).ContinueWith(task =>
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                //Wait 0.1 Sec Who Cancel Command - Cuz cannot revert doing Execute
+                Thread.Sleep(100);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                service.Authenticate();
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
             });
@@ -34,13 +45,18 @@ namespace CrmSdkLibrary
             await t;
         }
 
-        public static async Task<Guid> CreateAsync(this IOrganizationService sdk, Entity entity)
+        public static async Task<Guid> CreateAsync(this IOrganizationService service, Entity entity, CancellationToken cancellationToken = default)
         {
             var t = Task.Factory.StartNew(() =>
             {
-                var response = sdk.Create(entity);
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                //Wait 0.1 Sec Who Cancel Command - Cuz cannot revert doing Execute
+                Thread.Sleep(100);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                var response = service.Create(entity);
                 return response;
-            }).ContinueWith(task =>
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
                 else { return task.Result; }
@@ -52,12 +68,17 @@ namespace CrmSdkLibrary
             //return t.Result;
         }
 
-        public static async Task DeleteAsync(this IOrganizationService sdk, string entityName, Guid id)
+        public static async Task DeleteAsync(this IOrganizationService service, string entityName, Guid id, CancellationToken cancellationToken = default)
         {
             var t = Task.Factory.StartNew(() =>
             {
-                sdk.Delete(entityName, id);
-            }).ContinueWith(task =>
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                //Wait 0.1 Sec Who Cancel Command - Cuz cannot revert doing Execute
+                Thread.Sleep(100);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                service.Delete(entityName, id);
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
             });
@@ -65,12 +86,17 @@ namespace CrmSdkLibrary
             await t;
         }
 
-        public static async Task DisassociateAsync(this IOrganizationService sdk, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
+        public static async Task DisassociateAsync(this IOrganizationService service, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken = default)
         {
             var t = Task.Factory.StartNew(() =>
             {
-                sdk.Disassociate(entityName, entityId, relationship, relatedEntities);
-            }).ContinueWith(task =>
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                //Wait 0.1 Sec Who Cancel Command - Cuz cannot revert doing Execute
+                Thread.Sleep(100);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                service.Disassociate(entityName, entityId, relationship, relatedEntities);
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
             });
@@ -78,13 +104,18 @@ namespace CrmSdkLibrary
             await t;
         }
 
-        public static async Task<T> ExecuteAsync<T>(this IOrganizationService sdk, OrganizationRequest request) where T : OrganizationResponse
+        public static async Task<T> ExecuteAsync<T>(this IOrganizationService service, OrganizationRequest request, CancellationToken cancellationToken = default) where T : OrganizationResponse
         {
             var t = Task.Factory.StartNew(() =>
             {
-                var response = sdk.Execute(request) as T;
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                //Wait 0.1 Sec Who Cancel Command - Cuz cannot revert doing Execute
+                Thread.Sleep(100);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                var response = service.Execute(request) as T;
                 return response;
-            }).ContinueWith(task =>
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
                 else { return task.Result; }
@@ -93,13 +124,16 @@ namespace CrmSdkLibrary
             return await t;
         }
 
-        public static async Task<Entity> RetrieveAsync(this IOrganizationService sdk, string entityName, Guid id, ColumnSet columnSet)
+        public static async Task<Entity> RetrieveAsync(this IOrganizationService service, string entityName, Guid id, ColumnSet columnSet, CancellationToken cancellationToken = default)
         {
             var t = Task.Factory.StartNew(() =>
             {
-                var response = sdk.Retrieve(entityName, id, columnSet);
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                var response = service.Retrieve(entityName, id, columnSet);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
                 return response;
-            }).ContinueWith(task =>
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
                 else { return task.Result; }
@@ -108,13 +142,16 @@ namespace CrmSdkLibrary
             return await t;
         }
 
-        public static async Task<EntityCollection> RetrieveMultipleAsync(this IOrganizationService sdk, QueryBase query)
+        public static async Task<EntityCollection> RetrieveMultipleAsync(this IOrganizationService service, QueryBase query, CancellationToken cancellationToken = default)
         {
             var t = Task.Factory.StartNew(() =>
             {
-                var response = sdk.RetrieveMultiple(query);
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                var response = service.RetrieveMultiple(query);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
                 return response;
-            }).ContinueWith(task =>
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
                 else { return task.Result; }
@@ -123,12 +160,17 @@ namespace CrmSdkLibrary
             return await t;
         }
 
-        public static async Task UpdateAsync(this IOrganizationService sdk, Entity entity)
+        public static async Task UpdateAsync(this IOrganizationService service, Entity entity, CancellationToken cancellationToken = default)
         {
             var t = Task.Factory.StartNew(() =>
             {
-                sdk.Update(entity);
-            }).ContinueWith(task =>
+                // throw if already canceled
+                cancellationToken.ThrowIfCancellationRequested();
+                //Wait 0.1 Sec Who Cancel Command - Cuz cannot revert doing Execute
+                Thread.Sleep(100);
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                service.Update(entity);
+            }, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsFaulted) { throw task.Exception.Flatten(); }
             });
