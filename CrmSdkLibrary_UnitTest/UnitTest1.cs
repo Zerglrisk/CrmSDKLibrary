@@ -1,7 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-//using Newtonsoft.Json;
+﻿using CrmSdkLibrary;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace CrmSdkLibrary_UnitTest
 {
@@ -16,10 +18,10 @@ namespace CrmSdkLibrary_UnitTest
 
         public UnitTest1()
         {
-            //using (var reader = new StreamReader(Directory.GetCurrentDirectory() + "/secrets.json"))
-            //{
-            //    Config = JsonConvert.DeserializeObject<AppSettings>(reader.ReadToEnd());
-            //}
+            using (var reader = new StreamReader(Directory.GetCurrentDirectory() + "/secrets.json"))
+            {
+                Config = JsonConvert.DeserializeObject<AppSettings>(reader.ReadToEnd());
+            }
         }
 
         [TestMethod]
@@ -33,6 +35,25 @@ namespace CrmSdkLibrary_UnitTest
             {
 
             });
+        }
+        [TestMethod]
+        public async Task TestMathod2Async()
+        {
+            var conn = new CrmSdkLibrary.Connection();
+            var item = conn.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
+                Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
+
+            try
+            {
+                var ec = await item.Item1.RetrieveMultipleAsync(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
+                {
+                    ColumnSet = new Microsoft.Xrm.Sdk.Query.ColumnSet("fullname", "contactid")
+                });
+                var a = ec.Entities;
+            } catch(Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
         }
     }
 }

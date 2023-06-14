@@ -5,8 +5,6 @@ using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CrmSdkLibrary_Core
 {
@@ -14,7 +12,7 @@ namespace CrmSdkLibrary_Core
     {
         public static bool? GetIsAuditEnabled(IOrganizationService service)
         {
-            //Connection.Service.ConnectedOrgId 
+            //Connection.Service.ConnectedOrgId
             //Connection.Service.OrganizationDetail.OrganizationId
             var orgId = Connection.Service.ConnectedOrgId;
             var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
@@ -138,8 +136,8 @@ namespace CrmSdkLibrary_Core
                     {
                         Entity entity = detail.OldValue;
                         return service.Create(entity);
-                        // The audit records are recorded in the order 
-                        // from latest to older. So, it's ok to break since you've recreated 
+                        // The audit records are recorded in the order
+                        // from latest to older. So, it's ok to break since you've recreated
                         // from the latest snapshot of the entity, just before deletion
                         // break;
                     }
