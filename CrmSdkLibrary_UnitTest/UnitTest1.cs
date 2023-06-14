@@ -1,9 +1,13 @@
 ﻿using CrmSdkLibrary;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
 using Newtonsoft.Json;
 using System;
+using System.IdentityModel.Metadata;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Web.Services.Description;
 
 namespace CrmSdkLibrary_UnitTest
 {
@@ -45,10 +49,15 @@ namespace CrmSdkLibrary_UnitTest
 
             try
             {
-                var ec = await item.Item1.RetrieveMultipleAsync(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
+
+                var token = new CancellationTokenSource();
+                var t = item.Item1.RetrieveMultipleAsync(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
                 {
                     ColumnSet = new Microsoft.Xrm.Sdk.Query.ColumnSet("fullname", "contactid")
-                });
+                }, token.Token);
+                //Cancel Test
+                token.Cancel();
+                var ec = await t;
                 var a = ec.Entities;
             } catch(Exception ex)
             {
