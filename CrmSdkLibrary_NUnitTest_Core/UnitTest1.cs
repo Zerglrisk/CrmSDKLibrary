@@ -42,7 +42,7 @@ namespace CrmSdkLibrary_NUnitTest_Core
             {
 
             });
-
+            
             // Query Expression Example
 
             // Where
