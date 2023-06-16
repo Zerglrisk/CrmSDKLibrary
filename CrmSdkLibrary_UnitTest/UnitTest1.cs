@@ -1,13 +1,10 @@
 ﻿using CrmSdkLibrary;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Xrm.Sdk;
 using Newtonsoft.Json;
 using System;
-using System.IdentityModel.Metadata;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Services.Description;
 
 namespace CrmSdkLibrary_UnitTest
 {
@@ -18,6 +15,7 @@ namespace CrmSdkLibrary_UnitTest
         {
             public CrmConfig CrmConfig { get; set; }
         }
+
         private AppSettings Config { get; set; }
 
         public UnitTest1()
@@ -37,9 +35,9 @@ namespace CrmSdkLibrary_UnitTest
 
             var ec = item.Item1.RetrieveMultiple(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
             {
-
             });
         }
+
         [TestMethod]
         public async Task TestMathod2Async()
         {
@@ -49,7 +47,6 @@ namespace CrmSdkLibrary_UnitTest
 
             try
             {
-
                 var token = new CancellationTokenSource();
                 var t = item.Item1.RetrieveMultipleAsync(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
                 {
@@ -59,7 +56,8 @@ namespace CrmSdkLibrary_UnitTest
                 token.Cancel();
                 var ec = await t;
                 var a = ec.Entities;
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Assert.Fail(ex.Message);
             }
