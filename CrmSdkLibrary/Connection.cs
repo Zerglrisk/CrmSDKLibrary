@@ -11,12 +11,39 @@ using System.Net;
 using Microsoft.Xrm.Sdk.Client;
 using System.Threading.Tasks;
 using Microsoft.Xrm.Tooling.Connector;
+using Microsoft.Rest;
 
 namespace CrmSdkLibrary
 {
     public class Connection
     {
+        /// <summary>
+        /// 한번에 ServiceClient 실행가능 한 횟수 52
+        /// </summary>
+        public const int ConcurrentConnectionLimit = 52;
+
+        private static System.Collections.Queue queue = new System.Collections.Queue();
+        private readonly object queueLock = new object();
+
         public static CrmServiceClient Service { get; private set; }
+
+        //private static CrmServiceClient crmServiceClient;
+        //public static CrmServiceClient CrmServiceClient
+        //{
+        //    get
+        //    {
+        //        if (crmServiceClient == null ||
+        //            crmServiceClient.ActiveAuthenticationType == AuthenticationType.InvalidConnection)
+        //        {
+        //            CrmServiceClient = ConnectServiceOAuth();
+        //        }
+        //        return crmServiceClient;
+        //    }
+        //    set
+        //    {
+        //        crmServiceClient = value;
+        //    }
+        //}
 
         /// <summary>
         /// Connect using a certificate thumbprint

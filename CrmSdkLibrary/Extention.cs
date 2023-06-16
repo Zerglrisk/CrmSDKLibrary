@@ -1,17 +1,28 @@
-﻿using Microsoft.Xrm.Sdk;
+﻿using CrmSdkLibrary.Definition.Attribute;
+using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using CrmSdkLibrary.Definition.Attribute;
 
 namespace CrmSdkLibrary
 {
     public static class Extention
     {
+        /// <summary>
+        /// Generate Random String
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        public static string GenerateRandomString(int length = 16, string charset = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789")
+        {
+            var random = new Random();
+            return new string(Enumerable.Repeat(charset, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
         /// <summary>
         /// Get System.ComponentModel.DescriptionAttribute  Value
         /// </summary>
@@ -46,7 +57,6 @@ namespace CrmSdkLibrary
             var attrs = memberInfo.First().GetCustomAttributes(typeof(StringValue), false);
             return attrs.Length > 0 ? ((StringValue)attrs.First()).Value : enumerationValue.ToString();
         }
-
         public static AliasedValue ToAliasedValue(this object attr)
         {
             return ((AliasedValue)attr);
@@ -163,6 +173,7 @@ namespace CrmSdkLibrary
             var regex = new Regex(@"[^\d]");
             return regex.Replace(str.ToString(), "");
         }
+
         public static EntityReference ToEntityReference(this object attr, bool isAliasedValue = false)
         {
             return isAliasedValue ? (EntityReference)attr.ToAliasedValue().Value : (EntityReference)attr;
