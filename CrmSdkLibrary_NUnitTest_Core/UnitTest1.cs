@@ -12,6 +12,8 @@ using System.IO;
 using Newtonsoft.Json;
 using CrmSdkLibrary_Core;
 using Microsoft.Xrm.Sdk.Query;
+using System.Collections;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace CrmSdkLibrary_NUnitTest_Core
 {
@@ -129,7 +131,6 @@ namespace CrmSdkLibrary_NUnitTest_Core
         [Test]
         public void Api_MSAL()
         {
-
         }
 
         [Test]
