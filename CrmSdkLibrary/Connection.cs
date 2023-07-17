@@ -122,7 +122,7 @@ namespace CrmSdkLibrary
         /// <param name="clientId">from aad, app registration</param>
         /// <param name="clientSecret">from aad, app registration</param>
         /// <returns></returns>
-        public (CrmServiceClient, Guid) ConnectServiceApplicationUser(string environmentUri, string clientId, string clientSecret)
+        public CrmServiceClient ConnectServiceApplicationUser(string environmentUri, string clientId, string clientSecret)
         {
             string conn = $@" 
             Url = {environmentUri};
@@ -146,7 +146,7 @@ namespace CrmSdkLibrary
             }
             Service = svc;
 
-            return (svc, svc.GetMyCrmUserId());
+            return svc;
         }
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace CrmSdkLibrary
         /// <param name="pw">crm pw</param>
         /// <param name="tenantId">from aad, app registration </param>
         /// <returns></returns>
-        public (CrmServiceClient, Guid) ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
+        public CrmServiceClient ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
         {
             string conn = $@" 
             Url = {environmentUri};
@@ -178,7 +178,7 @@ namespace CrmSdkLibrary
             var svc = new CrmServiceClient(conn);
             if (svc.IsReady) //Connection is successful
             {
-                
+                svc.CallerId = svc.GetMyCrmUserId();
             }
             else
             {
@@ -187,8 +187,47 @@ namespace CrmSdkLibrary
 
             Service = svc;
 
-            return (svc, svc.GetMyCrmUserId());
+            return svc;
         }
+
+        /// <summary>
+        /// Connect with specific crm user.
+        /// You must set AllowPublicClient in AAD, AppRegistration, Manifest.
+        /// </summary>
+        /// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">from aad, app registration</param>
+        /// <param name="id">crm id</param>
+        /// <param name="pw">crm pw</param>
+        /// <returns></returns>
+        public CrmServiceClient ConnectServiceOAuth(string environmentUri, string clientId, string accessToken)
+        {
+            string conn = $@" 
+            Url = {environmentUri};
+            AuthType = {Microsoft.Xrm.Tooling.Connector.AuthenticationType.OAuth:G};
+            ClientId = {clientId};
+            RedirectUri = app://redirect;
+            AccessToken = {accessToken};
+            LoginPrompt=Never;"; //GenerateConString();
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+
+            //실행 대기시간 default 2분 -> 5분
+            CrmServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+
+            var svc = new CrmServiceClient(conn);
+            if (svc.IsReady) //Connection is successful
+            {
+                svc.CallerId = svc.GetMyCrmUserId();
+            }
+            else
+            {
+                throw svc.LastCrmException;
+            }
+
+            Service = svc;
+
+            return svc;
+        }
+
         /// <summary>
         /// Create an On-Premises User
         /// </summary>

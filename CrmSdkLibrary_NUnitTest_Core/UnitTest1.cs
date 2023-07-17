@@ -40,7 +40,7 @@ namespace CrmSdkLibrary_NUnitTest_Core
             var item = CrmSdkLibrary_Core.Connection.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
                 Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
 
-            var ec = item.Item1.RetrieveMultiple(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
+            var ec = item.RetrieveMultiple(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
             {
 
             });
@@ -139,7 +139,12 @@ namespace CrmSdkLibrary_NUnitTest_Core
             try
             {
                 var service = CrmSdkLibrary_Core.Connection.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
-                    Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId).Item1;
+                    Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
+                var qe2 = new QueryExpression("account")
+                {
+                    ColumnSet = new ColumnSet("tnaiw")
+                };
+                var abc = await service.RetrieveMultipleAsync(qe2);
                 var qe = new QueryExpression("savedquery")
                 {
                     ColumnSet = new ColumnSet(true),

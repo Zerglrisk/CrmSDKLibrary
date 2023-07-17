@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CrmSdkLibrary_Core
 {
@@ -41,7 +42,7 @@ namespace CrmSdkLibrary_Core
         /// <param name="pw">crm pw</param>
         /// <param name="tenantId">from aad, app registration </param>
         /// <returns></returns>
-        public static (ServiceClient, Guid) ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
+        public static ServiceClient ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
         {
             string conn = $@" 
             Url = {environmentUri};
@@ -53,14 +54,15 @@ namespace CrmSdkLibrary_Core
             RequireNewInstance = True;
             LoginPrompt=Never;"; //GenerateConString();
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-            
+
             //실행 대기시간 default 2분 -> 5분
             ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
             ServiceClient svc;
             try
             {
                 svc = new ServiceClient(conn);
-            }catch(Microsoft.PowerPlatform.Dataverse.Client.Utils.DataverseConnectionException dcex)
+            }
+            catch (Microsoft.PowerPlatform.Dataverse.Client.Utils.DataverseConnectionException dcex)
             {
                 throw dcex;
             }
@@ -76,7 +78,48 @@ namespace CrmSdkLibrary_Core
 
             Service = svc;
 
-            return (svc, svc.CallerId);
+            return svc;
+        }
+
+        /// <summary>
+        /// Connect with specific crm user.
+        /// You must set AllowPublicClient in AAD, AppRegistration, Manifest.
+        /// </summary>
+        /// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">from aad, app registration</param>
+        /// <param name="id">crm id</param>
+        /// <param name="pw">crm pw</param>
+        /// <param name="tenantId">from aad, app registration </param>
+        /// <returns></returns>
+        public static ServiceClient ConnectServiceOAuth(string environmentUri, string accessToken)
+        {
+            var client = 
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+
+            //실행 대기시간 default 2분 -> 5분
+            ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+            ServiceClient svc;
+            try
+            {
+                svc = new ServiceClient(new Uri(environmentUri), (orgServiceUrl) => Task.FromResult(accessToken));
+            }
+            catch (Microsoft.PowerPlatform.Dataverse.Client.Utils.DataverseConnectionException dcex)
+            {
+                throw dcex;
+            }
+
+            if (svc.IsReady) //Connection is successful
+            {
+                svc.CallerId = GetCallerId(ref svc);
+            }
+            else
+            {
+                throw svc.LastException;
+            }
+
+            Service = svc;
+
+            return svc;
         }
 
         /// <summary>
@@ -89,7 +132,7 @@ namespace CrmSdkLibrary_Core
         /// <param name="clientId">from aad, app registration</param>
         /// <param name="clientSecret">from aad, app registration</param>
         /// <returns></returns>
-        public static (ServiceClient, Guid) ConnectServiceApplicationUser(string environmentUri, string clientId, string clientSecret)
+        public static ServiceClient ConnectServiceApplicationUser(string environmentUri, string clientId, string clientSecret)
         {
             string conn = $@" 
             Url = {environmentUri};
@@ -113,7 +156,7 @@ namespace CrmSdkLibrary_Core
             }
             Service = svc;
 
-            return (svc, svc.CallerId);
+            return svc;
         }
 
         /// <summary>

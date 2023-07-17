@@ -33,7 +33,7 @@ namespace CrmSdkLibrary_UnitTest
             var item = conn.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
                 Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
 
-            var ec = item.Item1.RetrieveMultiple(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
+            var ec = item.RetrieveMultiple(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
             {
             });
         }
@@ -48,7 +48,7 @@ namespace CrmSdkLibrary_UnitTest
             try
             {
                 var token = new CancellationTokenSource();
-                var t = item.Item1.RetrieveMultipleAsync(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
+                var t = item.RetrieveMultipleAsync(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
                 {
                     ColumnSet = new Microsoft.Xrm.Sdk.Query.ColumnSet("fullname", "contactid")
                 }, token.Token);
