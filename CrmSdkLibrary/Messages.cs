@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using CrmSdkLibrary.Definition;
+﻿using CrmSdkLibrary.Definition;
 using CrmSdkLibrary.Definition.Enum;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Metadata.Query;
-using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Tooling.Connector;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CrmSdkLibrary
 {
@@ -18,7 +17,7 @@ namespace CrmSdkLibrary
     {
         /// <summary>
         /// Disable Duplication Detection (Default : false)
-        /// 중복 탐지 비활성화 
+        /// 중복 탐지 비활성화
         /// </summary>
         public static bool DisableDuplicateDetection { get; set; } = false;
 
@@ -82,15 +81,15 @@ namespace CrmSdkLibrary
         /// <returns>Gets an entity that contains the attributes relevant to the calculated rollup attribute.</returns>
         public static Entity CalculateRollupField(in IOrganizationService service, EntityReference target, string fieldName)
         {
-            return ((CalculateRollupFieldResponse)service.Execute(new CalculateRollupFieldRequest()
+            return (service.Execute(new CalculateRollupFieldRequest()
             {
                 Target = target,
                 FieldName = fieldName
-            })).Entity;
+            }) as CalculateRollupFieldResponse).Entity;
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.closeincidentrequest?view=dynamics-general-ce-9"/>
         /// <param name="service"></param>
@@ -138,7 +137,6 @@ namespace CrmSdkLibrary
             //AnnotationEntityObject["objecttypecode"] = "";
 
             return service.Create(entity);
-
         }
 
         /// <summary>
@@ -150,10 +148,10 @@ namespace CrmSdkLibrary
         /// <returns>Created Option Set Guid</returns>
         public static Guid CreateOptionSet(in IOrganizationService service, OptionSetMetadata optionSet)
         {
-            return ((CreateOptionSetResponse)service.Execute(new CreateOptionSetRequest()
+            return (service.Execute(new CreateOptionSetRequest()
             {
                 OptionSet = optionSet
-            })).OptionSetId;
+            }) as CreateOptionSetResponse).OptionSetId;
         }
 
         /// <summary>
@@ -214,7 +212,7 @@ namespace CrmSdkLibrary
             //}
 
             //// Otherwise, delete all partitions that are older than the current partition.
-            //// Hint: The partitions in the collection are returned in sorted order where the 
+            //// Hint: The partitions in the collection are returned in sorted order where the
             //// partition with the oldest end date is at index 0.
             //else
             //{
@@ -319,10 +317,10 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static QueryExpression FetchXmlToQueryExpression(in IOrganizationService service, string fetchXml)
         {
-            return ((FetchXmlToQueryExpressionResponse)service.Execute(new FetchXmlToQueryExpressionRequest()
+            return (service.Execute(new FetchXmlToQueryExpressionRequest()
             {
                 FetchXml = fetchXml
-            })).Query;
+            }) as FetchXmlToQueryExpressionResponse).Query;
         }
 
         /// <summary>
@@ -340,7 +338,7 @@ namespace CrmSdkLibrary
 
         public static Guid GetCurrentBusinessUnitId(in IOrganizationService service)
         {
-            return ((WhoAmIResponse)service.Execute(new WhoAmIRequest())).BusinessUnitId;
+            return (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).BusinessUnitId;
         }
 
         /// <summary>
@@ -350,12 +348,12 @@ namespace CrmSdkLibrary
         /// <returns>Version</returns>
         public static string GetCurrentCRMVersion(in IOrganizationService service)
         {
-            return ((RetrieveVersionResponse)service.Execute(new RetrieveVersionRequest())).Version;
+            return (service.Execute(new RetrieveVersionRequest()) as RetrieveVersionResponse).Version;
         }
 
         public static Guid GetCurrentOrganizationId(in IOrganizationService service)
         {
-            return ((WhoAmIResponse)service.Execute(new WhoAmIRequest())).OrganizationId;
+            return (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).OrganizationId;
         }
 
         /// <summary>
@@ -366,9 +364,8 @@ namespace CrmSdkLibrary
         [Obsolete("GetCurrentUseById is deprecated. Please use CrmServiceClient.GetMyCrmUserId().", true)]
         public static Guid GetCurrentUserId(this CrmServiceClient service)
         {
-            return ((WhoAmIResponse)service.Execute(new WhoAmIRequest())).UserId;
+            return (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).UserId;
         }
-
 
         #region A
 
@@ -448,12 +445,13 @@ namespace CrmSdkLibrary
         /// <returns>Gets the ID of the resulting list member.</returns>
         public static Guid AddMemberList(in IOrganizationService service, Guid listId, Guid entityId)
         {
-            return ((AddMemberListResponse)service.Execute(new AddMemberListRequest
+            return (service.Execute(new AddMemberListRequest
             {
                 ListId = listId,
                 EntityId = entityId
-            })).Id;
+            }) as AddMemberListResponse).Id;
         }
+
         /// <summary>
         /// Contains the data that is needed to add members to a team.
         /// </summary>
@@ -529,11 +527,11 @@ namespace CrmSdkLibrary
         /// <returns>Gets the ID of the newly created recurring appointment.</returns>
         public static Guid AddRecurrence(in IOrganizationService service, Guid appointmentId, Entity target)
         {
-            return ((AddRecurrenceResponse)service.Execute(new AddRecurrenceRequest
+            return (service.Execute(new AddRecurrenceRequest
             {
                 AppointmentId = appointmentId,
                 Target = target
-            })).id;
+            }) as AddRecurrenceResponse).id;
         }
 
         /// <summary>
@@ -548,13 +546,13 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static Guid AddSolutionComponent(in IOrganizationService service, bool addRequiredComponents, int componentType, Guid componentId, string solutionUniqueName)
         {
-            return ((AddSolutionComponentResponse)service.Execute(new AddSolutionComponentRequest
+            return (service.Execute(new AddSolutionComponentRequest
             {
                 AddRequiredComponents = addRequiredComponents,
                 ComponentType = componentType,
                 ComponentId = componentId,
                 SolutionUniqueName = solutionUniqueName,
-            })).id;
+            }) as AddSolutionComponentResponse).id;
         }
 
         /// <summary>
@@ -573,8 +571,8 @@ namespace CrmSdkLibrary
                 ListId = listId,
                 EntityId = memberId
             });
-
         }
+
         /// <summary>
         /// Contains the data that is needed to add members to a team.
         /// </summary>
@@ -590,6 +588,7 @@ namespace CrmSdkLibrary
                 MemberIds = memberIds.ToArray()
             });
         }
+
         public static void ReplacePrivilegesRole(in IOrganizationService service, Guid roleId, IEnumerable<RolePrivilege> privileges)
         {
             service.Execute(new ReplacePrivilegesRoleRequest
@@ -598,7 +597,9 @@ namespace CrmSdkLibrary
                 Privileges = privileges.ToArray()
             });
         }
-        #endregion
+
+        #endregion A
+
         /// <summary>
         /// Get LogicalName from ObjectTypeCode
         /// </summary>
@@ -607,7 +608,7 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static string GetEntityLogicalNameFromTypeCode(in IOrganizationService service, int entityTypeCode)
         {
-            var response = ((RetrieveMetadataChangesResponse)service.Execute(new RetrieveMetadataChangesRequest()
+            var response = service.Execute(new RetrieveMetadataChangesRequest()
             {
                 Query = new EntityQueryExpression()
                 {
@@ -632,7 +633,7 @@ namespace CrmSdkLibrary
                 },
                 ClientVersionStamp = null,
                 //DeletedMetadataFilters = DeletedMetadataFilters.OptionSet
-            }));
+            }) as RetrieveMetadataChangesResponse;
 
             return response.EntityMetadata.Any() ? response.EntityMetadata.FirstOrDefault()?.LogicalName : null;
         }
@@ -645,7 +646,7 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static EntityMetadata GetEntityMetadataFromTypeCode(in IOrganizationService service, int entityTypeCode)
         {
-            var response = ((RetrieveMetadataChangesResponse)service.Execute(new RetrieveMetadataChangesRequest()
+            var response = service.Execute(new RetrieveMetadataChangesRequest()
             {
                 Query = new EntityQueryExpression()
                 {
@@ -669,7 +670,7 @@ namespace CrmSdkLibrary
                 },
                 ClientVersionStamp = null,
                 //DeletedMetadataFilters = DeletedMetadataFilters.OptionSet
-            }));
+            }) as RetrieveMetadataChangesResponse;
 
             return response.EntityMetadata.Any() ? response.EntityMetadata.FirstOrDefault() : null;
         }
@@ -747,7 +748,7 @@ namespace CrmSdkLibrary
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.grantaccessrequest?view=dynamics-general-ce-9"/>
         /// <param name="service"></param>
@@ -773,11 +774,11 @@ namespace CrmSdkLibrary
         /// <returns>Gets the option value for the new option.</returns>
         public static int InsertOptionValue(in IOrganizationService service, string optionSetName, Microsoft.Xrm.Sdk.Label label)
         {
-            return ((InsertOptionValueResponse)service.Execute(new InsertOptionValueRequest()
+            return (service.Execute(new InsertOptionValueRequest()
             {
                 OptionSetName = optionSetName,
                 Label = label
-            })).NewOptionValue;
+            }) as InsertOptionValueResponse).NewOptionValue;
         }
 
         /// <summary>
@@ -791,15 +792,14 @@ namespace CrmSdkLibrary
         public static int InsertOptionValue(in IOrganizationService service, string optionSetName,
             Microsoft.Xrm.Sdk.Label label, string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null)
         {
-            return ((InsertOptionValueResponse)service.Execute(new InsertOptionValueRequest()
+            return (service.Execute(new InsertOptionValueRequest()
             {
                 OptionSetName = optionSetName,
                 Label = label,
                 EntityLogicalName = entityLogicalName,
                 AttributeLogicalName = attributeLogicalName,
                 SolutionUniqueName = solutionUniqueName,
-
-            })).NewOptionValue;
+            }) as InsertOptionValueResponse).NewOptionValue;
         }
 
         /// <summary>
@@ -836,7 +836,7 @@ namespace CrmSdkLibrary
             var createContact = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Contact);
             var createOpportunity = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Opportunity);
 
-            var response = (QualifyLeadResponse)service.Execute(new QualifyLeadRequest()
+            var response = service.Execute(new QualifyLeadRequest()
             {
                 Parameters = new ParameterCollection() { GetDisableDuplicateDetectionParameter },
 
@@ -855,7 +855,7 @@ namespace CrmSdkLibrary
 
                 // The source Campaign that will be associated with the Opportunity.
                 SourceCampaignId = null,
-            });
+            }) as QualifyLeadResponse;
             return response.CreatedEntities;
         }
 
@@ -868,10 +868,10 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static string QueryExpressionToFetchXml(in IOrganizationService service, QueryExpression queryExpression)
         {
-            return ((QueryExpressionToFetchXmlResponse)service.Execute(new QueryExpressionToFetchXmlRequest()
+            return (service.Execute(new QueryExpressionToFetchXmlRequest()
             {
                 Query = queryExpression
-            })).FetchXml;
+            }) as QueryExpressionToFetchXmlResponse).FetchXml;
         }
 
         /// <summary>
@@ -883,10 +883,10 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static IEnumerable<EntityMetadata> RetrieveAllEntities(in IOrganizationService service, EntityFilters entityFilters = EntityFilters.Default)
         {
-            return ((RetrieveAllEntitiesResponse)service.Execute(new RetrieveAllEntitiesRequest()
+            return (service.Execute(new RetrieveAllEntitiesRequest()
             {
                 EntityFilters = entityFilters
-            })).EntityMetadata;
+            }) as RetrieveAllEntitiesResponse).EntityMetadata;
         }
 
         public static IEnumerable<Guid> RetrieveAllMembers(in IOrganizationService service, Guid listId)
@@ -932,10 +932,10 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static IEnumerable<OptionSetMetadataBase> RetrieveAllOptionSets(in IOrganizationService service, bool retrieveAsIfPublished = false)
         {
-            return ((RetrieveAllOptionSetsResponse)service.Execute(new RetrieveAllOptionSetsRequest()
+            return (service.Execute(new RetrieveAllOptionSetsRequest()
             {
                 RetrieveAsIfPublished = retrieveAsIfPublished
-            })).OptionSetMetadata;
+            }) as RetrieveAllOptionSetsResponse).OptionSetMetadata;
         }
 
         /// <summary>
@@ -948,13 +948,13 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static AttributeMetadata RetrieveAttribute(in IOrganizationService service, bool retrieveAsIfPublished = false, string logicalName = null, string attributeName = null, int columnNumber = 0)
         {
-            return ((RetrieveAttributeResponse)service.Execute(new RetrieveAttributeRequest
+            return (service.Execute(new RetrieveAttributeRequest
             {
                 EntityLogicalName = logicalName, // optional
                 LogicalName = attributeName, // optional
                 RetrieveAsIfPublished = retrieveAsIfPublished, // required
                 ColumnNumber = columnNumber, // optional
-            })).AttributeMetadata;
+            }) as RetrieveAttributeResponse).AttributeMetadata;
         }
 
         /// <summary>
@@ -968,11 +968,11 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static AuditDetailCollection RetrieveAttributeChangeHistory(in IOrganizationService service, EntityReference target, string targetAttributeLogicalName)
         {
-            return ((RetrieveAttributeChangeHistoryResponse)service.Execute(new RetrieveAttributeChangeHistoryRequest
+            return (service.Execute(new RetrieveAttributeChangeHistoryRequest
             {
                 Target = target,
                 AttributeLogicalName = targetAttributeLogicalName
-            })).AuditDetailCollection;
+            }) as RetrieveAttributeChangeHistoryResponse).AuditDetailCollection;
         }
 
         /// <summary>
@@ -985,10 +985,10 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static AuditDetail RetrieveAuditDetails(in IOrganizationService service, Guid auditId)
         {
-            return ((RetrieveAuditDetailsResponse)service.Execute(new RetrieveAuditDetailsRequest
+            return (service.Execute(new RetrieveAuditDetailsRequest
             {
                 AuditId = auditId
-            })).AuditDetail;
+            }) as RetrieveAuditDetailsResponse).AuditDetail;
         }
 
         /// <summary>
@@ -1000,7 +1000,7 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static AuditPartitionDetailCollection RetrieveAuditPartitionList(in IOrganizationService service)
         {
-            return ((RetrieveAuditPartitionListResponse)service.Execute(new RetrieveAuditPartitionListRequest())).AuditPartitionDetailCollection;
+            return (service.Execute(new RetrieveAuditPartitionListRequest()) as RetrieveAuditPartitionListResponse).AuditPartitionDetailCollection;
         }
 
         /// <summary>
@@ -1009,9 +1009,14 @@ namespace CrmSdkLibrary
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievecurrentorganizationrequest?view=dynamics-general-ce-9"/>
         /// <param name="service"></param>
         /// <returns></returns>
-        public static OrganizationDetail RetrieveCurrentOrganization(in IOrganizationService service)
+        public static Microsoft.Xrm.Sdk.Organization.OrganizationDetail RetrieveCurrentOrganization(in IOrganizationService service)
         {
-            return ((RetrieveCurrentOrganizationResponse)service.Execute(new RetrieveCurrentOrganizationRequest())).Detail;
+            return (service.Execute(new RetrieveCurrentOrganizationRequest()) as RetrieveCurrentOrganizationResponse).Detail;
+        }
+
+        public static string RetrieveCurrentOrganzizationWebApplicationUrl(in IOrganizationService service)
+        {
+            return Messages.RetrieveCurrentOrganization(service).Endpoints.FirstOrDefault(e => e.Key == Microsoft.Xrm.Sdk.Organization.EndpointType.WebApplication).Value;
         }
         /// <summary>
         /// Contains the data that is needed to detect and retrieve duplicates for a specified record.
@@ -1024,13 +1029,14 @@ namespace CrmSdkLibrary
         /// <returns>Gets a collection of duplicate entity instances.</returns>
         public static EntityCollection RetrieveDuplicates(in IOrganizationService service, Entity businessEntity, PagingInfo pagingInfo)
         {
-            return ((RetrieveDuplicatesResponse)service.Execute(new RetrieveDuplicatesRequest
+            return (service.Execute(new RetrieveDuplicatesRequest
             {
                 BusinessEntity = businessEntity,
                 MatchingEntityName = businessEntity.LogicalName,
                 PagingInfo = pagingInfo
-            })).DuplicateCollection;
+            }) as RetrieveDuplicatesResponse).DuplicateCollection;
         }
+
         /// <summary>
         /// Contains the data that is needed to retrieve entity metadata.
         /// </summary>
@@ -1042,12 +1048,12 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static EntityMetadata RetrieveEntity(in IOrganizationService service, string entityLogicalName, EntityFilters entityFilters = EntityFilters.Default, Guid metadataId = default)
         {
-            return ((RetrieveEntityResponse)service.Execute(new RetrieveEntityRequest()
+            return (service.Execute(new RetrieveEntityRequest()
             {
                 EntityFilters = entityFilters,
                 LogicalName = entityLogicalName,
                 MetadataId = metadataId,
-            })).EntityMetadata;
+            }) as RetrieveEntityResponse).EntityMetadata;
         }
 
         /// <summary>
@@ -1087,11 +1093,11 @@ namespace CrmSdkLibrary
         /// <param name="columnSet"></param>
         public static EntityCollection RetrieveMembersTeamDeprecated(in IOrganizationService service, Guid teamId, ColumnSet columnSet)
         {
-            return ((RetrieveMembersTeamResponse)service.Execute(new RetrieveMembersTeamRequest()
+            return (service.Execute(new RetrieveMembersTeamRequest()
             {
                 EntityId = teamId,
                 MemberColumnSet = columnSet
-            })).EntityCollection;
+            }) as RetrieveMembersTeamResponse).EntityCollection;
         }
 
         /// <summary>
@@ -1103,27 +1109,25 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static OptionSetMetadata RetrieveOptionSet(in IOrganizationService service, string globalOptionSetName, bool retrieveAsIfPublished = false)
         {
-            return ((RetrieveOptionSetResponse)service.Execute(new RetrieveOptionSetRequest()
+            return (service.Execute(new RetrieveOptionSetRequest()
             {
                 Name = globalOptionSetName,
                 RetrieveAsIfPublished = retrieveAsIfPublished
-            })).OptionSetMetadata as OptionSetMetadata;
+            }) as RetrieveOptionSetResponse).OptionSetMetadata as OptionSetMetadata;
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveprincipalaccessrequest?view=dynamics-general-ce-9"/>
         /// <param name="service"></param>
         public static AccessRights RetrievePrincipalAccessRequest(in IOrganizationService service, EntityReference target, EntityReference principal)
         {
-            return ((RetrievePrincipalAccessResponse)service.Execute(new RetrievePrincipalAccessRequest
+            return (service.Execute(new RetrievePrincipalAccessRequest
             {
                 Principal = principal,
                 Target = target
-            })).AccessRights;
-
-
+            }) as RetrievePrincipalAccessResponse).AccessRights;
         }
 
         /// <summary>
@@ -1136,10 +1140,10 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static AuditDetailCollection RetrieveRecordChangeHistory(in IOrganizationService service, EntityReference target)
         {
-            return ((RetrieveRecordChangeHistoryResponse)service.Execute(new RetrieveRecordChangeHistoryRequest()
+            return (service.Execute(new RetrieveRecordChangeHistoryRequest()
             {
                 Target = target
-            })).AuditDetailCollection;
+            }) as RetrieveRecordChangeHistoryResponse).AuditDetailCollection;
         }
 
         /// <summary>
@@ -1151,10 +1155,10 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static IEnumerable<RolePrivilege> RetrieveRolePrivilegesRole(in IOrganizationService service, Guid roleId)
         {
-            return ((RetrieveRolePrivilegesRoleResponse)service.Execute(new RetrieveRolePrivilegesRoleRequest()
+            return (service.Execute(new RetrieveRolePrivilegesRoleRequest()
             {
                 RoleId = roleId,
-            })).RolePrivileges;
+            }) as RetrieveRolePrivilegesRoleResponse).RolePrivileges;
         }
 
         /// <summary>
@@ -1173,14 +1177,14 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccess(in IOrganizationService service, EntityReference target)
         {
-            return ((RetrieveSharedPrincipalsAndAccessResponse)service.Execute(new RetrieveSharedPrincipalsAndAccessRequest()
+            return (service.Execute(new RetrieveSharedPrincipalsAndAccessRequest()
             {
                 Target = target
-            })).PrincipalAccesses;
+            }) as RetrieveSharedPrincipalsAndAccessResponse).PrincipalAccesses;
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievesharedprincipalsandaccessrequest?view=dynamics-general-ce-9"/>
         /// <param name="service"></param>
@@ -1188,10 +1192,10 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccessRequest(in IOrganizationService service, EntityReference target)
         {
-            return ((RetrieveSharedPrincipalsAndAccessResponse)service.Execute(new RetrieveSharedPrincipalsAndAccessRequest
+            return (service.Execute(new RetrieveSharedPrincipalsAndAccessRequest
             {
                 Target = target
-            })).PrincipalAccesses;
+            }) as RetrieveSharedPrincipalsAndAccessResponse).PrincipalAccesses;
         }
 
         /// <summary>
@@ -1203,10 +1207,10 @@ namespace CrmSdkLibrary
         /// <returns>Gets an array of privileges that the user holds.</returns>
         public static RolePrivilege[] RetrieveUserPrivileges(in IOrganizationService service, Guid userId)
         {
-            return ((RetrieveUserPrivilegesResponse)service.Execute(new RetrieveUserPrivilegesRequest()
+            return (service.Execute(new RetrieveUserPrivilegesRequest()
             {
                 UserId = userId
-            })).RolePrivileges;
+            }) as RetrieveUserPrivilegesResponse).RolePrivileges;
         }
 
         /// <summary>
@@ -1219,6 +1223,7 @@ namespace CrmSdkLibrary
         {
             return RetrieveUserPrivileges(service, service.GetMyCrmUserId());
         }
+
         /// <summary>
         /// Contains the data that is needed to send an email message.
         /// </summary>
@@ -1277,16 +1282,15 @@ namespace CrmSdkLibrary
 
             var emailId = service.Create(emailEntity);
 
-
-            var response = (SendEmailResponse)service.Execute(new SendEmailRequest()
+            service.Execute(new SendEmailRequest()
             {
                 Parameters = new ParameterCollection() { GetDisableDuplicateDetectionParameter },
                 EmailId = emailId,
                 IssueSend = true,
                 TrackingToken = string.Empty
-            });
-
+            });// as SendEmailResponse;
         }
+
         /// <summary>
         /// Contains the data that is needed to update the definition of a global option set.
         /// </summary>
@@ -1298,8 +1302,9 @@ namespace CrmSdkLibrary
             service.Execute(new UpdateOptionSetRequest()
             {
                 OptionSet = optionSet
-            }); 
+            });
         }
+
         /// <summary>
         /// Contains the data that is needed to update an option value in a global option set.
         /// </summary>
