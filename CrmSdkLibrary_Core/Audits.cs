@@ -10,7 +10,112 @@ namespace CrmSdkLibrary_Core
 {
     public class Audits
     {
-        public static bool? GetIsAuditEnabled(IOrganizationService service)
+        public enum ActionType : int
+        {
+            Unknown = 0,
+            Create = 1,
+            Update = 2,
+            Delete = 3,
+            Activate = 4,
+            Deactivate = 5,
+            Cascade = 11,
+            Merge = 12,
+            Assign = 13,
+            Share = 14,
+            Retrieve = 15,
+            Close = 16,
+            Cancel = 17,
+            Complete = 18,
+            Resolve = 20,
+            Reopen = 21,
+            Fulfill = 22,
+            Paid = 23,
+            Qualify = 24,
+            Disqualify = 25,
+            Submit = 26,
+            Reject = 27,
+            Approve = 28,
+            Invoice = 29,
+            Hold = 30,
+            AddMember = 31,
+            RemoveMember = 32,
+            AssociateEntities = 33,
+            DisassociateEntities = 34,
+            AddMembers = 35,
+            RemoveMembers = 36,
+            AddItem = 37,
+            RemoveItem = 38,
+            AddSubstitute = 39,
+            RemoveSubstitute = 40,
+            SetState = 41,
+            Renew = 42,
+            Revise = 43,
+            Win = 44,
+            Lose = 45,
+            InternalProcessing = 46,
+            Reschedule = 47,
+            ModifyShare = 48,
+            Unshare = 49,
+            Book = 50,
+            GenerateQuoteFromOpportunity = 51,
+            AddToQueue = 52,
+            AssignRoleToTeam = 53,
+            RemoveRoleFromTeam = 54,
+            AssignRoleToUser = 55,
+            RemoveRoleFromUser = 56,
+            AddPrivilegestoRole = 57,
+            RemovePrivilegesFromRole = 58,
+            ReplacePrivilegesInRole = 59,
+            ImportMappings = 60,
+            Clone = 61,
+            SendDirectEmail = 62,
+            Enabledfororganization = 63,
+            UserAccessviaWeb = 64,
+            UserAccessviaWebServices = 65,
+            DeleteEntity = 100,
+            DeleteAttribute = 101,
+            AuditChangeatEntityLevel = 102,
+            AuditChangeatAttributeLevel = 103,
+            AuditChangeatOrgLevel = 104,
+            EntityAuditStarted = 105,
+            AttributeAuditStarted = 106,
+            AuditEnabled = 107,
+            EntityAuditStopped = 108,
+            AttributeAuditStopped = 109,
+            AuditDisabled = 110,
+            AuditLogDeletion = 111,
+            UserAccessAuditStarted = 112,
+            UserAccessAuditStopped = 113,
+            Upsert = 6,
+            Archive = 115,
+        }
+
+        public static void EnableEntityAuditing(in IOrganizationService service, string entityLogicalName, bool isEnable)
+        {
+            var entityMetadata = (service.Execute(new RetrieveEntityRequest
+            {
+                LogicalName = entityLogicalName,
+                EntityFilters = Microsoft.Xrm.Sdk.Metadata.EntityFilters.Attributes
+            }) as RetrieveEntityResponse).EntityMetadata;
+
+            entityMetadata.IsAuditEnabled = new BooleanManagedProperty(isEnable);
+
+            service.Execute(new UpdateEntityRequest
+            {
+                Entity = entityMetadata,
+            });
+        }
+
+        public static void EnableOrganizationAuditing(in IOrganizationService service, bool isEnable)
+        {
+            var orgId = Connection.Service.ConnectedOrgId;
+            var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
+
+            org.Attributes["isauditenabled"] = isEnable;
+            service.Update(org);
+        }
+
+        public static bool? GetIsAuditEnabled(in IOrganizationService service)
         {
             //Connection.Service.ConnectedOrgId
             //Connection.Service.OrganizationDetail.OrganizationId
@@ -23,33 +128,57 @@ namespace CrmSdkLibrary_Core
             }
             return null;
         }
-
-        public static void EnableOrganizationAuditing(IOrganizationService service, bool isEnable)
+        /// <summary>
+        /// Restore a deleted record using the auditId.
+        /// </summary>
+        /// <see href="https://cloudblogs.microsoft.com/dynamics365/no-audience/2011/05/23/recover-your-deleted-crm-data-and-recreate-them-using-crm-api/"/>
+        /// <param name="service">The IOrganizationService instance to use.</param>
+        /// <param name="auditId">The ID of the audit record to use.</param>
+        /// <returns>The ID of the restored record, or null if the record could not be restored.</returns>
+        public static Guid? RestoreDeletedRecord(in IOrganizationService service, Guid auditId)
         {
-            var orgId = Connection.Service.ConnectedOrgId;
-            var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
+            var detail = Audits.RetrieveAuditDetail(service, auditId);
+            if (detail.AuditRecord.GetAttributeValue<OptionSetValue>("action").Value == (int)ActionType.Delete && detail is AttributeAuditDetail)
+            {
+                var attrDetail = detail as AttributeAuditDetail;
+                return service.Create(attrDetail.OldValue);
+            }
 
-            org.Attributes["isauditenabled"] = isEnable;
-            service.Update(org);
+            // old 1
+            //var auditEntity = udits.RetrieveAuditDetail(service, auditId).AuditRecord;
+            //var target = auditEntity.GetAttributeValue<EntityReference>("objectid");
+            //var auditDetails = Audits.RetrieveRecordChangeHistory(service, target);
+
+            //var targetDetail = auditDetails.AuditDetails.FirstOrDefault(x => x.AuditRecord.GetAttributeValue<OptionSetValue>("action").Value == (int)ActionType.Delete);
+            //if (targetDetail != null && targetDetail is AttributeAuditDetail)
+            //{
+            //    var targetAttributeDetail = targetDetail as AttributeAuditDetail;
+            //    var targetEntity = targetAttributeDetail.OldValue;
+            //    return service.Create(targetEntity);
+            //}
+
+            // old 2
+            //for (var i = 0; i < auditDetails.Count; i++)
+            //{
+            //    if (auditDetails[i] is AttributeAuditDetail detail)
+            //    {
+            //        // This is a safety check to verify
+            //        // if the audit record is for the delete operation
+            //        if ((detail.NewValue == null || !detail.NewValue.Attributes.Any()) && (detail.OldValue != null && detail.OldValue.Attributes.Any()))
+            //        {
+            //            Entity entity = detail.OldValue;
+            //            return service.Create(entity);
+            //            // The audit records are recorded in the order
+            //            // from latest to older. So, it's ok to break since you've recreated
+            //            // from the latest snapshot of the entity, just before deletion
+            //            // break;
+            //        }
+            //    }
+            //}
+            return null;
         }
 
-        public static void EnableEntityAuditing(IOrganizationService service, string entityLogicalName, bool isEnable)
-        {
-            var entityMetadata = ((RetrieveEntityResponse)service.Execute(new RetrieveEntityRequest
-            {
-                LogicalName = entityLogicalName,
-                EntityFilters = Microsoft.Xrm.Sdk.Metadata.EntityFilters.Attributes
-            })).EntityMetadata;
-
-            entityMetadata.IsAuditEnabled = new BooleanManagedProperty(isEnable);
-
-            service.Execute(new UpdateEntityRequest
-            {
-                Entity = entityMetadata,
-            });
-        }
-
-        public static List<FieldHistory> GetFieldHistory(IOrganizationService service, string entityLogicalName, Guid recordId, string fieldName)
+        public static List<FieldHistory> RetrieveAttributeChangeHistory(in IOrganizationService service, string entityLogicalName, Guid recordId, string fieldName)
         {
             var attributeChangeHistoryRequest = new RetrieveAttributeChangeHistoryRequest
             {
@@ -57,19 +186,16 @@ namespace CrmSdkLibrary_Core
                 AttributeLogicalName = fieldName
             };
 
-            var attributeChangeHistoryResponse = (RetrieveAttributeChangeHistoryResponse)service.Execute(attributeChangeHistoryRequest);
+            var attributeChangeHistoryResponse = service.Execute(attributeChangeHistoryRequest) as RetrieveAttributeChangeHistoryResponse;
             var details = attributeChangeHistoryResponse.AuditDetailCollection;
 
             var fieldHistory = new List<FieldHistory>();
 
             foreach (var detail in details.AuditDetails)
             {
-                var detailType = detail.GetType();
-                if (detailType == typeof(AttributeAuditDetail))
+                if (detail is AttributeAuditDetail attributeDetail)
                 {
                     // retrieve old & new value of each action of each audit change from AttributeAuditDetail
-                    var attributeDetail = (AttributeAuditDetail)detail;
-
                     var userName = attributeDetail.AuditRecord.GetAttributeValue<EntityReference>("userid").Name;
                     var changedOn = attributeDetail.AuditRecord.GetAttributeValue<DateTime>("createdon");
                     var newValue = attributeDetail.NewValue.FormattedValues[fieldName];
@@ -87,76 +213,31 @@ namespace CrmSdkLibrary_Core
             return fieldHistory;
         }
 
-        public static AuditDetailCollection GetRecordHistory(IOrganizationService service, string entityLogicalName, Guid recordId)
-        {
-            var retrieveRecordChangeHistoryRequest = new RetrieveRecordChangeHistoryRequest()
-            {
-                Target = new EntityReference(entityLogicalName, recordId)
-            };
-
-            var retrieveRecordChangeHistoryResponse = (RetrieveRecordChangeHistoryResponse)service.Execute(retrieveRecordChangeHistoryRequest);
-            var details = retrieveRecordChangeHistoryResponse.AuditDetailCollection;
-
-            return details;
-        }
-
-        public static AuditDetail GetAuditDetail(IOrganizationService service, Guid auditId)
+        public static AuditDetail RetrieveAuditDetail(in IOrganizationService service, Guid auditId)
         {
             var retrieveAuditDetailsRequest = new RetrieveAuditDetailsRequest()
             {
                 AuditId = auditId
             };
 
-            var retrieveAuditDetailsResponse = (RetrieveAuditDetailsResponse)service.Execute(retrieveAuditDetailsRequest);
+            var retrieveAuditDetailsResponse = service.Execute(retrieveAuditDetailsRequest) as RetrieveAuditDetailsResponse;
             var detail = retrieveAuditDetailsResponse.AuditDetail;
 
             return detail;
         }
 
         /// <summary>
-        /// Restore Deleted Record using audit guid
+        /// Retrieve deleted records for a given entity.
         /// </summary>
-        /// <see href="https://cloudblogs.microsoft.com/dynamics365/no-audience/2011/05/23/recover-your-deleted-crm-data-and-recreate-them-using-crm-api/"/>
-        /// <param name="auditId"></param>
-        /// <param name="service"></param>
-        public static Guid? RestoreDeletedRecord(IOrganizationService service, Guid auditId)
+        /// /// <see href="https://promx.net/en/2016/04/how-to-restore-deleted-records-from-your-crm-system/"/>
+        /// <param name="service">The IOrganizationService instance to use.</param>
+        /// <param name="entityLogicalName">The logical name of the entity to retrieve deleted records for.</param>
+        /// <param name="recordId">The ID of the record to retrieve deleted records for.</param>
+        /// <param name="onOrAfter">The earliest date to retrieve deleted records for.</param>
+        /// <param name="onOrBefore">The latest date to retrieve deleted records for.</param>
+        /// <returns>An EntityCollection containing the deleted records, or null if no records were found.</returns>
+        public static EntityCollection RetrieveDeletedRecords(in IOrganizationService service, string entityLogicalName = "", Guid? recordId = null, DateTime? onOrAfter = null, DateTime? onOrBefore = null)
         {
-            var auditEntity = Audits.GetAuditDetail(service, auditId).AuditRecord;
-            var details = Audits.GetRecordHistory(service, auditEntity.LogicalName, auditEntity.Id);
-
-            for (var i = 0; i < details.Count; i++)
-            {
-                if (typeof(AttributeAuditDetail).Name == details[i].GetType().Name)
-                {
-                    AttributeAuditDetail detail = details[i] as AttributeAuditDetail;
-
-                    // This is a safety check to verify
-                    // if the audit record is for the delete operation
-                    if (detail.NewValue == null && detail.OldValue != null)
-                    {
-                        Entity entity = detail.OldValue;
-                        return service.Create(entity);
-                        // The audit records are recorded in the order
-                        // from latest to older. So, it's ok to break since you've recreated
-                        // from the latest snapshot of the entity, just before deletion
-                        // break;
-                    }
-                }
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Retrieve audit using qe first and Retrieve Audit Detail
-        /// </summary>
-        /// <see href="https://promx.net/en/2016/04/how-to-restore-deleted-records-from-your-crm-system/"/>
-        /// <param name="service"></param>
-        /// <param name="entityLogicalName">objecttypecode condition</param>
-        /// <param name="onOrAfter">createdon condition</param>
-        /// <param name="onOrBefore">createdon condition</param>
-        public static EntityCollection RetrieveDeletedRecords(IOrganizationService service, string entityLogicalName = "", DateTime? onOrAfter = null, DateTime? onOrBefore = null)
-        {
-            EntityCollection rtn = null;
             var qe = new QueryExpression("audit")
             {
                 ColumnSet = new ColumnSet("createdon", "userid"),
@@ -164,13 +245,17 @@ namespace CrmSdkLibrary_Core
                 {
                     Conditions =
                     {
-                        new ConditionExpression("operation", ConditionOperator.Equal, 3), // Delete
+                        new ConditionExpression("operation", ConditionOperator.Equal, (int)ActionType.Delete), // Delete
                     }
                 }
             };
             if (!string.IsNullOrWhiteSpace(entityLogicalName))
             {
                 qe.Criteria.Conditions.Add(new ConditionExpression("objecttypecode", ConditionOperator.Equal, entityLogicalName));
+            }
+            if (recordId != null)
+            {
+                qe.Criteria.Conditions.Add(new ConditionExpression("objectid", ConditionOperator.Equal, recordId.Value));
             }
             if (onOrAfter != null)
             {
@@ -184,27 +269,43 @@ namespace CrmSdkLibrary_Core
             var ec = service.RetrieveMultiple(qe);
             if (ec.Entities.Any())
             {
-                rtn = new EntityCollection();
+                var rtn = new EntityCollection();
                 foreach (var entity in ec.Entities)
                 {
-                    var retrieveAuditDetailsRequest = new RetrieveAuditDetailsRequest()
+                    var auditDetail = RetrieveAuditDetail(service, entity.Id);
+                    if (auditDetail != null && auditDetail is AttributeAuditDetail)
                     {
-                        AuditId = entity.Id,
-                    };
-
-                    var retrieveAuditDetailsResponse = (RetrieveAuditDetailsResponse)service.Execute(retrieveAuditDetailsRequest);
-                    rtn.Entities.Add(((AttributeAuditDetail)retrieveAuditDetailsResponse.AuditDetail).OldValue);
+                        rtn.Entities.Add((auditDetail as AttributeAuditDetail).OldValue);
+                    }
                 }
+                return rtn;
             }
-            return rtn;
+            return null;
         }
 
+        public static AuditDetailCollection RetrieveRecordChangeHistory(in IOrganizationService service, string entityLogicalName, Guid recordId)
+        {
+            return RetrieveRecordChangeHistory(service, new EntityReference(entityLogicalName, recordId));
+        }
+
+        public static AuditDetailCollection RetrieveRecordChangeHistory(in IOrganizationService service, EntityReference entityReference)
+        {
+            var retrieveRecordChangeHistoryRequest = new RetrieveRecordChangeHistoryRequest()
+            {
+                Target = entityReference,
+            };
+
+            var retrieveRecordChangeHistoryResponse = service.Execute(retrieveRecordChangeHistoryRequest) as RetrieveRecordChangeHistoryResponse;
+            var details = retrieveRecordChangeHistoryResponse.AuditDetailCollection;
+
+            return details;
+        }
         public class FieldHistory
         {
             public string ChangedBy { get; set; }
             public DateTime ChangedOn { get; set; }
-            public string Oldvalue { get; set; }
             public string NewValue { get; set; }
+            public string Oldvalue { get; set; }
         }
     }
 }
