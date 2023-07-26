@@ -77,11 +77,12 @@
     <Compile Include="Definition\CrmValue\CrmValueConverter.cs" />
     <Compile Include="Definition\CrmValue\CrmValueConverterOfT.cs" />
     <Compile Include="Definition\CrmValue\CrmValueReader.cs" />
+    <Compile Include="Definition\Email.EmailSendManager.cs" />
     <Compile Include="Definition\Enum\ConditionType.cs" />
     <Compile Include="Definition\Enum\JoinType.cs" />
     <Compile Include="Definition\Enum\SortDirection.cs" />
     <Compile Include="Definition\Attribute\StringValue.cs" />
-    <Compile Include="Definition\Model\EmailFormat.cs" />
+    <Compile Include="Definition\Model\Email.EmailFormat.cs" />
     <Compile Include="Definition\Enum\Location.cs" />
     <Compile Include="Definition\Enum\QualifyLeadEntity.cs" />
     <Compile Include="Definition\Model\SqlWrapper.cs" />
