@@ -294,7 +294,7 @@ namespace CrmSdkLibrary_Core
             {
                 Target = entityReference,
             };
-
+             
             var retrieveRecordChangeHistoryResponse = service.Execute(retrieveRecordChangeHistoryRequest) as RetrieveRecordChangeHistoryResponse;
             var details = retrieveRecordChangeHistoryResponse.AuditDetailCollection;
 
