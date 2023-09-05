@@ -88,7 +88,7 @@ namespace CrmSdkLibrary_Core.Services
                 }
                 else if (rtn is Money)
                 {
-                    if (propertyType != typeof(OptionSetValue))
+                    if (propertyType != typeof(Money))
                     {
                         rtn = (rtn as Money).Value;
                     }
