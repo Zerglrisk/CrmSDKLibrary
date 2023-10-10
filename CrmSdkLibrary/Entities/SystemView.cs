@@ -1,372 +1,368 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-using Microsoft.Xrm.Sdk;
+﻿using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml;
 
 namespace CrmSdkLibrary.Entities
 {
-    public class SystemView 
-    {
-        private static int? _entityTypeCode;
-        public static int? EntityTypeCode =>
-            _entityTypeCode ?? (_entityTypeCode = Connection.Service != null
-                ? Messages.GetEntityTypeCode(Connection.Service, EntityLogicalName)
-                : _entityTypeCode);
-        public const string EntityLogicalName = "savedquery";
-        public const string EntitySetPath = "savedqueries"; 
-        public const string DisplayName = "View";
-        public const string PrimaryKey = "savedqueryid";
-        public const string PrimaryKeyAttribute = "name";
-        /// <summary>
-        /// Retrieve Views by entity
-        /// </summary>
-        /// <see cref="https://docs.microsoft.com/en-us/dynamics365/customer-engagement/web-api/savedquery?view=dynamics-ce-odata-9"/>
-        /// <param name="service"></param>
-        /// <param name="entityLogicalName"></param>
-        /// <returns></returns>
-        public static EntityCollection RetrieveViews(IOrganizationService service, string entityLogicalName)
-        {
-            try
-            {
-                var qe = new QueryExpression(EntityLogicalName)
-                {
-                    ColumnSet = new ColumnSet(true),
-                    Criteria = new FilterExpression()
-                    {
-                        Conditions =
-                        {
-                            new ConditionExpression("returnedtypecode", ConditionOperator.Equal, Messages.GetEntityTypeCode(service ,entityLogicalName))
-                        }
-                    }
-                };
-                return service.RetrieveMultiple(qe);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
+	public class SystemView
+	{
+		private static int? _entityTypeCode;
 
-        /// <summary>
-        /// Retrieve View(savedquery) Entity
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="viewId"></param>
-        /// <returns></returns>
-        public static Entity RetrieveView(IOrganizationService service, Guid viewId)
-        {
-            try
-            {
-                return service.Retrieve(EntityLogicalName, viewId, new ColumnSet(true));
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
+		public static int? EntityTypeCode =>
+			_entityTypeCode ?? (_entityTypeCode = Connection.Service != null
+				? Messages.GetEntityTypeCode(Connection.Service, EntityLogicalName)
+				: _entityTypeCode);
 
+		public const string EntityLogicalName = "savedquery";
+		public const string EntitySetPath = "savedqueries";
+		public const string DisplayName = "View";
+		public const string PrimaryKey = "savedqueryid";
+		public const string PrimaryKeyAttribute = "name";
 
-        /// <summary>
-        /// Retrieve Columns(Attributes) From View
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="viewId"></param>
-        /// <param name="ordering"></param>
-        /// <returns></returns>
-        public static IEnumerable<string> RetrieveViewAttributeLogicalNames(IOrganizationService service, Guid viewId, bool useLayoutXml = false)
-        {
-            try
-            {
-                var view = RetrieveView(service, viewId);
+		/// <summary>
+		/// Retrieve Views by entity
+		/// </summary>
+		/// <see cref="https://docs.microsoft.com/en-us/dynamics365/customer-engagement/web-api/savedquery?view=dynamics-ce-odata-9"/>
+		/// <param name="service"></param>
+		/// <param name="entityLogicalName"></param>
+		/// <returns></returns>
+		public static EntityCollection RetrieveViews(IOrganizationService service, string entityLogicalName)
+		{
+			try
+			{
+				var qe = new QueryExpression(EntityLogicalName)
+				{
+					ColumnSet = new ColumnSet(true),
+					Criteria = new FilterExpression()
+					{
+						Conditions =
+						{
+							new ConditionExpression("returnedtypecode", ConditionOperator.Equal, Messages.GetEntityTypeCode(service ,entityLogicalName))
+						}
+					}
+				};
+				return service.RetrieveMultiple(qe);
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+		}
 
-                if (useLayoutXml)
-                {
-                    var xml = new XmlDocument();
-                    xml.LoadXml(view["layoutxml"].ToString());
-                    var xnList = xml.GetElementsByTagName("cell");
+		/// <summary>
+		/// Retrieve View(savedquery) Entity
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="viewId"></param>
+		/// <returns></returns>
+		public static Entity RetrieveView(IOrganizationService service, Guid viewId)
+		{
+			try
+			{
+				return service.Retrieve(EntityLogicalName, viewId, new ColumnSet(true));
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+		}
 
-                    return (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value)
-                        .ToList();
-                }
-                else
-                {
-                    if (view.Contains("fetchxml"))
-                    {
-                        var attributes = new List<string>();
-                        var qe = Messages.FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
+		/// <summary>
+		/// Retrieve Columns(Attributes) From View
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="viewId"></param>
+		/// <param name="ordering"></param>
+		/// <returns></returns>
+		public static IEnumerable<string> RetrieveViewAttributeLogicalNames(IOrganizationService service, Guid viewId, bool useLayoutXml = false)
+		{
+			try
+			{
+				var view = RetrieveView(service, viewId);
 
-                        //Get all LinkEntity's Attribute into Dictionary
-                        foreach (var linkEntity in qe.LinkEntities)
-                        {
-                            attributes.AddRange(linkEntity.Columns.Columns.Select(attr => $"{linkEntity.EntityAlias}.{attr}"));
+				if (useLayoutXml)
+				{
+					var xml = new XmlDocument();
+					xml.LoadXml(view["layoutxml"].ToString());
+					var xnList = xml.GetElementsByTagName("cell");
 
-                            //Get all Next LinkEntity's Attribute into Dictionary
-                            attributes.AddRange(GetLinkEntityLogicalNames(service, linkEntity.LinkEntities.ToList()));
+					return (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value)
+						.ToList();
+				}
+				else
+				{
+					if (view.Contains("fetchxml"))
+					{
+						var attributes = new List<string>();
+						var qe = Messages.FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
 
-                        }
+						//Get all LinkEntity's Attribute into Dictionary
+						foreach (var linkEntity in qe.LinkEntities)
+						{
+							attributes.AddRange(linkEntity.Columns.Columns.Select(attr => $"{linkEntity.EntityAlias}.{attr}"));
 
-                        return attributes;
-                    }
-                    else
-                    {
-                        throw new Exception("Cannot find fetchxml string");
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-        private static IEnumerable<string> GetLinkEntityLogicalNames(IOrganizationService service, List<LinkEntity> linkEntities)
-        {
-            var attributes = new List<string>();
+							//Get all Next LinkEntity's Attribute into Dictionary
+							attributes.AddRange(GetLinkEntityLogicalNames(service, linkEntity.LinkEntities.ToList()));
+						}
 
-            foreach (var linkEntity in linkEntities)
-            {
-                attributes.AddRange(linkEntity.Columns.Columns.Select(attr => $"{linkEntity.EntityAlias}.{attr}"));
+						return attributes;
+					}
+					else
+					{
+						throw new Exception("Cannot find fetchxml string");
+					}
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+		}
 
-                //Get all Next LinkEntity's Attribute into Dictionary
-                attributes.AddRange(GetLinkEntityLogicalNames(service, linkEntity.LinkEntities.ToList()));
-            }
+		private static IEnumerable<string> GetLinkEntityLogicalNames(IOrganizationService service, List<LinkEntity> linkEntities)
+		{
+			var attributes = new List<string>();
 
-            return attributes;
-        }
+			foreach (var linkEntity in linkEntities)
+			{
+				attributes.AddRange(linkEntity.Columns.Columns.Select(attr => $"{linkEntity.EntityAlias}.{attr}"));
 
+				//Get all Next LinkEntity's Attribute into Dictionary
+				attributes.AddRange(GetLinkEntityLogicalNames(service, linkEntity.LinkEntities.ToList()));
+			}
 
-        /// <summary>
-        /// Retrieve Columns(Attributes) From View as Dictionary(logical name, display name)
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="viewId"></param>
-        /// <param name="ordering"></param>
-        /// <returns></returns>
-        public static Dictionary<string, string> RetrieveAttributes(IOrganizationService service, Guid viewId, bool useLayoutXml = false)
-        {
-            try
-            {
-                var view = RetrieveView(service, viewId);
-                if (view.Contains("fetchxml"))
-                {
-                    var qe = Messages.FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
+			return attributes;
+		}
 
-                    //Main
-                    var attrs = Messages.RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
+		/// <summary>
+		/// Retrieve Columns(Attributes) From View as Dictionary(logical name, display name)
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="viewId"></param>
+		/// <param name="ordering"></param>
+		/// <returns></returns>
+		public static Dictionary<string, string> RetrieveAttributes(IOrganizationService service, Guid viewId, bool useLayoutXml = false)
+		{
+			try
+			{
+				var view = RetrieveView(service, viewId);
+				if (view.Contains("fetchxml"))
+				{
+					var qe = Messages.FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
 
-                    if (attrs == null)
-                    {
-                        throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
-                    }
+					//Main
+					var attrs = Messages.RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
 
-                    var attributes = new Dictionary<string, string>();
+					if (attrs == null)
+					{
+						throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
+					}
 
-                    attributes = qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
-                        .Where(attr => attr != null)
-                        .ToDictionary(attr => attr.LogicalName, attr => attr.DisplayName.UserLocalizedLabel.Label);
+					var attributes = new Dictionary<string, string>();
 
-                    //Remove Primary Id Attribute
-                    attributes.Remove(attrs.PrimaryIdAttribute);
+					attributes = qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+						.Where(attr => attr != null)
+						.ToDictionary(attr => attr.LogicalName, attr => attr.DisplayName.UserLocalizedLabel.Label);
 
-                    //Get all LinkEntity's Attribute into Dictionary
-                    foreach (var linkEntity in qe.LinkEntities)
-                    {
-                        attrs = Messages.RetrieveEntity(service, linkEntity.LinkToEntityName, EntityFilters.Attributes);
+					//Remove Primary Id Attribute
+					attributes.Remove(attrs.PrimaryIdAttribute);
 
-                        foreach (var attrMetadata in linkEntity.Columns.Columns.Select(column =>
-                                attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
-                            .Where(attr => attrs != null))
-                        {
-                            attributes.Add($"{linkEntity.EntityAlias}.{attrMetadata.LogicalName}", attrMetadata.DisplayName.UserLocalizedLabel.Label);
-                        }
+					//Get all LinkEntity's Attribute into Dictionary
+					foreach (var linkEntity in qe.LinkEntities)
+					{
+						attrs = Messages.RetrieveEntity(service, linkEntity.LinkToEntityName, EntityFilters.Attributes);
 
-                        //Get all Next LinkEntity's Attribute into Dictionary
-                        foreach (var a in GetLinkEntities(service, linkEntity.LinkEntities.ToList()))
-                        {
-                            attributes.Add(a.Key, a.Value.DisplayName.UserLocalizedLabel.Label);
-                        }
-                    }
+						foreach (var attrMetadata in linkEntity.Columns.Columns.Select(column =>
+								attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+							.Where(attr => attrs != null))
+						{
+							attributes.Add($"{linkEntity.EntityAlias}.{attrMetadata.LogicalName}", attrMetadata.DisplayName.UserLocalizedLabel.Label);
+						}
 
-                    if (!useLayoutXml) return attributes;
-                    {
-                        if (!view.Contains("layoutxml")) return attributes;
+						//Get all Next LinkEntity's Attribute into Dictionary
+						foreach (var a in GetLinkEntities(service, linkEntity.LinkEntities.ToList()))
+						{
+							attributes.Add(a.Key, a.Value.DisplayName.UserLocalizedLabel.Label);
+						}
+					}
 
-                        var xml = new XmlDocument();
-                        xml.LoadXml(view["layoutxml"].ToString());
-                        var xnList = xml.GetElementsByTagName("cell");
+					if (!useLayoutXml) return attributes;
+					{
+						if (!view.Contains("layoutxml")) return attributes;
 
-                        var orderedAttributes = (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList();
+						var xml = new XmlDocument();
+						xml.LoadXml(view["layoutxml"].ToString());
+						var xnList = xml.GetElementsByTagName("cell");
 
-                        //Order
-                        attributes = attributes.OrderBy(x => orderedAttributes.IndexOf(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-                    }
+						var orderedAttributes = (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList();
 
-                    return attributes;
-                }
-                else
-                {
-                    throw new Exception("Cannot find fetchxml string");
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
+						//Order
+						attributes = attributes.OrderBy(x => orderedAttributes.IndexOf(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+					}
 
+					return attributes;
+				}
+				else
+				{
+					throw new Exception("Cannot find fetchxml string");
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+		}
 
-        /// <summary>
-        /// Retrieve view's entity AttributeMetaData
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="viewId"></param>
-        /// <returns></returns>
-        public static IEnumerable<AttributeMetadata> RetrieveEntityAttributeMetadata(IOrganizationService service, Guid viewId)
-        {
-            try
-            {
-                var view = RetrieveView(service, viewId);
+		/// <summary>
+		/// Retrieve view's entity AttributeMetaData
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="viewId"></param>
+		/// <returns></returns>
+		public static IEnumerable<AttributeMetadata> RetrieveEntityAttributeMetadata(IOrganizationService service, Guid viewId)
+		{
+			try
+			{
+				var view = RetrieveView(service, viewId);
 
-                return Messages.RetrieveEntity(service, view.LogicalName, EntityFilters.Attributes).Attributes;
+				return Messages.RetrieveEntity(service, view.LogicalName, EntityFilters.Attributes).Attributes;
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+		}
 
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
+		/// <summary>
+		/// Retrieve Columns(Attributes) From View as Dictionary(logical name, attributeMetaData)
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="viewId"></param>
+		/// <param name="useLayoutXml">for order</param>
+		/// <returns></returns>
+		public static Dictionary<string, AttributeMetadata> RetrieveAttributeMetadata(IOrganizationService service, Guid viewId, bool useLayoutXml = false)
+		{
+			try
+			{
+				var view = RetrieveView(service, viewId);
 
-        /// <summary>
-        /// Retrieve Columns(Attributes) From View as Dictionary(logical name, attributeMetaData)
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="viewId"></param>
-        /// <param name="useLayoutXml">for order</param>
-        /// <returns></returns>
-        public static Dictionary<string, AttributeMetadata> RetrieveAttributeMetadata(IOrganizationService service, Guid viewId, bool useLayoutXml = false)
-        {
-            try
-            {
-                var view = RetrieveView(service, viewId);
+				if (view.Contains("fetchxml"))
+				{
+					var qe = Messages.FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
 
-                if (view.Contains("fetchxml"))
-                {
-                    var qe = Messages.FetchXmlToQueryExpression(service, view["fetchxml"].ToString());
+					//Main
+					var attrs = Messages.RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
 
-                    //Main
-                    var attrs = Messages.RetrieveEntity(service, qe.EntityName, EntityFilters.Attributes);
+					if (attrs == null)
+					{
+						throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
+					}
 
-                    if (attrs == null)
-                    {
-                        throw new Exception($"Cannot retrieve attributes from {qe.EntityName}");
-                    }
+					var metadatas = new Dictionary<string, AttributeMetadata>();
+					metadatas = qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+						.Where(attr => attr != null)
+						.ToDictionary(attr => attr.LogicalName, attr => attr);
 
-                    var metadatas = new Dictionary<string, AttributeMetadata>();
-                    metadatas = qe.ColumnSet.Columns.Select(column => attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
-                        .Where(attr => attr != null)
-                        .ToDictionary(attr => attr.LogicalName, attr => attr);
+					//Remove Primary Id Attribute
+					metadatas.Remove(attrs.PrimaryIdAttribute);
 
-                    //Remove Primary Id Attribute
-                    metadatas.Remove(attrs.PrimaryIdAttribute);
+					//Get all LinkEntity's Attribute into Dictionary
+					foreach (var linkEntity in qe.LinkEntities)
+					{
+						attrs = Messages.RetrieveEntity(service, linkEntity.LinkToEntityName, EntityFilters.Attributes);
 
-                    //Get all LinkEntity's Attribute into Dictionary
-                    foreach (var linkEntity in qe.LinkEntities)
-                    {
-                        attrs = Messages.RetrieveEntity(service, linkEntity.LinkToEntityName, EntityFilters.Attributes);
+						foreach (var attrMetadata in linkEntity.Columns.Columns.Select(column =>
+								attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+							.Where(attr => attrs != null))
+						{
+							metadatas.Add($"{linkEntity.EntityAlias}.{attrMetadata.LogicalName}", attrMetadata);
+						}
 
-                        foreach (var attrMetadata in linkEntity.Columns.Columns.Select(column =>
-                                attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
-                            .Where(attr => attrs != null))
-                        {
-                            metadatas.Add($"{linkEntity.EntityAlias}.{attrMetadata.LogicalName}", attrMetadata);
-                        }
+						//Get all Next LinkEntity's Attribute into Dictionary
+						foreach (var a in GetLinkEntities(service, linkEntity.LinkEntities.ToList()))
+						{
+							metadatas.Add(a.Key, a.Value);
+						}
+					}
 
-                        //Get all Next LinkEntity's Attribute into Dictionary
-                        foreach (var a in GetLinkEntities(service, linkEntity.LinkEntities.ToList()))
-                        {
-                            metadatas.Add(a.Key, a.Value);
-                        }
-                    }
+					if (!useLayoutXml) return metadatas;
+					{
+						if (!view.Contains("layoutxml")) return metadatas;
+						var xml = new XmlDocument();
+						xml.LoadXml(view["layoutxml"].ToString());
+						var xnList = xml.GetElementsByTagName("cell");
 
-                    if (!useLayoutXml) return metadatas;
-                    {
-                        if (!view.Contains("layoutxml")) return metadatas;
-                        var xml = new XmlDocument();
-                        xml.LoadXml(view["layoutxml"].ToString());
-                        var xnList = xml.GetElementsByTagName("cell");
+						var attributes = (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList();
 
-                        var attributes = (from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList();
+						//Order
+						metadatas = metadatas.OrderBy(x => attributes.IndexOf(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+					}
 
-                        //Order
-                        metadatas = metadatas.OrderBy(x => attributes.IndexOf(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-                    }
+					return metadatas;
+				}
+				else
+				{
+					throw new Exception("Cannot find fetchxml string");
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+		}
 
-                    return metadatas;
-                }
-                else
-                {
-                    throw new Exception("Cannot find fetchxml string");
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
+		private static Dictionary<string, AttributeMetadata> GetLinkEntities(IOrganizationService service, List<LinkEntity> linkEntities)
+		{
+			var metadatas = new Dictionary<string, AttributeMetadata>();
 
-        private static Dictionary<string, AttributeMetadata> GetLinkEntities(IOrganizationService service, List<LinkEntity> linkEntities)
-        {
-            var metadatas = new Dictionary<string, AttributeMetadata>();
+			foreach (var linkEntity in linkEntities)
+			{
+				var attrs = Messages.RetrieveEntity(service, linkEntity.LinkToEntityName, EntityFilters.Attributes);
 
-            foreach (var linkEntity in linkEntities)
-            {
-                var attrs = Messages.RetrieveEntity(service, linkEntity.LinkToEntityName, EntityFilters.Attributes);
+				foreach (var attrMetadata in linkEntity.Columns.Columns.Select(column =>
+						attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
+					.Where(attr => attrs != null))
+				{
+					metadatas.Add($"{linkEntity.EntityAlias}.{attrMetadata.LogicalName}", attrMetadata);
+				}
 
-                foreach (var attrMetadata in linkEntity.Columns.Columns.Select(column =>
-                        attrs.Attributes.FirstOrDefault(x => x.LogicalName == column))
-                    .Where(attr => attrs != null))
-                {
-                    metadatas.Add($"{linkEntity.EntityAlias}.{attrMetadata.LogicalName}", attrMetadata);
-                }
+				foreach (var a in GetLinkEntities(service, linkEntity.LinkEntities.ToList()))
+				{
+					metadatas.Add(a.Key, a.Value);
+				}
+			}
 
-                foreach (var a in GetLinkEntities(service, linkEntity.LinkEntities.ToList()))
-                {
-                    metadatas.Add(a.Key, a.Value);
-                }
-            }
+			return metadatas;
+		}
 
-            return metadatas;
-        }
-
-        /// <summary>
-        /// Retrieve Entities(Records) By View
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="viewId"></param>
-        /// <returns></returns>
-        public static EntityCollection RetrieveEntities(IOrganizationService service, Guid viewId)
-        {
-            try
-            {
-                var view = RetrieveView(service, viewId);
-                if (view.Contains("fetchxml"))
-                {
-                    return service.RetrieveMultiple(new FetchExpression(view["fetchxml"].ToString()));
-                }
-                else
-                {
-                    throw new Exception("Cannot find fetchxml string");
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-    }
+		/// <summary>
+		/// Retrieve Entities(Records) By View
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="viewId"></param>
+		/// <returns></returns>
+		public static EntityCollection RetrieveEntities(IOrganizationService service, Guid viewId)
+		{
+			try
+			{
+				var view = RetrieveView(service, viewId);
+				if (view.Contains("fetchxml"))
+				{
+					return service.RetrieveMultiple(new FetchExpression(view["fetchxml"].ToString()));
+				}
+				else
+				{
+					throw new Exception("Cannot find fetchxml string");
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+		}
+	}
 }

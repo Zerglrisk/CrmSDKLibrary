@@ -1,20 +1,22 @@
 ﻿namespace CrmSdkLibrary.Definition.Attribute
 {
-    public class StringValue: System.Attribute
+	public class StringValue : System.Attribute
 
-    {
-        public string Value { get; set; }
-        public StringValue(string value)
-        {
-            this.Value = value;
-        }
-        public static string GetStringValue(object value)
-        {
-            var type = value.GetType();
+	{
+		public string Value { get; set; }
 
-            var fi = type.GetField(value.ToString());
+		public StringValue(string value)
+		{
+			Value = value;
+		}
 
-            return fi.GetCustomAttributes(typeof(StringValue), false) is StringValue[] attr && attr.Length > 0 ? attr[0].Value : null;
-        }
-    }
+		public static string GetStringValue(object value)
+		{
+			var type = value.GetType();
+
+			var fi = type.GetField(value.ToString());
+
+			return fi.GetCustomAttributes(typeof(StringValue), false) is StringValue[] attr && attr.Length > 0 ? attr[0].Value : null;
+		}
+	}
 }
