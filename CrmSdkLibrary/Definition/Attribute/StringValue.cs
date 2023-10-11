@@ -1,13 +1,12 @@
 ﻿namespace CrmSdkLibrary.Definition.Attribute
 {
 	public class StringValue : System.Attribute
-
 	{
 		public string Value { get; set; }
 
 		public StringValue(string value)
 		{
-			Value = value;
+			this.Value = value;
 		}
 
 		public static string GetStringValue(object value)

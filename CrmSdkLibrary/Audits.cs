@@ -109,7 +109,7 @@ namespace CrmSdkLibrary
 		public static void EnableOrganizationAuditing(in IOrganizationService service, bool isEnable)
 		{
 			var orgId = Connection.Service.ConnectedOrgId;
-			var org = service.Retrieve("organization", orgId, new ColumnSet("organizationid", "isauditenabled"));
+			var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
 
 			org.Attributes["isauditenabled"] = isEnable;
 			service.Update(org);
@@ -120,7 +120,7 @@ namespace CrmSdkLibrary
 			//Connection.Service.ConnectedOrgId
 			//Connection.Service.OrganizationDetail.OrganizationId
 			var orgId = Connection.Service.ConnectedOrgId;
-			var org = service.Retrieve("organization", orgId, new ColumnSet("organizationid", "isauditenabled"));
+			var org = service.Retrieve("organization", orgId, new Microsoft.Xrm.Sdk.Query.ColumnSet("organizationid", "isauditenabled"));
 
 			if (org != null && org.Contains("isauditenabled"))
 			{
@@ -138,7 +138,7 @@ namespace CrmSdkLibrary
 		/// <returns>The ID of the restored record, or null if the record could not be restored.</returns>
 		public static Guid? RestoreDeletedRecord(in IOrganizationService service, Guid auditId)
 		{
-			var detail = RetrieveAuditDetail(service, auditId);
+			var detail = Audits.RetrieveAuditDetail(service, auditId);
 			if (detail.AuditRecord.GetAttributeValue<OptionSetValue>("action").Value == (int)ActionType.Delete && detail is AttributeAuditDetail)
 			{
 				var attrDetail = detail as AttributeAuditDetail;

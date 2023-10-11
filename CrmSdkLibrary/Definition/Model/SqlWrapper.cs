@@ -35,13 +35,13 @@ namespace CrmSdkLibrary.Definition.Model
 			xml.LoadXml(layoutXml);
 			var xnList = xml.GetElementsByTagName("cell");
 
-			LayoutColumns.AddRange((from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList());
+			this.LayoutColumns.AddRange((from XmlNode xn in xnList where xn.Attributes != null select xn.Attributes["name"].Value).ToList());
 		}
 
 		public bool SetLayoutColumnsDisplayName(string name, string displayName)
 		{
 			if (string.IsNullOrWhiteSpace(name)) return false;
-			var col = LayoutColumns.FirstOrDefault(x => x.Name == name);
+			var col = this.LayoutColumns.FirstOrDefault(x => x.Name == name);
 			if (col != null) col.DisplayName = displayName;
 			return true;
 		}
@@ -53,9 +53,9 @@ namespace CrmSdkLibrary.Definition.Model
 		public string GenerateSql()
 		{
 			var query = "SELECT ";
-			var attributes = LayoutColumns.OrderBy(x => x.Index).Select(x => x.Name.Contains(".") ? x.Name : $"{From}.{x.Name}");
+			var attributes = this.LayoutColumns.OrderBy(x => x.Index).Select(x => x.Name.Contains(".") ? x.Name : $"{this.From}.{x.Name}");
 			query += string.Join(", ", attributes);
-			query += $" FROM {From} ";
+			query += $" FROM {this.From} ";
 			foreach (var link in Join)
 			{
 				query += GenerateJoinSql(link);
@@ -67,7 +67,7 @@ namespace CrmSdkLibrary.Definition.Model
 				var orderString = new List<string>();
 				foreach (var order in Orders.OrderBy(x => x.Index))
 				{
-					orderString.Add($"{From}.{order.ColumnName} {order.SortDirection.GetStringValue()}");
+					orderString.Add($"{this.From}.{order.ColumnName} {order.SortDirection.GetStringValue()}");
 				}
 				query += string.Join(", ", orderString);
 			}
@@ -89,7 +89,7 @@ namespace CrmSdkLibrary.Definition.Model
 			{
 				query += $"AS {join.Alias} ";
 			}
-			query += $"ON ({From}.{join.JoinFromAttributeName} = {join.Alias}.{join.JoinToAttributeName} ";
+			query += $"ON ({this.From}.{join.JoinFromAttributeName} = {join.Alias}.{join.JoinToAttributeName} ";
 
 			var conditionString = new List<string>();
 			foreach (var condition in join.Conditions)
@@ -114,13 +114,13 @@ namespace CrmSdkLibrary.Definition.Model
 
 			public Column(string name)
 			{
-				Name = name;
+				this.Name = name;
 			}
 
 			public Column(string name, string displayName)
 			{
-				Name = name;
-				DisplayName = displayName;
+				this.Name = name;
+				this.DisplayName = displayName;
 			}
 		}
 
@@ -128,7 +128,7 @@ namespace CrmSdkLibrary.Definition.Model
 		{
 			public void Add(string name)
 			{
-				Add(new Column(name)
+				this.Add(new Column(name)
 				{
 					Index = Count
 				});
@@ -136,7 +136,7 @@ namespace CrmSdkLibrary.Definition.Model
 
 			public void Add(string name, string displayName)
 			{
-				Add(new Column(name, displayName)
+				this.Add(new Column(name, displayName)
 				{
 					Index = Count
 				});
@@ -146,7 +146,7 @@ namespace CrmSdkLibrary.Definition.Model
 			{
 				foreach (var name in names)
 				{
-					Add(name);
+					this.Add(name);
 				}
 			}
 		}

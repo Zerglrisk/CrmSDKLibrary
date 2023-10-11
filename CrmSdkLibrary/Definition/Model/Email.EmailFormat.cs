@@ -21,9 +21,9 @@ namespace CrmSdkLibrary.Definition
 		{
 			/// <summary>
 			/// Sender
-			/// Target : systemuser
+			/// Target : account,contact,entitlement,equipment,knowledgearticle,lead,queue,systemuser,unresolvedaddress, (Unknown, Using Email Address)
 			/// </summary>
-			public EntityReferenceEmailRecipient From { get; set; }
+			public IEmailRecipient From { get; set; }
 
 			/// <summary>
 			/// Receiver

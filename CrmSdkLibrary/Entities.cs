@@ -1,13 +1,12 @@
 ﻿using Microsoft.Crm.Sdk.Messages;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.PowerPlatform.Dataverse.Client.Extensions;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Tooling.Connector;
 using System;
 
 // How to Make AutoGenerate File  :
 //  .\CrmSvcUtil.exe /url:https://orgname.api.crm5.dynamics.com/XRMServices/2011/Organization.svc /username:domain\crmadmin /password:pass /out:CRMSdkTypes.cs
-namespace CrmSdkLibrary_Core.Entities
+namespace CrmSdkLibrary.Entities
 {
 	/// <summary>
 	/// 고객 회사 또는 잠재 고객 회사를 나타내며, 비즈니스 거래에서 청구 대상이 되는 회사입니다.
@@ -8587,13 +8586,13 @@ namespace CrmSdkLibrary_Core.Entities
 			}
 		}
 
-		public string GetCurrentUserName(ServiceClient service)
+		public string GetCurrentUserName(CrmServiceClient service)
 		{
 			try
 			{
 				// Get a system user
 				//var userId = Messages.GetCurrentUserId(service);
-				var userId = service.GetMyUserId();
+				var userId = service.GetMyCrmUserId();
 
 				// Lookup User
 				return GetCurrentUserName(service, userId);

@@ -4,7 +4,8 @@ namespace CrmSdkLibrary.Definition.CrmValue
 {
 	public abstract partial class CrmValueConverter
 	{
-		internal CrmValueConverter() { }
+		internal CrmValueConverter()
+		{ }
 
 		public abstract bool CanConvert(Type typeToConvert);
 

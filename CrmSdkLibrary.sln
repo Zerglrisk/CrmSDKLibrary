@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary.Old", "CrmSdkLibrary.Old\CrmSdkLibrary.Old.csproj", "{8047D594-9184-4D8A-936B-86323BE56318}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary", "CrmSdkLibrary\CrmSdkLibrary.csproj", "{8047D594-9184-4D8A-936B-86323BE56318}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi_ADAL", "WebApi\WebApi_ADAL.csproj", "{59E338CE-8F44-43BC-8062-68146D117405}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrmSdkLibrary", "CrmSdkLibrary\CrmSdkLibrary.csproj", "{B1B47554-8430-45AC-AE1B-F584B3E82A95}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrmSdkLibrary.Dataverse", "CrmSdkLibrary.Dataverse\CrmSdkLibrary.Dataverse.csproj", "{B1B47554-8430-45AC-AE1B-F584B3E82A95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary_UnitTest.Old", "CrmSdkLibrary_UnitTest.Old\CrmSdkLibrary_UnitTest.Old.csproj", "{80D786DA-FC86-471E-8D21-9565F545CFD5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary.UnitTest", "CrmSdkLibrary.UnitTest\CrmSdkLibrary.UnitTest.csproj", "{80D786DA-FC86-471E-8D21-9565F545CFD5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrmSdkLibrary_NUnitTest", "CrmSdkLibrary_NUnitTest\CrmSdkLibrary_NUnitTest.csproj", "{0525F69B-F5B2-4F8D-9EA0-9EFB3A8EEA35}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrmSdkLibrary.Dataverse.NUnitTest", "CrmSdkLibrary.Dataverse.NUnitTest\CrmSdkLibrary.Dataverse.NUnitTest.csproj", "{0525F69B-F5B2-4F8D-9EA0-9EFB3A8EEA35}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary.Workflows", "Workflows\CrmSdkLibrary.Workflows.csproj", "{DE335307-B330-47F2-B3CD-73525FE4E630}"
 EndProject

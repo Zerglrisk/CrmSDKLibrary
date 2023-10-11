@@ -1,10 +1,8 @@
-﻿using Microsoft.Xrm.Sdk;
-
-namespace CrmSdkLibrary.Entities
+﻿namespace CrmSdkLibrary.Entities
 {
-	[System.Runtime.Serialization.DataContract()]
-	[Microsoft.Xrm.Sdk.Client.EntityLogicalName("incident")]
-	public class Incident : Entity, System.ComponentModel.INotifyPropertyChanging, System.ComponentModel.INotifyPropertyChanged
+	[System.Runtime.Serialization.DataContractAttribute()]
+	[Microsoft.Xrm.Sdk.Client.EntityLogicalNameAttribute("incident")]
+	public class Incident : Microsoft.Xrm.Sdk.Entity, System.ComponentModel.INotifyPropertyChanging, System.ComponentModel.INotifyPropertyChanged
 	{
 		private int? _entityTypeCode;
 
@@ -19,16 +17,16 @@ namespace CrmSdkLibrary.Entities
 		public const string PrimaryKey = "incidentid";
 		public const string PrimaryKeyAttribute = "title";
 
-		[System.Runtime.Serialization.DataContract()]
+		[System.Runtime.Serialization.DataContractAttribute()]
 		public enum IncidentState
 		{
-			[System.Runtime.Serialization.EnumMember()]
+			[System.Runtime.Serialization.EnumMemberAttribute()]
 			Active = 0,
 
-			[System.Runtime.Serialization.EnumMember()]
+			[System.Runtime.Serialization.EnumMemberAttribute()]
 			Resolved = 1,
 
-			[System.Runtime.Serialization.EnumMember()]
+			[System.Runtime.Serialization.EnumMemberAttribute()]
 			Canceled = 2,
 		}
 
@@ -58,17 +56,17 @@ namespace CrmSdkLibrary.Entities
 
 		private void OnPropertyChanged(string propertyName)
 		{
-			if (PropertyChanged != null)
+			if ((this.PropertyChanged != null))
 			{
-				PropertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+				this.PropertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
 			}
 		}
 
 		private void OnPropertyChanging(string propertyName)
 		{
-			if (PropertyChanging != null)
+			if ((this.PropertyChanging != null))
 			{
-				PropertyChanging(this, new System.ComponentModel.PropertyChangingEventArgs(propertyName));
+				this.PropertyChanging(this, new System.ComponentModel.PropertyChangingEventArgs(propertyName));
 			}
 		}
 	}

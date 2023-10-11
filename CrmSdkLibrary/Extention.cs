@@ -27,11 +27,11 @@ namespace CrmSdkLibrary
 		{
 			if (!entity.Contains(attributeName))
 			{
-				return default;
+				return default(T);
 			}
 			if (entity.Attributes[attributeName].GetType() != typeof(AliasedValue))
 			{
-				return default;
+				return default(T);
 			}
 
 			return (T)entity.GetAttributeValue<AliasedValue>(attributeName).Value;
@@ -74,7 +74,7 @@ namespace CrmSdkLibrary
 
 		public static AliasedValue ToAliasedValue(this object attr)
 		{
-			return (AliasedValue)attr;
+			return ((AliasedValue)attr);
 		}
 
 		public static T ToCrmValue<T>(this Entity entity, string attributeName, bool isFormattedValue = false)

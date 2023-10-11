@@ -1,7 +1,6 @@
-﻿using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.PowerPlatform.Dataverse.Client.Extensions;
-using Microsoft.Xrm.Sdk;
+﻿using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Tooling.Connector;
 using System;
 
 namespace CrmSdkLibrary.Entities
@@ -50,10 +49,10 @@ namespace CrmSdkLibrary.Entities
 
 				var a = Messages.QueryExpressionToFetchXml(service, qe);
 
-				var client = (ServiceClient)service;
+				var client = (CrmServiceClient)service;
 
 				//client.CallerId = Messages.GetCurrentUserId(service);
-				client.CallerId = ((ServiceClient)service).GetMyUserId();
+				client.CallerId = ((CrmServiceClient)service).GetMyCrmUserId();
 				return client.RetrieveMultiple(qe);
 			}
 			catch (Exception)
