@@ -123,6 +123,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CalculateRollupField.cs" />
     <Compile Include="ChangeChildRecordOwner.cs" />
     <Compile Include="FormatDateTime.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

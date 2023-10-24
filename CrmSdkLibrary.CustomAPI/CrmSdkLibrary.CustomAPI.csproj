@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net6.0;net7.0;net462;net472;net48</TargetFrameworks>
+		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+		<RepositoryType>https://github.com/Zerglrisk/CrmSDKLibrary.git</RepositoryType>
+		<SignAssembly>True</SignAssembly>
+		<DelaySign>False</DelaySign>
+		<AssemblyOriginatorKeyFile>..\Zerglrisk.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
+		<DefineConstants>NET48</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
+		<DefineConstants>NET462</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
+		<DefineConstants>NET472</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+		<DefineConstants>NET60</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
+		<DefineConstants>NET70</DefineConstants>
+	</PropertyGroup>
+	
+	<ItemGroup Condition="'$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net462' Or '$(TargetFramework)' == 'net472'">
+		<Reference Include="System.ServiceModel" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.1.14" />
+	</ItemGroup>
+
+</Project>

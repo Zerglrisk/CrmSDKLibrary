@@ -26,7 +26,7 @@ namespace CrmSdkLibrary
 		/// <param name="attribute"></param>
 		/// <see cref="http://www.inogic.com/blog/2014/08/clone-records-in-dynamics-crm/"/>
 		/// <returns>Created Record Id</returns>
-		public static Guid CloneRecord(string logicalName, Guid parentRecordId, AttributeCollection attribute = null)
+		public static Guid CloneRecord(in IOrganizationService service, string logicalName, Guid parentRecordId, AttributeCollection attribute = null)
 		{
 			/* === ex ===
                var qe = new QueryExpression("account"){ColumnSet = new ColumnSet(true)};
@@ -40,7 +40,7 @@ namespace CrmSdkLibrary
 			try
 			{
 				//retrieve the parent record
-				var parentRecord = Connection.Service.Retrieve(logicalName, parentRecordId, new ColumnSet(true));
+				var parentRecord = service.Retrieve(logicalName, parentRecordId, new ColumnSet(true));
 
 				//Clone the Account Record using Clone function;
 				//Clone function takes a bool parameter which relates the Related Entities of the parent
@@ -72,7 +72,7 @@ namespace CrmSdkLibrary
 				}
 
 				//create the cloned record and return child account ID
-				return Connection.Service.Create(childRecord);
+				return service.Create(childRecord);
 			}
 			catch (SaveChangesException)
 			{
@@ -87,7 +87,7 @@ namespace CrmSdkLibrary
 		/// <param name="parentRecordIds"></param>
 		/// <param name="attribute"></param>
 		/// <returns>Created Record Ids</returns>
-		public static List<Guid> CloneRecords(string logicalName, Guid[] parentRecordIds, AttributeCollection attribute = null)
+		public static List<Guid> CloneRecords(in IOrganizationService service, string logicalName, Guid[] parentRecordIds, AttributeCollection attribute = null)
 		{
 			/*  === ex ===
                var qe = new QueryExpression("account"){ColumnSet = new ColumnSet(true)};
@@ -113,7 +113,7 @@ namespace CrmSdkLibrary
 				filter.AddCondition($"{logicalName.ToLower()}id", ConditionOperator.Equal, recordId);
 			}
 			qe.Criteria.Filters.Add(filter);
-			var retrieve = Connection.Service.RetrieveMultiple(qe);
+			var retrieve = service.RetrieveMultiple(qe);
 
 			foreach (var childRecord in retrieve.Entities)
 			{
@@ -140,7 +140,7 @@ namespace CrmSdkLibrary
 				}
 
 				//Don't Use Bulk For get Ids
-				clonedRecordIds.Add(Connection.Service.Create(childRecord));
+				clonedRecordIds.Add(service.Create(childRecord));
 			}
 			return clonedRecordIds;
 		}

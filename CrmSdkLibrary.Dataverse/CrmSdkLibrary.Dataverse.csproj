@@ -4,6 +4,8 @@
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
     <RepositoryType>https://github.com/Zerglrisk/CrmSDKLibrary.git</RepositoryType>
     <PackAsTool>False</PackAsTool>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Zerglrisk.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
     <DefineConstants>NET48</DefineConstants>

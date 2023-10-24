@@ -1,6 +1,8 @@
 ﻿using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -33,8 +35,9 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 		[Test]
 		public void Test1()
 		{
-			var item = Connection.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
-				Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
+			var config = Config.CrmConfig;
+			var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
+				   config.UserId, config.UserPassword, config.TenantId);
 
 			// Query Expression Example
 
@@ -179,8 +182,9 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 		[Test]
 		public async Task Api_ADALAsync()
 		{
-			WebApi_ADAL.Api.SetClientId(Config.CrmConfig.ClientId);
-			var httpClient = await WebApi_ADAL.Api.GetWebApiHttpClient(Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.EnvironmentUrl);
+			var config = Config.CrmConfig;
+			WebApi_ADAL.Api.SetClientId(config.ClientId);
+			var httpClient = await WebApi_ADAL.Api.GetWebApiHttpClient(config.UserId, config.UserPassword, config.EnvironmentUrl);
 
 			var user = await WebApi_ADAL.Api.User(httpClient);
 
@@ -193,6 +197,15 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 		}
 
 		[Test]
+		public void Clone()
+		{
+			var config = Config.CrmConfig;
+			var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
+				   config.UserId, config.UserPassword, config.TenantId);
+			Copy.CloneRecord(service, "lead", new Guid("a2249ae9-d568-ee11-9ae7-6045bd591b31"));
+		}
+
+			[Test]
 		public void Api_MSAL()
 		{
 		}
@@ -202,8 +215,9 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 		{
 			try
 			{
-				var service = Connection.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
-					Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
+				var config = Config.CrmConfig;
+				var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
+					   config.UserId, config.UserPassword, config.TenantId);
 
 				var currentOrg = service.Execute(new RetrieveCurrentOrganizationRequest()) as RetrieveCurrentOrganizationResponse;
 				var url = currentOrg.Detail.Endpoints
@@ -255,9 +269,9 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 		[Test]
 		public void RestoreAsync()
 		{
-			//
-			var service = Connection.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
-				   Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
+			var config = Config.CrmConfig;
+			var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
+				   config.UserId, config.UserPassword, config.TenantId);
 
 			var a = Audits.RestoreDeletedRecord(service, new Guid("F44E78E4-EE29-EE11-A9BB-000D3AA26549"));
 		}
@@ -265,9 +279,9 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 		[Test]
 		public void ActivateRecord()
 		{
-			//
-			var service = Connection.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
-				   Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
+			var config = Config.CrmConfig;
+			var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
+				   config.UserId, config.UserPassword, config.TenantId);
 
 			Messages.ActivateRecord(service, "account", new Guid("09859910-8f35-ee11-bdf4-000d3a07e75b"));
 		}
@@ -275,13 +289,14 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 		[Test]
 		public void SendEmail()
 		{
-			var service = Connection.ConnectServiceOAuth(Config.CrmConfig.EnvironmentUrl, Config.CrmConfig.ClientId,
-				   Config.CrmConfig.UserId, Config.CrmConfig.UserPassword, Config.CrmConfig.TenantId);
+			var config = Config.CrmConfig;
+			var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
+				   config.UserId, config.UserPassword, config.TenantId);
 
 			Messages.SendEmail(service, new Definition.Email.EmailFormat()
 			{
 				From = new Definition.Email.EntityReferenceEmailRecipient(new EntityReference("systemuser", service.CallerId)),
-				To = new Definition.Email.StringEmailRecipient[] { new Definition.Email.StringEmailRecipient(""), },
+				To = new Definition.Email.StringEmailRecipient[] { new Definition.Email.StringEmailRecipient("tester@test.com"), },
 				Subject = "this thes",
 				Description = @"
 <!DOCTYPE html PUBLIC ""-//W3C//DTD XHTML 1.0 Transitional//EN"" ""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"">
@@ -292,384 +307,23 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 	<meta name=""viewport"" content=""width=device-width, initial-scale=1.0"" />
 </head>
 <body style=""margin: 0; padding: 0;"">
-	<table border=""0"" cellpadding=""0"" cellspacing=""0"" width=""780"" id=""tbl_body"" style=""font-family: 맑은 고딕;"">
-		<tr>
-			<td>
-				<table border=""0"" cellpadding=""0"" cellspacing=""0"" width=""760"" style=""margin-top: 10px; margin-left: 10px; margin-right: 10px; margin-bottom: 10px"">
-					<tr>
-						<td style=""color:red; font-weight:bold;"">
-							
-						</td>
-					</tr>
-					<tr>
-						<td height=""5px"" style=""font-size: 1pt""></td>
-					</tr>
-					<tr>
-						<td style=""padding: 3px"">
-		 
-							<br />
-							
-						</td>
-					</tr>
-					<tr>
-						<td height=""8px"" style=""font-size: 1pt""></td>
-					</tr>
-					<tr>
-						<td valign=""middle"">
-							<div style=""font-size:17px; font-weight:bold;""></div>
-						</td>
-					</tr>
-					<tr>
-						<td height=""5px"" style=""font-size: 1px"">&nbsp;</td>
-					</tr>
-					<tr>
-						<td style=""padding: 0px"">
-							<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px; border: 1px solid #808080;"">
-								<tr>
-									<td style=""padding: 0px"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-								
-												</td>
-												<td width=""262"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080; "">
-						
-												</td>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080; "">
-							
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-								
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-
-												</td>
-												<td width=""262"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080; "">
-						
-												</td>
-												<td width=""103"" valign=""middle"" align=""center"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-							
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-							
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-						
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-						
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-						
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-top: 2px solid #808080"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" valign=""middle"" bgcolor=""#eeeeee"" style=""background-color: #ebebeb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">&nbsp;</td>
-												<td width=""84"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;""></td>
-												<td width=""164"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;""></td>
-												<td align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-bottom: 1px solid #808080;""></td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-bottom: 1px solid #808080;"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; border-right: 1px solid #808080; padding-left: 3px; padding-right: 3px; padding-top: 0px; padding-bottom: 0px;"">
-						
-												</td>
-												<td style=""padding: 0;"">
-													<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0"">
-														<tr>
-															<td width=""84"" align=""center"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-										
-															</td>
-															<td width=""164"" align=""right"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-										
-															</td>
-															<td align=""center"" valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-							
-															</td>
-														</tr>
-														<tr>
-															<td width=""84"" align=""center"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; "">
-									
-															</td>
-															<td width=""164"" align=""right"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; "">
-						
-															</td>
-															<td align=""center"" valign=""middle"" style=""padding: 3px; "">
-							
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px;"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-							
-												</td>
-												<td align=""right"" valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-				
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-top: 6px double #808080"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px; border-top: 1px solid #808080;"">
-											<tr>
-												<td width=""103"" valign=""middle"" bgcolor=""#eeeeee"" style=""background-color: #ebebeb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">&nbsp;</td>
-												<td width=""84"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">매입유형</td>
-												<td width=""164"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">매입액</td>
-												<td align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-bottom: 1px solid #808080;""></td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-bottom: 1px solid #808080;"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; border-right: 1px solid #808080; padding-left: 3px; padding-right: 3px; padding-top: 0px; padding-bottom: 0px;"">
-				
-												</td>
-												<td style=""padding: 0;"">
-													<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0"">
-														<tr>
-															<td width=""84"" align=""center"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-										
-															</td>
-															<td width=""164"" align=""right"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-										
-															</td>
-															<td align=""center"" valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-							
-															</td>
-														</tr>
-														<tr>
-															<td width=""84"" align=""center"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; "">
-									
-															</td>
-															<td width=""164"" align=""right"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; "">
-						
-															</td>
-															<td align=""center"" valign=""middle"" style=""padding: 3px; "">
-							
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-						
-												</td>
-												<td align=""right"" valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-							
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-top: 2px solid #808080"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-				
-												</td>
-												<td align=""right"" valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-							
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-top: 2px solid #808080"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#212529"" style=""background-color: #212529; color: #ffffff; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-						
-												</td>
-												<td width=""297"" align=""right"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-							
-												</td>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#212529"" style=""background-color: #212529; color: #ffffff; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-						
-												</td>
-												<td align=""center"" valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-						
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-top: 2px solid #808080"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-							
-												</td>
-												<td align=""right"" valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-							
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-top: 2px solid #808080"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#212529"" style=""background-color: #212529; color: #ffffff; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-						
-												</td>
-												<td width=""297"" align=""right"" valign=""middle"" style=""padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-							
-												</td>
-												<td width=""103"" align=""center"" valign=""middle"" bgcolor=""#212529"" style=""background-color: #212529; color: #ffffff; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-								
-												</td>
-												<td align=""center"" valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-								<tr>
-									<td style=""padding: 0px; border-top: 2px solid #808080"">
-										<table width=""100%"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0px;"">
-											<tr>
-												<td width=""153"" align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-													
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-													
-												</td>
-											</tr>
-											<tr>
-												<td align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-													
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-													
-												</td>
-											</tr>
-											<tr>
-												<td align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-													
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-													
-												</td>
-											</tr>
-											<tr>
-												<td align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-													
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-													
-												</td>
-											</tr>
-											<tr>
-												<td align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080; border-bottom: 1px solid #808080;"">
-													
-												</td>
-												<td valign=""middle"" style=""padding: 3px; border-bottom: 1px solid #808080;"">
-												</td>
-											</tr>
-											<tr>
-												<td align=""center"" valign=""middle"" bgcolor=""#dbdbdb"" style=""background-color: #dbdbdb; padding: 3px; border-right: 1px solid #808080;"">
-													
-												</td>
-												<td valign=""middle"" style=""padding: 3px;"">
-													
-												</td>
-											</tr>
-										</table>
-									</td>
-								</tr>
-							</table>
-						</td>
-					</tr>
-					<tr>
-						<td style=""padding: 0px"">&nbsp;</td>
-					</tr>
-					<tr>
-						<td align=""center"" valign=""middle"" bgcolor=""#0088ec"" style=""background-color: #0088ec; cursor: default;"">
-							<a href="""" target=""_blank"" style=""text-decoration: none; cursor: pointer; color: #ffffff; font-size: 16px; line-height: 31px"">
-								<b></b>
-							</a>
-						</td>
-					</tr>
-					<tr>
-						<td height=""3"" style=""padding: 0px; font-size: 1pt""></td>
-					</tr>
-					<tr>
-						<td align=""center"" valign=""middle"" bgcolor=""#b2ccff"" style=""background-color: #b2ccff; cursor: default;"">
-							<a href="""" target=""_blank"" style=""text-decoration: none; cursor: pointer; color: #000000; font-size: 16px; line-height: 31px"">
-								
-							</a>
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
 </body>
 </html>
 "
 			});
+		}
+
+		[Test]
+		public void OptionSetDescription()
+		{
+			var config = Config.CrmConfig;
+			var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
+				   config.UserId, config.UserPassword, config.TenantId);
+
+			//global optionset
+			var r = Messages.RetrieveOptionSet(service, "statecode", true);
+			var rb = r.Options.Select(x => x.Description.LocalizedLabels.FirstOrDefault()?.Label).Distinct().ToList();
+			var re = r.Options.Select(x => x.ExternalValue).Distinct().ToList();
 		}
 	}
 }

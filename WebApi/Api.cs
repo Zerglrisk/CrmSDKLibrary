@@ -1,5 +1,4 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -69,6 +68,27 @@ namespace WebApi_ADAL
 			AuthenticationResult result = await authContext.AcquireTokenAsync(resourceUrl, credential);
 
 			return result.AccessToken;
+		}
+
+
+		/// <summary>
+		/// If you are connecting using an secret configured for the application,
+		/// you will use the ClientCredential class passing in the clientId and clientSecret rather than a UserCredential with userName and password parameters.
+		/// </summary>
+		/// <see cref="https://docs.microsoft.com/en-us/powerapps/developer/common-data-service/authenticate-oauth#connect-using-the-application-secret"/>
+		/// <param name="resourceUrl">e.g.) https://tester200315.crm5.dynamics.com</param>
+		/// <param name="secret">If your app is a public client, then the client_secret cannot be included</param>
+		/// <param name="authorityUrl">e.g.) https://login.microsoftonline.com/tenantId, https://graph.windows.net/</param>
+		/// <returns></returns>
+		public static async Task<string> GetTenantId(string resourceUrl, string secret, string authorityUrl = "https://login.microsoftonline.com/common")
+		{
+			//"https://login.microsoftonline.com/<Tenant-ID-here>"
+			var authContext = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(authorityUrl);
+			ClientCredential credential = new ClientCredential(ClientId, secret);
+
+			AuthenticationResult result = await authContext.AcquireTokenAsync(resourceUrl, credential);
+
+			return result.TenantId;
 		}
 
 #endif
