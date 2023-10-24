@@ -19,18 +19,18 @@ Object.defineProperty(this, 'formContext', {
 		//}
 
 		// add lines for formcontext properties;
-		if (_formContext. == undefined) {
-			_formContext. = {};
+		if (_formContext.zerglrisk == undefined) {
+			_formContext.zerglrisk = {};
 		}
-		if (_formContext..debug == undefined) {
-			_formContext..debug = {};
+		if (_formContext.zerglrisk.debug == undefined) {
+			_formContext.zerglrisk.debug = {};
 		}
-		if (_formContext..WebApi == undefined) {
-			_formContext..WebApi = {};
+		if (_formContext.zerglrisk.WebApi == undefined) {
+			_formContext.zerglrisk.WebApi = {};
 		}
 
 		try {
-			_formContext..debug.openByGuid = function (entityName, entityId, width, height) {
+			_formContext.zerglrisk.debug.openByGuid = function (entityName, entityId, width, height) {
 				var guid = formContext.data.entity.getEntityReference().id;
 				guid = guid.replace("{", "").replace("}", "").toString();
 
@@ -71,12 +71,12 @@ Object.defineProperty(this, 'formContext', {
 				);
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..debug.openByGuid.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.debug.openByGuid.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
-			_formContext..debug.openCopyForm = function (entityName, entityId, width, height) {
+			_formContext.zerglrisk.debug.openCopyForm = function (entityName, entityId, width, height) {
 				var guid = formContext.data.entity.getEntityReference().id;
 				guid = guid.replace("{", "").replace("}", "").toString();
 
@@ -119,12 +119,12 @@ Object.defineProperty(this, 'formContext', {
 				);
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..debug.openCopyForm.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.debug.openCopyForm.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
-			_formContext..debug.getEntityTypeCodeSync = async function (entityName) {
+			_formContext.zerglrisk.debug.getEntityTypeCodeSync = async function (entityName) {
 				if (entityName == null) {
 					entityName = prompt("Enter the records entity internalname (ex; account, new_contact)", formContext.data.entity.getEntityName());
 				}
@@ -140,12 +140,12 @@ Object.defineProperty(this, 'formContext', {
 				return objectTypeCode;
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..debug.getEntityTypeCode.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.debug.getEntityTypeCode.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
-			_formContext..OpenWebResourceDialog = function (data, width, height, isSide, webresourceName) {
+			_formContext.zerglrisk.OpenWebResourceDialog = function (data, width, height, isSide, webresourceName) {
 				if (data == null) {
 					console.log("[new_js_common] OpenWebResourceDialog : not provide data parameter.(required)");
 					return;
@@ -166,12 +166,12 @@ Object.defineProperty(this, 'formContext', {
 				Xrm.Navigation.navigateTo({ pageType: "webresource", webresourceName: webresourceName, data: data }, { target: 2, position: position, width: width, height: height });
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..OpenWebResourceDialog.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.OpenWebResourceDialog.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
-			_formContext..WebApi.GetEntityMetadata = function (entityLogicalName, successCallback, errorCallback) {
+			_formContext.zerglrisk.WebApi.GetEntityMetadata = function (entityLogicalName, successCallback, errorCallback) {
 				if (entityLogicalName == undefined || entityLogicalName === "") {
 					entityLogicalName = formContext.data.entity.getEntityName();
 				}
@@ -180,11 +180,11 @@ Object.defineProperty(this, 'formContext', {
 				Xrm.Utility.getEntityMetadata(entityLogicalName).then(successCallback, errorCallback);
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..GetEntityTypeCode.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.GetEntityTypeCode.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 		try {
-			_formContext..WebApi.SetStatus = function (statecode, statuscode, successCallBack, errorCallBack) {
+			_formContext.zerglrisk.WebApi.SetStatus = function (statecode, statuscode, successCallBack, errorCallBack) {
 				var entityLogicalName = _formContext.data.entity.getEntityName();
 
 				// Remove brackets from the GUID if there’s any
@@ -211,11 +211,11 @@ Object.defineProperty(this, 'formContext', {
 				Xrm.WebApi.updateRecord(entityLogicalName, id, data).then(successCallBack, errorCallBack);
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..WebApi.SetStatus.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.SetStatus.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 		try {
-			_formContext..WebApi.Update = function (data, successCallBack, errorCallBack) {
+			_formContext.zerglrisk.WebApi.Update = function (data, successCallBack, errorCallBack) {
 				var entityLogicalName = _formContext.data.entity.getEntityName();
 
 				// Remove brackets from the GUID if there’s any
@@ -225,7 +225,7 @@ Object.defineProperty(this, 'formContext', {
 				Xrm.WebApi.updateRecord(entityLogicalName, id, data).then(successCallBack, errorCallBack);
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..WebApi.SetStatus.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.SetStatus.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
@@ -233,7 +233,7 @@ Object.defineProperty(this, 'formContext', {
 
 			//only for subgrid in uci ( not work even set on form editor )
 			// Deprecated, Rederning Order Changed. (if want fix it, use mutationobserver that you can spying grid render time.)
-			_formContext..SetSubGridHeaderColor = function (subGridId) {
+			_formContext.zerglrisk.SetSubGridHeaderColor = function (subGridId) {
 				if (subGridId == null || subGridId == "") {
 					return;
 				}
@@ -301,35 +301,35 @@ Object.defineProperty(this, 'formContext', {
 				});
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..SetSubGridHeaderColor.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.SetSubGridHeaderColor.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 		try {
 
 			//only for UCI
 			//field tag generate 되기 전에 미리 dom ID를 알 수 있다. mutation observer를 사용하여 필드가 load 되었는지 감시할 때 사용 가능
-			_formContext..getDomId = function (fieldId) {
+			_formContext.zerglrisk.getDomId = function (fieldId) {
 				if (fieldId == null || fieldId == "") {
 					return null;
 				}
 				return _formContext.getControl(fieldId).controlDescriptor.DomId;
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..getDomId.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.getDomId.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 		try {
-			_formContext..getCurrentFormId = function () {
+			_formContext.zerglrisk.getCurrentFormId = function () {
 				var formItem = formContext.ui.formSelector.getCurrentItem();
 				return (formItem != null ? formItem.getId() : null);
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..getDomId.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.getDomId.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
-			_formContext..WebApi.ReplaceImageBlobToCrmAPI = function (fieldid) {
+			_formContext.zerglrisk.WebApi.ReplaceImageBlobToCrmAPI = function (fieldid) {
 				if (!_formContext.getAttribute(fieldid)) {
 					console.error("[new_js_common] UpdateImageBlob : cannot find '" + fieldid + "' field.");
 					return null;
@@ -361,12 +361,12 @@ Object.defineProperty(this, 'formContext', {
 				return replaceStr;
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..getDomId.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.getDomId.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
-			_formContext..WebApi.RetrieveGlobalOptionSets = function (optionsetName) {
+			_formContext.zerglrisk.WebApi.RetrieveGlobalOptionSets = function (optionsetName) {
 				var data = null;
 				var req = new XMLHttpRequest();
 				req.open('GET', Xrm.Page.context.getClientUrl() + "/api/data/v9.0/GlobalOptionSetDefinitions(Name='" + optionsetName + "')", false);
@@ -386,14 +386,14 @@ Object.defineProperty(this, 'formContext', {
 				return data;
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..WebApi.RetrieveGlobalOptionSets.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveGlobalOptionSets.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
 
 			// usage : RetrieveGlobalOptionSetsAsync('new_p_calltype2').then(function (a){ console.log(a);}).catch(function(err){ console.log(err);});
-			_formContext..WebApi.RetrieveGlobalOptionSetsAsync = function (optionsetName) {
+			_formContext.zerglrisk.WebApi.RetrieveGlobalOptionSetsAsync = function (optionsetName) {
 				return new Promise(function (resolve, reject) {
 					var req = new XMLHttpRequest();
 					req.open('GET', Xrm.Page.context.getClientUrl() + "/api/data/v9.0/GlobalOptionSetDefinitions(Name='" + optionsetName + "')");
@@ -424,7 +424,7 @@ Object.defineProperty(this, 'formContext', {
 				});
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..WebApi.RetrieveGlobalOptionSetsAsync.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveGlobalOptionSetsAsync.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 		try {
@@ -432,8 +432,8 @@ Object.defineProperty(this, 'formContext', {
 			//Query Must startwith '?'
 			// Using RetrieveEntityManyToManyRelationshipRecordsAsync('teams','10b9fbe0-fa54-e911-a988-000d3aa37980','teammembership_association','');
 			// Using RetrieveEntityManyToManyRelationshipRecordsAsync('systemusers','dae9b66d-4610-ec11-b6e6-000d3a82ed38','new_new_salesoffice_systemuser','?$select=new_name&$filter=new_chk_useincalendar eq true&$orderby=new_i_order');
-			// Using RetrieveEntityManyToManyRelationshipRecordsAsync('new_salesoffices','2b8ccdde-fe1f-ec11-b6e6-000d3a852496','new_new_salesoffice_systemuser','?$select=fullname&$filter=isdisabled eq false and accessmode eq 0 and _fc_inc_tc eq true and new_chk_anzuser eq true&$orderby=fullname asc');
-			_formContext..WebApi.RetrieveEntityManyToManyRelationshipRecordsAsync = function (entitySetName, entityRecordId, relationshipSchemaName, query) {
+			// Using RetrieveEntityManyToManyRelationshipRecordsAsync('new_salesoffices','2b8ccdde-fe1f-ec11-b6e6-000d3a852496','new_new_salesoffice_systemuser','?$select=fullname&$filter=isdisabled eq false and accessmode eq 0 and zerglrisk_fc_inc_tc eq true and new_chk_anzuser eq true&$orderby=fullname asc');
+			_formContext.zerglrisk.WebApi.RetrieveEntityManyToManyRelationshipRecordsAsync = function (entitySetName, entityRecordId, relationshipSchemaName, query) {
 				return new Promise(function (resolve, reject) {
 					var req = new XMLHttpRequest();
 					req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/${entitySetName}(${entityRecordId})/${relationshipSchemaName}${(query ? query : '')}`);
@@ -464,11 +464,11 @@ Object.defineProperty(this, 'formContext', {
 				});
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..WebApi.RetrieveEntityManyToManyRelationshipRecordsAsync.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveEntityManyToManyRelationshipRecordsAsync.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 		try {
-			_formContext..WebApi.RetrieveAttributeMetadataAsync = function (entityLogicalName, attributeName) {
+			_formContext.zerglrisk.WebApi.RetrieveAttributeMetadataAsync = function (entityLogicalName, attributeName) {
 				return new Promise(function (resolve, reject) {
 					var req = new XMLHttpRequest();
 					req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')`);
@@ -519,11 +519,11 @@ Object.defineProperty(this, 'formContext', {
 				});
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..WebApi.RetrieveAttributeMetadataAsync.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveAttributeMetadataAsync.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 		try {
-			_formContext..WebApi.RetrieveAttributeMetadataDetailAsync = function (entityLogicalName, attributeName, odataType) {
+			_formContext.zerglrisk.WebApi.RetrieveAttributeMetadataDetailAsync = function (entityLogicalName, attributeName, odataType) {
 				return new Promise(function (resolve, reject) {
 					var odataTpyeQuery = '';
 					if (!odataType) {
@@ -577,12 +577,12 @@ Object.defineProperty(this, 'formContext', {
 				});
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..WebApi.RetrieveAttributeMetadataDetailAsync.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveAttributeMetadataDetailAsync.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
-			_formContext..WebApi.RetrieveEntityRelationshipMetadataAsync = function (entityLogicalName, RelationshipType, SchemaName) {
+			_formContext.zerglrisk.WebApi.RetrieveEntityRelationshipMetadataAsync = function (entityLogicalName, RelationshipType, SchemaName) {
 				return new Promise(function (resolve, reject) {
 					if (RelationshipType !== 'OneToManyRelationships' && RelationshipType !== 'ManyToManyRelationships' && RelationshipType !== ManyToOneRelationships) {
 						reject({
@@ -646,7 +646,7 @@ Object.defineProperty(this, 'formContext', {
 				});
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..WebApi.RetrieveEntityRelationshipMetadataAsync.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveEntityRelationshipMetadataAsync.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
@@ -660,7 +660,7 @@ Object.defineProperty(this, 'formContext', {
 				console.log(controlDescriptor);
 			}
 			*/
-			_formContext..RegisterFieldObserver = function (attributeName, eventCallback) {
+			_formContext.zerglrisk.RegisterFieldObserver = function (attributeName, eventCallback) {
 				if (typeof eventCallback != 'function') {
 					return;
 				}
@@ -675,7 +675,7 @@ Object.defineProperty(this, 'formContext', {
 				formContext.getControl('new_l_l1').controlStateObservable.registerObserver(observer);
 			};
 		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext..RegisterFieldObserver.");
+			console.error("[new_js_common] Failed To Load formContext.zerglrisk.RegisterFieldObserver.");
 			(console.error || console.log).call(console, e.stack || e);
 		}
 
