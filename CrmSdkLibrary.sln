@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary.UnitTest", "C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrmSdkLibrary.Dataverse.NUnitTest", "CrmSdkLibrary.Dataverse.NUnitTest\CrmSdkLibrary.Dataverse.NUnitTest.csproj", "{0525F69B-F5B2-4F8D-9EA0-9EFB3A8EEA35}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary.Workflows", "Workflows\CrmSdkLibrary.Workflows.csproj", "{DE335307-B330-47F2-B3CD-73525FE4E630}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary.Workflows", "CrmSdkLibrary.Workflows\CrmSdkLibrary.Workflows.csproj", "{DE335307-B330-47F2-B3CD-73525FE4E630}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrmSdkLibrary.CustomAPI", "CrmSdkLibrary.CustomAPI\CrmSdkLibrary.CustomAPI.csproj", "{248B5230-D6BF-4B15-80F5-09E15D5BA89F}"
 EndProject

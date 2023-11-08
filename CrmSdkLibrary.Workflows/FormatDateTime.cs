@@ -31,11 +31,6 @@ public class FormatDateTime : System.Activities.CodeActivity
 		//Create the tracing service
 		ITracingService tracingService = context.GetExtension<ITracingService>();
 
-		////Create the context
-		//IWorkflowContext workflowContext = context.GetExtension<IWorkflowContext>();
-		//IOrganizationServiceFactory serviceFactory = context.GetExtension<IOrganizationServiceFactory>();
-		//IOrganizationService service = serviceFactory.CreateOrganizationService(workflowContext.UserId);
-
 		if (this.DateTime.Get<DateTime?>(context) == null)
 		{
 			return;

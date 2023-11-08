@@ -42,7 +42,7 @@ public class CalculateRollupField : System.Activities.CodeActivity
 
 			if (this.TargetRollupRelatedLookupAttributeLogicalName.Get<string>(context) != null) //&& IsValidEntityName(service, this.TargetRollupRelatedLookupAttributeLogicalName.Get<string>(context)))
 			{
-				EntityReference value = this.GetFieldValue(service, workflowContext.PrimaryEntityName, workflowContext.PrimaryEntityId, this.TargetRollupRelatedLookupAttributeLogicalName.Get<string>(context));
+				EntityReference value = service.GetFieldValue<EntityReference>(workflowContext.PrimaryEntityName, workflowContext.PrimaryEntityId, this.TargetRollupRelatedLookupAttributeLogicalName.Get<string>(context));
 				if (value != null)
 				{
 					service.Execute(new CalculateRollupFieldRequest()
@@ -70,47 +70,6 @@ public class CalculateRollupField : System.Activities.CodeActivity
 		{
 			tracingService.Trace("[An error has occurred]: {0}", ex.ToString());
 			throw;
-		}
-	}
-
-	private bool IsValidEntityName(IOrganizationService service, string entityName)
-	{
-		try
-		{
-			RetrieveEntityRequest request = new RetrieveEntityRequest
-			{
-				LogicalName = entityName,
-				EntityFilters = EntityFilters.Entity
-			};
-
-			RetrieveEntityResponse response = (RetrieveEntityResponse)service.Execute(request);
-
-			return true;
-		}
-		catch (FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>)
-		{
-			return false;
-		}
-	}
-
-	public EntityReference GetFieldValue(IOrganizationService service, string entityName, Guid entityId, string fieldName)
-	{
-		Entity entity;
-		try
-		{
-			entity = service.Retrieve(entityName, entityId, new Microsoft.Xrm.Sdk.Query.ColumnSet(fieldName));
-		}
-		catch
-		{
-			throw new Exception($"TargetRollupRelatedLookupAttributeLogicalName [Optional] '{fieldName}' is not valid in this {entityName}");
-		}
-		try
-		{
-			return entity?.GetAttributeValue<EntityReference>(fieldName);
-		}
-		catch
-		{
-			throw new Exception($"'{fieldName}' is not of type 'EntityReference'.");
 		}
 	}
 }
