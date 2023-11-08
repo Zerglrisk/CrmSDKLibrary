@@ -36,11 +36,7 @@ public class PreventUpdateIfExistChildEntity : CodeActivity
 
 		// Check if the user has the necessary security role
 		EntityReference securityRole = AccessSecurityRole.Get(context);
-		QueryExpression roleQuery = new QueryExpression("systemuserroles");
-		roleQuery.ColumnSet = new ColumnSet("roleid");
-		roleQuery.Criteria.AddCondition("systemuserid", ConditionOperator.Equal, workflowContext.UserId);
-		EntityCollection userRoles = service.RetrieveMultiple(roleQuery);
-		if (userRoles.Entities.Any(e => e.GetAttributeValue<EntityReference>("roleid").Id == securityRole.Id))
+		if (service.HasNecessarySecurityRole(workflowContext.UserId, securityRole))
 		{
 			tracingService.Trace("The user has the necessary security role: {0}", securityRole.Id);
 			return;
@@ -67,11 +63,7 @@ public class PreventUpdateIfExistChildEntity : CodeActivity
 		}
 
 		// Check if the entity has child records
-		QueryExpression query = new QueryExpression(childEntityName);
-		query.Criteria.AddCondition(lookupFieldName, ConditionOperator.Equal, workflowContext.PrimaryEntityId);
-		EntityCollection childRecords = service.RetrieveMultiple(query);
-
-		if (childRecords.Entities.Count > 0)
+		if (service.HasChildRecords(childEntityName, lookupFieldName, workflowContext.PrimaryEntityId))
 		{
 			// If child records exist, throw an exception to prevent the update
 			throw new InvalidPluginExecutionException("Cannot update record because child records exist.");

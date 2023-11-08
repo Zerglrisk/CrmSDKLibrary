@@ -1,7 +1,10 @@
 ﻿using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Workflow;
 using System;
+using System.Linq;
 using System.ServiceModel;
 
 public static class Common
@@ -45,5 +48,36 @@ public static class Common
 		{
 			throw new Exception($"'{fieldName}' is not of type '{typeof(T).FullName}'.");
 		}
+	}
+	public static bool HasChildRecords(this IOrganizationService service, string childEntityName, string lookupFieldName, Guid primaryEntityId)
+	{
+		QueryExpression query = new QueryExpression(childEntityName);
+		query.Criteria.AddCondition(lookupFieldName, ConditionOperator.Equal, primaryEntityId);
+		EntityCollection childRecords = service.RetrieveMultiple(query);
+		return childRecords.Entities.Count > 0;
+	}
+
+	public static bool HasNecessarySecurityRole(this IOrganizationService service, Guid userId, EntityReference securityRole)
+	{
+		QueryExpression userRoleQuery = new QueryExpression("systemuserroles")
+		{
+			ColumnSet = new ColumnSet("roleid"),
+			Criteria = new FilterExpression
+			{
+				Conditions =
+				{
+					new ConditionExpression("roleid", ConditionOperator.NotNull),
+					new ConditionExpression("systemuserid", ConditionOperator.Equal, userId),
+				}
+			}
+		};
+		EntityCollection userRoles = service.RetrieveMultiple(userRoleQuery);
+
+		if (userRoles.Entities.Any(e => e.GetAttributeValue<EntityReference>("roleid").Id == securityRole.Id || e.GetAttributeValue<EntityReference>("roleid").Name == securityRole.Name))
+		{
+			return true;
+		}
+
+		return false;
 	}
 }
