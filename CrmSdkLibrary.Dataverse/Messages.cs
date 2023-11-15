@@ -1202,5 +1202,44 @@ namespace CrmSdkLibrary.Dataverse
 				AttributeLogicalName = attributeLogicalName,
 				SolutionUniqueName = solutionUniqueName
 			});
+		/// <summary>
+		/// Get User's TimeZoneBias For using DateTime
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="systemUserId"></param>
+		/// <returns></returns>
+		/// <exception cref="Exception"></exception>
+		public static int GetUserTimeZoneBias(in IOrganizationService service, Guid systemUserId)
+		{
+			EntityCollection ec = service.RetrieveMultiple(new QueryExpression("usersettings")
+			{
+				ColumnSet = new ColumnSet("timezonebias"),
+				Criteria = new FilterExpression()
+				{
+					Conditions =
+					{
+						new ConditionExpression("systemuserid", ConditionOperator.Equal, systemUserId)
+					}
+				}
+			});
+			if (ec.Entities.Count < 1)
+			{
+				throw new Exception("Failed to retrieve the user settings record.");
+			}
+			return ec.Entities.First().GetAttributeValue<int>("timezonebias");
+		}
+
+		/// <summary>
+		/// Returns the datetime adjusted for the user’s timezone bias based on the received date parameter.
+		/// to use plugin system service (system service only using utc time.)
+		/// ex)
+		/// new ConditionExpression("createdon", ConditionOperator.GreaterEqual, date.AddMinutes(timezonebias)));
+		/// new ConditionExpression("createdon", ConditionOperator.LessEqual, date.AddMinutes(timezonebias).AddDays(1).AddTicks(-1)));
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="systemUserId"></param>
+		/// <param name="date"></param>
+		/// <returns></returns>
+		public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date) => date.AddMinutes(GetUserTimeZoneBias(service, systemUserId));
 	}
 }

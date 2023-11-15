@@ -69,7 +69,7 @@
     <Compile Include="Bulk.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="Connection.cs" />
-    <Compile Include="ConnectionOld.cs" />
+    <Compile Include="Connectionv8.cs" />
     <Compile Include="ConnectionSQL.cs" />
     <Compile Include="Copy.cs" />
     <Compile Include="Definition\CrmValue\Converters\Value\BooleanConverter.cs" />

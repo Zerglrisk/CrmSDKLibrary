@@ -10,7 +10,7 @@ namespace CrmSdkLibrary
 	/// <summary>
 	/// Deprecated (Use Ws-Trust Authenticate)
 	/// </summary>
-	public class ConnectionOld
+	public class Connectionv8
 	{
 		public static ClientCredentials ClientCredentials;
 		private static ClientCredentials _deviceCredentials;
@@ -29,7 +29,7 @@ namespace CrmSdkLibrary
 		/// <param name="userName"></param>
 		/// <param name="password"></param>
 		/// <param name="location"></param>
-		public Guid ConnectService(string orgName, string userName, string password, Definition.Enum.Location location)
+		public CrmServiceClient ConnectService(string orgName, string userName, string password, Definition.Enum.Location location)
 		{
 			var uri = new System.Uri($"https://{orgName}.api.crm{location.GetStringValue()}.dynamics.com/XRMServices/2011/Organization.svc");
 
@@ -47,8 +47,9 @@ namespace CrmSdkLibrary
 
 			var organizationServiceProxy = new OrganizationServiceProxy(uri, null, ClientCredentials, _deviceCredentials);
 			Service = new CrmServiceClient(organizationServiceProxy);
-
-			return ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
+			Service.CallerId = ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
+			//return ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
+			return Service;
 		}
 
 		/// <summary>
@@ -59,7 +60,7 @@ namespace CrmSdkLibrary
 		/// <param name="userName"></param>
 		/// <param name="password"></param>
 		/// <returns></returns>
-		public Guid ConnectService(Uri organizationServiceUri, string userName, string password)
+		public CrmServiceClient ConnectService(Uri organizationServiceUri, string userName, string password)
 		{
 			//기본인증정보 설정.
 			if (!string.IsNullOrEmpty(userName) || !string.IsNullOrEmpty(password))
@@ -91,8 +92,9 @@ namespace CrmSdkLibrary
 			organizationServiceProxy.Authenticate();
 
 			Service = new CrmServiceClient(organizationServiceProxy);
-
-			return ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
+			Service.CallerId = ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
+			return Service;
+			//return ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
 		}
 
 		/// <summary>
@@ -106,7 +108,7 @@ namespace CrmSdkLibrary
 		/// <param name="password"> e.g. y0urp455w0rd </param>
 		/// <param name="authType">  </param>
 		/// <returns></returns>
-		public Guid ConnectService(string environmentUri, string userName, string password,
+		public CrmServiceClient ConnectService(string environmentUri, string userName, string password,
 			AuthenticationType authType = AuthenticationType.Office365) //Microsoft.Xrm.Tooling.Connector.AuthenticationType authType)
 		{
 			string conn = $@"
@@ -121,8 +123,9 @@ namespace CrmSdkLibrary
 			Service = svc;
 
 			//OrgService = svc.OrganizationWebProxyClient ?? (IOrganizationService)svc.OrganizationServiceProxy;
-
-			return ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
+			Service.CallerId = ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
+			//return ((WhoAmIResponse)Service.Execute(new WhoAmIRequest())).UserId;
+			return Service;
 		}
 	}
 }
