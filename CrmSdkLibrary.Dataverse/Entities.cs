@@ -15,7 +15,7 @@ namespace CrmSdkLibrary.Dataverse
 	[System.Runtime.Serialization.DataContract()]
 	[Microsoft.Xrm.Sdk.Client.EntityLogicalName("account")]
 	[System.CodeDom.Compiler.GeneratedCode("CrmSvcUtil", "8.2.1.8676")]
-	public partial class Accounts : Entity, System.ComponentModel.INotifyPropertyChanging, System.ComponentModel.INotifyPropertyChanged
+	public partial class Accounts : Microsoft.Xrm.Sdk.Entity, System.ComponentModel.INotifyPropertyChanging, System.ComponentModel.INotifyPropertyChanged
 	{
 		#region Field
 

@@ -1,11 +1,15 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using CrmSdkLibrary.Entities;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 
 namespace CrmSdkLibrary.UnitTest
 {
@@ -33,12 +37,29 @@ namespace CrmSdkLibrary.UnitTest
 			var conn = new Connectionv8();
 			var service = conn.ConnectService(new Uri("https://crmurl/XRMServices/2011/Organization.svc"), "userid", "password");
 
+			QueryExpression qe = new QueryExpression("usersettings");
+			qe.ColumnSet = new ColumnSet(true);
+			qe.Criteria.AddCondition("systemuserid", ConditionOperator.Equal, service.CallerId);
+			var results = service.RetrieveMultiple(qe);
+			
+			var aabc = UserView.GetAllUsersPersonalViews(service);
 
-			QueryExpression query = new QueryExpression("usersettings");
-			query.ColumnSet = new ColumnSet(true);
-			query.Criteria.AddCondition("systemuserid", ConditionOperator.Equal, service.CallerId);
-			var results = service.RetrieveMultiple(query);
-
+			var checkx = new System.Collections.Generic.List<Entity>();
+			var hawe = new System.Collections.Generic.List<KeyValuePair<string,string>>();
+			foreach(var entity in aabc.Entities)
+			{
+				if (entity.Attributes.Contains("returnedtypecode") 
+					&& entity.GetAttributeValue<string>("returnedtypecode").ToLower().Equals("lead") 
+					&& entity.Attributes.Contains("fetchxml"))
+				{
+					if (entity.GetAttributeValue<string>("fetchxml").ToLower().Contains("new_p_delete"))
+					{
+						checkx.Add(entity);
+						hawe.Add(new KeyValuePair<string, string>(entity.GetAttributeValue<EntityReference>("ownerid").Name, entity.GetAttributeValue<string>("fetchxml")));
+					}
+				}
+			}
+			GC.Collect();
 		}
 
 		[TestMethod]

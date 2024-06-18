@@ -96,6 +96,7 @@
     <Compile Include="Entities\SecurityRoles.cs" />
     <Compile Include="Entities\SystemUser.cs" />
     <Compile Include="Entities\SystemView.cs" />
+    <Compile Include="EntityUtility.cs" />
     <Compile Include="Extention.cs" />
     <Compile Include="Messages.cs" />
     <Compile Include="Messages.Undocumented.cs" />

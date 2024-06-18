@@ -1,5 +1,7 @@
 ﻿using CrmSdkLibrary.Definition.Attribute;
+using Microsoft.Rest;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Tooling.Connector;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -681,5 +683,18 @@ namespace CrmSdkLibrary
 		{
 			return isAliasedValue ? (OptionSetValue)attr.ToAliasedValue().Value : (OptionSetValue)attr;
 		}
-	}
+
+        public static void Validate(this CrmServiceClient serviceClient)
+        {
+            if (serviceClient == null)
+            {
+                throw new InvalidOperationException("ServiceClient is null.");
+            }
+
+            if (!serviceClient.IsReady)
+            {
+                throw new InvalidOperationException("ServiceClient is not ready.");
+            }
+        }
+    }
 }

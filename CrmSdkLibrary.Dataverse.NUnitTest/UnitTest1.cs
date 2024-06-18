@@ -7,9 +7,11 @@ using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace CrmSdkLibrary.Dataverse.NUnitTest
@@ -18,8 +20,8 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 	{
 		public class AppSettings
 		{
-			public CrmConfig CrmConfig { get; set; }
-		}
+            public CrmConfig CrmConfig { get; set; }
+        }
 
 		private AppSettings Config { get; set; }
 
@@ -31,7 +33,7 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 				Config = JsonConvert.DeserializeObject<AppSettings>(reader.ReadToEnd());
 			}
 		}
-
+		
 		[Test]
 		public void Test1()
 		{
@@ -39,8 +41,38 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 			var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
 				   config.UserId, config.UserPassword, config.TenantId);
 
+			var li = new List<string>();
+			var ens = new EntityUtility(service);
+			
+			var abc = ens.GetEntitiesMetadata(x => x.LogicalName.Contains("new_")).Select(x=> new { DisplayName = x.DisplayName.UserLocalizedLabel?.Label, LogicalName = x.LogicalName, CreatedOn = x.CreatedOn?.ToString("yyyy-MM-dd"), ModifiedOn = x.ModifiedOn?.ToString("yyyy-MM-dd"), OwnerId = x.OwnerId }).ToList();
 			// Query Expression Example
+			using (var context = new OrganizationServiceContext(Connection.Service))
+			{
+                //var q = from e in context.CreateQuery("systemuser")
+                //		where e.GetAttributeValue<Guid>("systemuserid") == new Guid("692ac4bb-6973-ec11-8943-000d3ac7ee49")
+                //		select new
+                //		{
+                //			id = e.Id,
+                //			name = e.GetAttributeValue<string>("fullname")
+                //		};
 
+                //var q = from e in context.CreateQuery("entity")
+                //		select e;
+                //	//select new
+                //	//{
+                //	//	id = e.Id,
+                //	//	createdon = e.GetAttributeValue<DateTime>("createdon")
+                //	//};
+
+                //var q = from e in context.CreateQuery("activityparty")
+                //		where e.GetAttributeValue<Guid>("activitypartyid") == new Guid("5f1cf8e5-5251-44db-b631-153d815b23d2")
+                //		select new
+                //		{
+                //			id = e.Id
+                //		};
+
+                //var data = q.ToList();
+            }
 			// Where
 			using (var context = new OrganizationServiceContext(Connection.Service))
 			{

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Tooling.Connector;
 using System;
@@ -77,6 +78,65 @@ namespace CrmSdkLibrary.Entities
 			{
 				throw;
 			}
+		}
+
+		public static EntityCollection GetAllUsersPersonalViews<T>(in T service) where T : IOrganizationService
+		{
+			EntityCollection views = new EntityCollection()
+			{
+				EntityName = "userquery",
+			};
+
+			Guid originalCallerId = Guid.Empty;
+			if (service is OrganizationServiceProxy serviceProxy)
+			{
+				originalCallerId = serviceProxy.CallerId;
+			}
+			else if (service is CrmServiceClient serviceClient)
+			{
+				originalCallerId = serviceClient.CallerId;
+			}
+
+			EntityCollection users = service.RetrieveMultiple(new QueryExpression("systemuser")
+			{
+				ColumnSet = new ColumnSet("systemuserid"),
+				Criteria = new FilterExpression()
+				{
+					Conditions =
+					{
+						new ConditionExpression("isdisabled", ConditionOperator.Equal, false)
+					}
+				}
+			});
+
+			foreach (Entity user in users.Entities)
+			{
+				if (service is OrganizationServiceProxy tserviceProxy)
+				{
+					tserviceProxy.CallerId = user.Id;
+				}
+				else if (service is CrmServiceClient tserviceClient)
+				{
+					tserviceClient.CallerId = user.Id;
+				}
+
+				EntityCollection userViews = service.RetrieveMultiple(new QueryExpression("userquery") { ColumnSet = new ColumnSet(true) });
+
+				views.Entities.AddRange(userViews.Entities);
+			}
+
+			if (service is OrganizationServiceProxy orgServiceProxy)
+			{
+				orgServiceProxy.CallerId = originalCallerId;
+			}
+			else if (service is CrmServiceClient svcClient)
+			{
+				svcClient.CallerId = originalCallerId;
+			}
+
+			views.TotalRecordCount = views.Entities.Count;
+
+			return views;
 		}
 	}
 }

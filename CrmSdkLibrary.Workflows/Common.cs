@@ -125,9 +125,9 @@ public static class Common
 		return false;
 	}
 
-	private static readonly Guid AdminRoleTemplateId = new Guid("627090FF-40A3-4053-8790-584EDC5BE201");
+    private static readonly Guid AdminRoleTemplateId = new Guid("627090FF-40A3-4053-8790-584EDC5BE201");
 
-	public static bool HavingAdminRole(this IOrganizationService service, Guid systemUserId)
+    public static bool HavingAdminRole(this IOrganizationService service, Guid systemUserId)
 	{
 		var query = new QueryExpression("role");
 		query.Criteria.AddCondition("roletemplateid", ConditionOperator.Equal, AdminRoleTemplateId);

@@ -1,4 +1,5 @@
 ﻿using CrmSdkLibrary.Dataverse.Definition.Attribute;
+using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
@@ -681,5 +682,18 @@ namespace CrmSdkLibrary.Dataverse
 		{
 			return isAliasedValue ? (OptionSetValue)attr.ToAliasedValue().Value : (OptionSetValue)attr;
 		}
+
+		public static void Validate(this ServiceClient serviceClient)
+		{
+            if (serviceClient == null)
+            {
+                throw new InvalidOperationException("ServiceClient is null.");
+            }
+
+            if (!serviceClient.IsReady)
+            {
+                throw new InvalidOperationException("ServiceClient is not ready.");
+            }
+        }
 	}
 }
