@@ -290,7 +290,7 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
 				{
 					File.WriteAllBytes("test.xlsx", excel);
 				}
-				Assert.IsNotNull(excel);
+				Assert.That(excel, Is.Not.Null);
 			}
 			catch (Exception ex)
 			{

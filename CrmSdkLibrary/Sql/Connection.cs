@@ -1,20 +1,143 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Data.SqlClient;
-//using System.Linq;
-//using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Data;
+using System.Dynamic;
 
-//namespace CrmSdkLibrary
-//{
-//    class ConnectionSQL
-//    {
-//        private SqlConnection conn;
-//        public SqlConnection Conn
-//        {
-//            get { return conn;}
-//            set { conn = value; }
-//        }
-//    }
+namespace CrmSdkLibrary.Sql
+{
+    public partial class Connection
+    {
+        public SqlConnection SqlConnection { get; private set; }
+
+        public Connection() { }
+
+
+        public Connection(string connectionString)
+        {
+            SetConnection(connectionString);
+        }
+
+        public void SetConnection(string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
+
+            this.SqlConnection = new SqlConnection(connectionString);
+        }
+    }
+    public static class SqlConnectionExtensions
+    {
+        public static List<T> ExecuteQueryWithRetry<T, P>(this SqlConnection connection, string sql, P parameters, int maxRetries = 3) where T : class, new()
+        {
+            if (connection == null)
+                throw new ArgumentNullException(nameof(connection), "SqlConnection cannot be null.");
+
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    return ExecuteQueryInternal<T, P>(connection, sql, parameters);
+                }
+                catch (SqlException ex)
+                {
+                    if (retryCount >= maxRetries || !IsTransientError(ex))
+                        throw;
+
+                    retryCount++;
+                    System.Threading.Thread.Sleep(1000 * retryCount); // 간단한 지수 백오프
+                }
+            }
+        }
+
+        private static List<T> ExecuteQueryInternal<T, P>(SqlConnection connection, string sql, P parameters) where T : class, new()
+        {
+            var result = new List<T>();
+
+            try
+            {
+                if (connection.State != ConnectionState.Open)
+                {
+                    connection.Open();
+                }
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    if (parameters != null)
+                    {
+                        foreach (var prop in typeof(P).GetProperties())
+                        {
+                            command.Parameters.AddWithValue($"@{prop.Name}", prop.GetValue(parameters) ?? DBNull.Value);
+                        }
+                    }
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(MapReaderToClass<T>(reader));
+                        }
+                    }
+                }
+            }
+            catch (SqlException)
+            {
+                throw; // SqlException을 그대로 다시 throw
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("An unexpected error occurred while processing the query.", ex);
+            }
+            finally
+            {
+                if (connection.State == ConnectionState.Open)
+                {
+                    connection.Close();
+                }
+            }
+
+            return result;
+        }
+
+        private static T MapReaderToClass<T>(IDataReader reader) where T : class, new()
+        {
+            T item = new T();
+            var properties = typeof(T).GetProperties();
+
+            foreach (var property in properties)
+            {
+                if (HasColumn(reader, property.Name))
+                {
+                    var value = reader[property.Name];
+                    if (value != DBNull.Value)
+                    {
+                        property.SetValue(item, Convert.ChangeType(value, property.PropertyType));
+                    }
+                }
+            }
+
+            return item;
+        }
+
+        private static bool HasColumn(IDataRecord dr, string columnName)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+            {
+                if (dr.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool IsTransientError(SqlException ex)
+        {
+            int[] transientErrorNumbers = { 4060, 40197, 40501, 40613, 49918, 49919, 49920 };
+            return transientErrorNumbers.Contains(ex.Number);
+        }
+    }
+}
 
 //    u
 //namespace TIFW.DB

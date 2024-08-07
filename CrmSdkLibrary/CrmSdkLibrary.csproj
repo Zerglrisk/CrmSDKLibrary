@@ -70,7 +70,7 @@
     <Compile Include="Common.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="Connectionv8.cs" />
-    <Compile Include="ConnectionSQL.cs" />
+    <Compile Include="Sql\Connection.cs" />
     <Compile Include="Copy.cs" />
     <Compile Include="Definition\CrmValue\Converters\Value\BooleanConverter.cs" />
     <Compile Include="Definition\CrmValue\Converters\Value\StringConverter.cs" />
@@ -102,19 +102,20 @@
     <Compile Include="Messages.Undocumented.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Entities\UserView.cs" />
+    <Compile Include="Sql\Models\OptionSet.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="JS\new_js_common.js" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies">
-      <Version>9.0.2.50</Version>
+      <Version>9.0.2.56</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.CrmSdk.Workflow">
-      <Version>9.0.2.50</Version>
+      <Version>9.0.2.56</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.CrmSdk.XrmTooling.CoreAssembly">
-      <Version>9.1.1.41</Version>
+      <Version>9.1.1.65</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory">
       <Version>3.19.8</Version>
@@ -125,6 +126,9 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Sql\Connection.OptionSet.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

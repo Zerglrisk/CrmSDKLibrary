@@ -71,16 +71,17 @@ namespace CrmSdkLibrary
 				ClientCredentials.UserName.Password = password;
 			}
 
-			if (_deviceCredentials == null)
-				_deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
-
 			OrganizationServiceProxy organizationServiceProxy = null;
 
 			ServicePointManager.SecurityProtocol =
 				SecurityProtocolType.Tls12 | SecurityProtocolType.Tls | SecurityProtocolType.Tls11;
+
 			try
-			{
-				organizationServiceProxy = new OrganizationServiceProxy(organizationServiceUri, null,
+            {
+                if (_deviceCredentials == null)
+                    _deviceCredentials = DeviceIdManager.LoadOrRegisterDevice();
+
+                organizationServiceProxy = new OrganizationServiceProxy(organizationServiceUri, null,
 					ClientCredentials, _deviceCredentials);
 			}
 			catch
