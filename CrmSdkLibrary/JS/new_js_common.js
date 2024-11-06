@@ -1008,13 +1008,11 @@ function DateToStringISO8601(date, obj) {
 /// <summary>
 // Apply the StyleSheet given css code
 /// </summary>
-function AddStyleSheets(id, code) {
+function AddStyleSheets(code) {
 	var style = document.createElement('style');
 
-	//style.type = 'text/css';
 	style.setAttribute("type", "text/css");
 
-	//var code = '';
 	if (code == "" || code == null) { //default
 
 		// How to use : add calss into input button -> button white (bigrounded or medium or small)
@@ -1028,14 +1026,8 @@ function AddStyleSheets(id, code) {
 	}
 
 	//note that it's important for IE that you append the style to the head *before* setting its content. Otherwise IE678 will *crash* is the css string contains an @import.
-	if (id == null) {
-		var head = document.getElementsByTagName('head')[0];
-		head.appendChild(style);
-	}
-	else {
-		var head = $('#' + id).context.getElementsByTagName('head')[0];
-		head.appendChild(style);
-	}
+	var head = document.getElementsByTagName('head')[0];
+	head.appendChild(style);
 
 	if (style.styleSheet) {   // IE
 		style.styleSheet.cssText = code;
