@@ -1,6 +1,7 @@
 ﻿var $ = parent.$;
 var _formContext;
-var globalContext = (window.Xrm != undefined ? Xrm.Utility.getGlobalContext() : null);
+var _queryString;
+const globalContext = (window.Xrm != undefined ? Xrm.Utility.getGlobalContext() : null);
 var FORM_TYPE_CREATE = 1;
 var FORM_TYPE_UPDATE = 2;
 var FORM_TYPE_READONLY = 3;
@@ -11,675 +12,939 @@ Object.defineProperty(this, 'formContext', {
 	set: function (v) {
 		_formContext = v;
 
-		// overwrite formcontext properties
-		//_formContext.context.getQueryStringParameters = function () {
-		//    var params = {};
-		//    window.top.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (str, key, value) { params[key] = value; });
-		//    return params;
-		//}
-
-		// add lines for formcontext properties;
+		// Initialize formcontext properties
 		if (_formContext.zerglrisk == undefined) {
-			_formContext.zerglrisk = {};
-		}
-		if (_formContext.zerglrisk.debug == undefined) {
-			_formContext.zerglrisk.debug = {};
-		}
-		if (_formContext.zerglrisk.WebApi == undefined) {
-			_formContext.zerglrisk.WebApi = {};
-		}
-
-		try {
-			_formContext.zerglrisk.debug.openByGuid = function (entityName, entityId, width, height) {
-				var guid = formContext.data.entity.getEntityReference().id;
-				guid = guid.replace("{", "").replace("}", "").toString();
-
-				//var loc = window.location;
-				//var crmurl = loc.protocol + "//" + loc.host + loc.pathname;
-				if (entityName == null) {
-					entityName = prompt("Enter the records entity internalname (ex; account, new_contact)",
-						formContext.data.entity.getEntityName());
-				}
-
-				//var etcetn = Number.isInteger(entity) ? "?etc=" : "?etn=";
-				if (entityId == null) {
-					entityId = prompt("Enter the records GUID", guid);
-				}
-
-				//var fullurl = crmurl + etcetn + entityName + "&id=" + entityId + "&pagetype=entityrecord";
-				//console.log("Opening " + fullurl);
-				//window.open(fullurl, "_blank");
-
-				var formItem = formContext.ui.formSelector.getCurrentItem();
-				var parameters = {};
-				var entityFormOptions = {};
-				entityFormOptions["entityName"] = entityName;
-				entityFormOptions["useQuickCreateForm"] = false;
-				entityFormOptions["openInNewWindow"] = true;
-				entityFormOptions["entityId"] = entityId;
-				entityFormOptions["formId"] = (formItem != null ? formItem.getId() : null);
-				entityFormOptions["width"] = (width != null ? width : 950);
-				entityFormOptions["height"] = (height != null ? height : 600);
-
-				Xrm.Navigation.openForm(entityFormOptions, parameters).then(
-					function (e) {
-						console.log(e);
-					},
-					function (error) {
-						console.log(error);
-					}
-				);
+			_formContext.zerglrisk = {
+				debug: {},
+				webApi: {},
 			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.debug.openByGuid.");
-			(console.error || console.log).call(console, e.stack || e);
 		}
 
 		try {
-			_formContext.zerglrisk.debug.openCopyForm = function (entityName, entityId, width, height) {
-				var guid = formContext.data.entity.getEntityReference().id;
-				guid = guid.replace("{", "").replace("}", "").toString();
+			const makeHttpRequest = (method, url, isAsync = true) => {
+				// 동기 요청일 경우
+				if (!isAsync) {
+					const req = new XMLHttpRequest();
+					req.open(method, url, false); // 동기 호출
+					req.setRequestHeader("Accept", "application/json");
+					req.setRequestHeader("OData-MaxVersion", "4.0");
+					req.setRequestHeader("OData-Version", "4.0");
+					req.setRequestHeader("Prefer", "odata.include-annotations=*");
 
-				// var entityReference = {
-				// entityType: "new_teamschedule",
-				// id: guid
-				// };
-				//
-				// var params = {};
-				// OpenNewWindowCopyForm('new_teamschedule', params, entityReference, 950, 600, GetCurrentFormId(), function () { }, function (error) { });
-				if (entityName == null) {
-					entityName = prompt("Enter the records entity internalname (ex; account, new_contact)", formContext.data.entity.getEntityName());
-				}
-
-				//var etcetn = Number.isInteger(entity) ? "?etc=" : "?etn=";
-				if (entityId == null) {
-					entityId = prompt("Enter the records GUID", guid);
-				}
-
-				var formItem = formContext.ui.formSelector.getCurrentItem();
-				var parameters = {};
-
-				//normal
-				var entityFormOptions = {};
-				entityFormOptions["entityName"] = entityName;
-				entityFormOptions["useQuickCreateForm"] = false;
-				entityFormOptions["openInNewWindow"] = true;
-				entityFormOptions["createFromEntity"] = { entityType: entityName, id: entityId };
-				entityFormOptions["formId"] = (formItem != null ? formItem.getId() : null);
-				entityFormOptions["width"] = (width != null ? width : 950);
-				entityFormOptions["height"] = (height != null ? height : 600);
-
-				Xrm.Navigation.openForm(entityFormOptions, parameters).then(
-					function (e) {
-						console.log(e);
-					},
-					function (error) {
-						console.log(error);
+					try {
+						req.send();
+						if (req.status >= 200 && req.status < 300) {
+							return {
+								data: JSON.parse(req.response),
+								status: req.status
+							};
+						} else {
+							const error = JSON.parse(req.response).error;
+							console.log(error.message);
+							throw {
+								status: req.status,
+								statusText: error.message
+							};
+						}
+					} catch (error) {
+						console.error(error);
+						return null;
 					}
-				);
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.debug.openCopyForm.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-			_formContext.zerglrisk.debug.getEntityTypeCodeSync = async function (entityName) {
-				if (entityName == null) {
-					entityName = prompt("Enter the records entity internalname (ex; account, new_contact)", formContext.data.entity.getEntityName());
 				}
-				var objectTypeCode = null;
 
-				//Getting entity Metadata to get otc (Object Type Code)
+				// 비동기 요청일 경우
+				return new Promise((resolve, reject) => {
+					const req = new XMLHttpRequest();
+					req.open(method, url, true);
+					req.setRequestHeader("Accept", "application/json");
+					req.setRequestHeader("OData-MaxVersion", "4.0");
+					req.setRequestHeader("OData-Version", "4.0");
+					req.setRequestHeader("Prefer", "odata.include-annotations=*");
 
-				await Xrm.Utility.getEntityMetadata(entityName).then(
-					function (entityMetadata) {
-						objectTypeCode = entityMetadata.ObjectTypeCode;
+					req.onload = function () {
+						if (this.status >= 200 && this.status < 300) {
+							resolve({
+								data: JSON.parse(req.response),
+								status: this.status
+							});
+						} else {
+							const error = JSON.parse(req.response).error;
+							console.log(error.message);
+							reject({
+								status: this.status,
+								statusText: error.message
+							});
+						}
+					};
+
+					req.onerror = function () {
+						reject({
+							status: this.status,
+							statusText: req.statusText
+						});
+					};
+
+					req.send();
+				});
+			};
+
+			// Debug functions group
+			const initializeDebugFunctions = () => {
+				_formContext.zerglrisk.debug.openByGuid = function (entityName, entityId, width, height) {
+					var guid = formContext.data.entity.getEntityReference().id;
+					guid = guid.replace("{", "").replace("}", "").toString();
+
+					//var loc = window.location;
+					//var crmurl = loc.protocol + "//" + loc.host + loc.pathname;
+					if (entityName == null) {
+						entityName = prompt("Enter the records entity internalname (ex; account, new_contact)",
+							formContext.data.entity.getEntityName());
+					}
+
+					//var etcetn = Number.isInteger(entity) ? "?etc=" : "?etn=";
+					if (entityId == null) {
+						entityId = prompt("Enter the records GUID", guid);
+					}
+
+					//var fullurl = crmurl + etcetn + entityName + "&id=" + entityId + "&pagetype=entityrecord";
+					//console.log("Opening " + fullurl);
+					//window.open(fullurl, "_blank");
+
+					var formItem = formContext.ui.formSelector.getCurrentItem();
+					var parameters = {};
+					var entityFormOptions = {
+						entityName: entityName,
+						useQuickCreateForm: false,
+						openInNewWindow: true,
+						entityId: entityId,
+						formId: (formItem != null ? formItem.getId() : null),
+						width: (width != null ? width : 950),
+						height: (height != null ? height : 600)
+					};
+
+					Xrm.Navigation.openForm(entityFormOptions, parameters).then(
+						function (e) {
+							console.log(e);
+						},
+						function (error) {
+							console.log(error);
+						}
+					);
+				};
+
+				_formContext.zerglrisk.debug.openCopyForm = function (entityName, entityId, width, height) {
+					var guid = formContext.data.entity.getEntityReference().id;
+					guid = guid.replace("{", "").replace("}", "").toString();
+
+					// var entityReference = {
+					// entityType: "new_teamschedule",
+					// id: guid
+					// };
+					//
+					// var params = {};
+					// OpenNewWindowCopyForm('new_teamschedule', params, entityReference, 950, 600, GetCurrentFormId(), function () { }, function (error) { });
+					if (entityName == null) {
+						entityName = prompt("Enter the records entity internalname (ex; account, new_contact)",
+							formContext.data.entity.getEntityName());
+					}
+
+					//var etcetn = Number.isInteger(entity) ? "?etc=" : "?etn=";
+					if (entityId == null) {
+						entityId = prompt("Enter the records GUID", guid);
+					}
+
+					var formItem = formContext.ui.formSelector.getCurrentItem();
+					var parameters = {};
+					var entityFormOptions = {
+						entityName: entityName,
+						useQuickCreateForm: false,
+						openInNewWindow: true,
+						createFromEntity: { entityType: entityName, id: entityId },
+						formId: (formItem != null ? formItem.getId() : null),
+						width: (width != null ? width : 950),
+						height: (height != null ? height : 600)
+					};
+
+					Xrm.Navigation.openForm(entityFormOptions, parameters).then(
+						function (e) {
+							console.log(e);
+						},
+						function (error) {
+							console.log(error);
+						}
+					);
+				};
+
+				_formContext.zerglrisk.debug.getEntityTypeCodeSync = async function (entityName) {
+					if (entityName == null) {
+						entityName = prompt("Enter the records entity internalname (ex; account, new_contact)",
+							formContext.data.entity.getEntityName());
+					}
+					var objectTypeCode = null;
+
+					//Getting entity Metadata to get otc (Object Type Code)
+					await Xrm.Utility.getEntityMetadata(entityName).then(
+						function (entityMetadata) {
+							objectTypeCode = entityMetadata.ObjectTypeCode;
+						});
+
+					return objectTypeCode;
+				};
+			};
+
+			// WebApi functions group
+			const initializeWebApiFunctions = () => {
+				_formContext.zerglrisk.webApi.getEntityMetadata = function (entityLogicalName, successCallback, errorCallback) {
+					if (entityLogicalName == undefined || entityLogicalName === "") {
+						entityLogicalName = formContext.data.entity.getEntityName();
+					}
+
+					//Getting entity Metadata to get otc (Object Type Code)
+					Xrm.Utility.getEntityMetadata(entityLogicalName).then(successCallback, errorCallback);
+				};
+
+				_formContext.zerglrisk.webApi.setStatus = function (statecode, statuscode, successCallBack, errorCallBack) {
+					var entityLogicalName = _formContext.data.entity.getEntityName();
+
+					// Remove brackets from the GUID if there’s any
+					var id = _formContext.data.entity.getEntityReference().id.replace("{", "").replace("}", "").toString();
+
+					// Set statecode and statuscode
+					var data = {
+						"statecode": statecode,
+						"statuscode": statuscode
+					};
+
+					if (successCallBack == null) {
+						successCallBack = function success(result) {
+							_formContext.data.refresh(false);
+						};
+					}
+					if (errorCallBack == null) {
+						errorCallBack = function (error) {
+							_formContext.data.refresh(false);
+						};
+					}
+
+					Xrm.WebApi.updateRecord(entityLogicalName, id, data).then(successCallBack, errorCallBack);
+				};
+
+				_formContext.zerglrisk.webApi.update = function (data, successCallBack, errorCallBack) {
+					var entityLogicalName = _formContext.data.entity.getEntityName();
+
+					// Remove brackets from the GUID if there’s any
+					var id = _formContext.data.entity.getEntityReference().id.replace("{", "").replace("}", "").toString();
+					Xrm.WebApi.updateRecord(entityLogicalName, id, data).then(successCallBack, errorCallBack);
+				};
+
+				//Must have imageblob/{id}  api on customApiUrl
+				_formContext.zerglrisk.webApi.replaceImageBlobToCustomAPI = function (fieldid, customApiUrl) {
+					if (!_formContext.getAttribute(fieldid)) {
+						console.error("[new_js_common] UpdateImageBlob : cannot find '" + fieldid + "' field.");
+						return null;
+					}
+
+					//괄호 포함 /\((.*?)\)/g
+					//괄호 미포함 /(?<=\().+?(?=\))/g
+					var template = document.createElement("div");
+					var replaceStr = _formContext.getAttribute(fieldid).getValue();
+					template.innerHTML = replaceStr.trim();
+					var imgs = template.getElementsByTagName("img");
+
+					for (var i = 0; i < imgs.length; ++i) {
+						if (imgs[i].src.indexOf('msdyn_richtextfiles') == -1) {
+							continue;
+						}
+
+						var regx = /\((.*?)\)/g;
+						var m = regx.exec(imgs[i].src);
+						var targetId = m[0].replace("(", "").replace(")", "");
+						console.log(targetId);
+
+						//수정필요 src부분의 XXX/api XXX부분 삭제(http:///불라불라 호스트)
+						// customApiUrl ; https://blabla.com/api/Content/imageblob/
+						replaceStr = replaceStr.replace(imgs[i].src.replace(window.top.window.location.origin, ''), customApiUrl + targetId);
+					}
+
+					return replaceStr;
+				};
+
+				_formContext.zerglrisk.webApi.retrieveGlobalOptionSets = function (optionsetName) {
+					var data = null;
+					var req = new XMLHttpRequest();
+					req.open('GET', Xrm.Page.context.getClientUrl() + "/api/data/v9.0/GlobalOptionSetDefinitions(Name='" + optionsetName + "')", false);
+					req.setRequestHeader("Accept", "application/json");
+					req.setRequestHeader("OData-MaxVersion", "4.0");
+					req.setRequestHeader("OData-Version", "4.0");
+					req.setRequestHeader("Prefer", "odata.include-annotations=*");
+					req.send();
+					if (req.readyState == 4 /* complete */) {
+						if (req.status == 200) {
+							data = JSON.parse(req.response);
+						} else {
+							var error = JSON.parse(req.response).error;
+							console.log(error.message);
+						}
+					}
+					return data;
+				};
+
+
+				// usage : RetrieveGlobalOptionSetsAsync('new_p_calltype2').then(function (a){ console.log(a);}).catch(function(err){ console.log(err);});
+				_formContext.zerglrisk.webApi.retrieveGlobalOptionSetsAsync = function (optionsetName) {
+					return new Promise(function (resolve, reject) {
+						var req = new XMLHttpRequest();
+						req.open('GET', Xrm.Page.context.getClientUrl() + "/api/data/v9.0/GlobalOptionSetDefinitions(Name='" + optionsetName + "')");
+						req.setRequestHeader("Accept", "application/json");
+						req.setRequestHeader("OData-MaxVersion", "4.0");
+						req.setRequestHeader("OData-Version", "4.0");
+						req.setRequestHeader("Prefer", "odata.include-annotations=*");
+						req.onload = function () {
+							if (this.status >= 200 && this.status < 300) {
+								resolve(JSON.parse(req.response));
+							} else {
+								var error = JSON.parse(req.response).error;
+								reject({
+									status: this.status,
+									statusText: error.message,
+								});
+								console.log(error.message);
+							}
+						};
+						req.onerror = function () {
+							reject({
+								status: this.status,
+								statusText: req.statusText
+							});
+						};
+						req.send();
+					});
+				};
+
+				//Query Must startwith '?'
+				// Using RetrieveEntityManyToManyRelationshipRecordsAsync('teams','10b9fbe0-fa54-e911-a988-000d3aa37980','teammembership_association','');
+				// Using RetrieveEntityManyToManyRelationshipRecordsAsync('systemusers','dae9b66d-4610-ec11-b6e6-000d3a82ed38','new_new_salesoffice_systemuser','?$select=new_name&$filter=new_chk_useincalendar eq true&$orderby=new_i_order');
+				_formContext.zerglrisk.webApi.retrieveEntityManyToManyRelationshipRecordsAsync = function (entitySetName, entityRecordId, relationshipSchemaName, query) {
+					return new Promise(function (resolve, reject) {
+						var req = new XMLHttpRequest();
+						req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/${entitySetName}(${entityRecordId})/${relationshipSchemaName}${(query ? query : '')}`);
+						req.setRequestHeader("Accept", "application/json");
+						req.setRequestHeader("OData-MaxVersion", "4.0");
+						req.setRequestHeader("OData-Version", "4.0");
+						req.setRequestHeader("Prefer", "odata.include-annotations=*");
+						req.onload = function () {
+							if (this.status >= 200 && this.status < 300) {
+								resolve(JSON.parse(req.response));
+							} else {
+								var error = JSON.parse(req.response).error;
+								reject({
+									status: this.status,
+									statusText: error.message,
+								});
+								console.log(error.message);
+							}
+						};
+						req.onerror = function () {
+							reject({
+								status: this.status,
+								statusText: req.statusText
+							});
+						};
+						req.send();
+					});
+				};
+
+				_formContext.zerglrisk.webApi.retrieveAttributeMetadataAsync = function (entityLogicalName, attributeName) {
+					return new Promise(function (resolve, reject) {
+						var req = new XMLHttpRequest();
+						req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')`);
+						req.setRequestHeader("Accept", "application/json");
+						req.setRequestHeader("OData-MaxVersion", "4.0");
+						req.setRequestHeader("OData-Version", "4.0");
+						req.setRequestHeader("Prefer", "odata.include-annotations=*");
+						req.onload = function () {
+							if (this.status >= 200 && this.status < 300) {
+								var jobj = JSON.parse(req.response);
+								if (jobj && jobj["@odata.type"]) {
+									_formContext.zerglrisk.webApi.retrieveAttributeMetadataDetailAsync(entityLogicalName, attributeName, jobj["@odata.type"]).then(function (results) {
+										try {
+											resolve(results);
+										} catch (error) {
+											reject({
+												status: this.status,
+												statusText: error.message,
+											});
+										}
+									}).catch(function (err) {
+										reject({
+											status: this.status,
+											statusText: err.message,
+										});
+									});
+								} else {
+									resolve(jobj);
+								}
+							} else {
+								var error = JSON.parse(req.response).error;
+								reject({
+									status: this.status,
+									statusText: error.message,
+								});
+								console.log(error.message);
+							}
+						};
+						req.onerror = function () {
+							reject({
+								status: this.status,
+								statusText: req.statusText
+							});
+						};
+						req.send();
+					});
+				};
+
+				_formContext.zerglrisk.webApi.retrieveAttributeMetadataDetailAsync = function (entityLogicalName, attributeName, odataType) {
+					return new Promise(function (resolve, reject) {
+						if (!odataType) {
+							reject({
+								status: 0,
+								statusText: '@odata.type value is Empty.'
+							});
+							return;
+						}
+
+						var expand = '';
+						if (odataType == '#Microsoft.Dynamics.CRM.PicklistAttributeMetadata') {
+							expand = '?$expand=OptionSet($select=Options),GlobalOptionSet($select=Options)';
+							//또는 바로 Optionset만 가져오도록 /OptionSet?$select=Options 해도 됨
+						} else if (odataType == '#Microsoft.Dynamics.CRM.BooleanAttributeMetadata') {
+							expand = '?$expand=GlobalOptionSet($select=FalseOption,TrueOption)';
+							//GlobalOptionSet Only
+						}
+
+						var odataTpyeQuery = `/${odataType.replace('#', '')}${expand}`;
+						var req = new XMLHttpRequest();
+						req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')${odataTpyeQuery}`);
+						req.setRequestHeader("Accept", "application/json");
+						req.setRequestHeader("OData-MaxVersion", "4.0");
+						req.setRequestHeader("OData-Version", "4.0");
+						req.setRequestHeader("Prefer", "odata.include-annotations=*");
+						req.onload = function () {
+							if (this.status >= 200 && this.status < 300) {
+								resolve(JSON.parse(req.response));
+							} else {
+								var error = JSON.parse(req.response).error;
+								reject({
+									status: this.status,
+									statusText: error.message,
+								});
+								console.log(error.message);
+							}
+						};
+						req.onerror = function () {
+							reject({
+								status: this.status,
+								statusText: req.statusText
+							});
+						};
+						req.send();
+					});
+				};
+
+				_formContext.zerglrisk.webApi.retrieveEntityRelationshipMetadataAsync = function (entityLogicalName, RelationshipType, SchemaName) {
+					return new Promise(function (resolve, reject) {
+						if (RelationshipType !== 'OneToManyRelationships' && RelationshipType !== 'ManyToManyRelationships' && RelationshipType !== 'ManyToOneRelationships') {
+							reject({
+								status: 0,
+								statusText: 'Unknown RelationshipType.',
+							});
+							return;
+						}
+
+						var schemaNameQuery = SchemaName ? `(SchemaName='${SchemaName}')` : '';
+
+						var req = new XMLHttpRequest();
+						req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/EntityDefinitions(LogicalName='${entityLogicalName}')/${RelationshipType}${schemaNameQuery}`);
+						req.setRequestHeader("Accept", "application/json");
+						req.setRequestHeader("OData-MaxVersion", "4.0");
+						req.setRequestHeader("OData-Version", "4.0");
+						req.setRequestHeader("Prefer", "odata.include-annotations=*");
+						req.onload = function () {
+							if (this.status >= 200 && this.status < 300) {
+								var jobj = JSON.parse(req.response);
+								if (jobj && jobj["@odata.type"]) {
+									_formContext.zerglrisk.webApi.retrieveAttributeMetadataDetailAsync(entityLogicalName, attributeName, jobj["@odata.type"]).then(function (results) {
+										try {
+											resolve(results);
+										} catch (error) {
+											reject({
+												status: this.status,
+												statusText: error.message,
+											});
+										}
+									}).catch(function (err) {
+										reject({
+											status: this.status,
+											statusText: err.message,
+										});
+									});
+								} else {
+									resolve(jobj);
+								}
+							} else {
+								var error = JSON.parse(req.response).error;
+								reject({
+									status: this.status,
+									statusText: error.message,
+								});
+								console.log(error.message);
+							}
+						};
+						req.onerror = function () {
+							reject({
+								status: this.status,
+								statusText: req.statusText
+							});
+						};
+						req.send();
+					});
+				};
+
+				// usage : RetrieveGlobalOptionSetsAsync('new_p_calltype2').then(function (a){ console.log(a);}).catch(function(err){ console.log(err);});
+				_formContext.zerglrisk.webApi.getHighlightFromTimeline = function (entityLogicalName) {
+					return new Promise(function (resolve, reject) {
+						var req = new XMLHttpRequest();
+						req.open('GET', Xrm.Page.context.getClientUrl() + "/api/data/v9.0/new_projects_skecs('" + entityLogicalName + "')/timeline");
+						req.setRequestHeader("Accept", "application/json");
+						req.setRequestHeader("OData-MaxVersion", "4.0");
+						req.setRequestHeader("OData-Version", "4.0");
+						req.setRequestHeader("Prefer", "odata.include-annotations=*");
+						req.onload = function () {
+							if (this.status >= 200 && this.status < 300) {
+								resolve(JSON.parse(req.response));
+							} else {
+								var error = JSON.parse(req.response).error;
+								reject({
+									status: this.status,
+									statusText: error.message,
+								});
+								console.log(error.message);
+							}
+						};
+						req.onerror = function () {
+							reject({
+								status: this.status,
+								statusText: req.statusText
+							});
+						};
+						req.send();
+					});
+				};
+			};
+
+			// Utility functions group
+			const initializeUtilityFunctions = () => {
+				_formContext.zerglrisk.openWebResourceDialog = function (data, width, height, isSide, webresourceName) {
+					if (data == null) {
+						console.log("[new_js_common] OpenWebResourceDialog : not provide data parameter.(required)");
+						return;
+					}
+					if (width == null) {
+						width = { value: 50, unit: "%" };
+					}
+					var position = isSide ? 2 : 1;
+					if (webresourceName == null || webresourceName == "") {
+						webresourceName = "new_u_html_dialog_template";
+					}
+					Xrm.Navigation.navigateTo(
+						{ pageType: "webresource", webresourceName: webresourceName, data: data },
+						{ target: 2, position: position, width: width, height: height }
+					);
+				};
+
+				//only for UCI
+				//field tag generate 되기 전에 미리 dom ID를 알 수 있다. mutation observer를 사용하여 필드가 load 되었는지 감시할 때 사용 가능
+				_formContext.zerglrisk.getDomId = function (fieldId) {
+					if (fieldId == null || fieldId == "") {
+						return null;
+					}
+					return _formContext.getControl(fieldId).controlDescriptor.DomId;
+				};
+
+				//you can find element using data-id="ParentSectionName" 
+				_formContext.zerglrisk.getParentSectionName = function (fieldId) {
+					if (fieldId == null || fieldId == "") {
+						return null;
+					}
+					return _formContext.getControl(fieldId).controlDescriptor.ParentSectionName;
+				}
+
+				_formContext.zerglrisk.getCurrentFormId = function () {
+					var formItem = formContext.ui.formSelector.getCurrentItem();
+					return (formItem != null ? formItem.getId() : null);
+				};
+
+				// For Field Observer (Deprecated)
+				_formContext.zerglrisk.registerFieldObserver = function (attributeName, eventCallback) {
+					if (typeof eventCallback != 'function') {
+						return;
+					}
+					if (_formContext.getControl(attributeName) == undefined) {
+						return;
+					}
+
+					let observer = {
+						update: eventCallback
+					};
+
+					formContext.getControl('new_l_l1').controlStateObservable.registerObserver(observer);
+				};
+
+				//only for subgrid in uci ( not work even set on form editor )
+				// Deprecated, Rederning Order Changed. (if want fix it, use mutationobserver that you can spying grid render time.)
+				_formContext.zerglrisk.setSubGridHeaderColor = function (subGridId) {
+					if (subGridId == null || subGridId == "") {
+						return;
+					}
+
+					var a = true;
+
+					// FIXME : Deprecated.
+					if (a)
+						return;
+
+					_formContext.getControl(subGridId).addOnLoad(function (element) {
+
+						//console.log(this.name + "loaded");
+						if (element.getEventSource == undefined) {
+
+							//not uci
+							console.error("[new_js_common] SetSubGridHeaderColor : Cannot find EventSource");
+							return;
+						}
+
+						// only for UCI
+						// only for subgrid in addOnLoad event
+						function GetSubGridHeadrColor(element) {
+							parameters = element.getEventSource().controlDescriptor.Parameters;
+							if (parameters == undefined || parameters == null) {
+								return null;
+							}
+							if (parameters.HeaderColorCode == undefined || parameters.HeaderColorCode == null) {
+								return null;
+							}
+
+							return element.getEventSource().controlDescriptor.Parameters.HeaderColorCode;
+						}
+
+						// only for UCI
+						// only for subgrid in addOnLoad event
+						function GetLabelParentElement(element) {
+							var target = window.top.document.getElementById(element.getEventSource().controlDescriptor.DomId).closest("[id$=" + element.getEventSource().controlDescriptor.Id + "]");
+
+							// Label Element
+							//return Array.from(target.querySelectorAll('div')).find(el => el.children.length === 0 && el.textContent === element.getEventSource().controlDescriptor.Label);
+							// Label Parent Element
+							//return Array.from(target.querySelectorAll('div')).find(el => el.textContent === element.getEventSource().controlDescriptor.Label);
+							//-> IE에서 find folyfill해도 es2015 안먹혀서 변경
+							function findtextContent(el) {
+								return el.textContent === element.getEventSource().controlDescriptor.Label;
+							}
+							return Array.from(target.querySelectorAll('div')).find(findtextContent);
+						}
+
+						var target = GetLabelParentElement(element);
+						if (target != undefined) {
+							target.style.background = GetSubGridHeadrColor(element);
+						}
+
+						//element.getEventSource().controlDescriptor.Parameters.ViewId
+						//element.getEventSource().controlDescriptor.DomId
+
+						//var target = window.parent.document.getElementById("dataSetRoot_sub_Competitor");
+						//if (target != undefined)
+						//var childNode = target.childNodes[0];
+						//if (childNode != undefined) {
+						//    childNode.style.background = "#EC7063";
+						//}
+					});
+				};
+
+				_formContext.zerglrisk.initializedNoteTemplateAll = function (templateHtml) {
+					var target = parent.document.querySelector('#mainContent');
+					if (target == undefined || target == null) {
+						console.error("[new_js_common] Cannot Find Target.");
+						return;
+					}
+
+					var entityName;
+					try {
+						entityName = Xrm.Page.data.entity.getEntityName();
+					} catch (error) {
+						console.error('[new_js_common] Failed to getting entity name');
+						return;
+					}
+
+					if (!templateHtml || templateHtml == '') {
+						console.warn('[new_js_common] templateHtml is required. cannot be set empty');
+					}
+
+					var prevNode;
+					const observer = new MutationObserver((mutations) => {
+						mutations.forEach((mutation) => {
+							mutation.addedNodes.forEach((node) => {
+								if (node.nodeType === 1) {
+									if (node.outerHTML == '<p><br data-cke-filter="true"></p>' && prevNode) {
+										// if (prevNode && prevNode.innerHTML.indexOf(node.outerHTML) > -1) { // Find CK Editor data;
+										// '<p><br data-cke-filter="true"></p>' means CK Editor on create (in editor.getData() == '')
+										// checked on 2024-11-12
+										const editorDiv = prevNode.querySelector('div.ck.ck-content');
+
+										if (editorDiv) {
+											const editor = editorDiv.ckeditorInstance;
+											if (editor?.getData() == '') {
+												editor?.setData(templateHtml);
+											}
+											prevNode = null;
+										}
+									}
+
+									if (node.getAttribute('data-lp-id') == `MscrmControls.RichTextEditorV2.RichTextEditorControlV2|notescontrol.RichTextEditorControl_Container|${entityName}`) {
+										//if (node.getAttribute('data-lp-id)?.split('|').includes(entityName)) {
+										prevNode = node;
+									}
+								}
+							})
+						});
 					});
 
-				return objectTypeCode;
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.debug.getEntityTypeCode.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-			_formContext.zerglrisk.OpenWebResourceDialog = function (data, width, height, isSide, webresourceName) {
-				if (data == null) {
-					console.log("[new_js_common] OpenWebResourceDialog : not provide data parameter.(required)");
-					return;
-				}
-				if (width == null) {
-					width = { value: 50, unit: "%" };
-				}
-				if (height == null) {
-					height == null;
-				}
-				var position = 1;
-				if (isSide != null && isSide === true) {
-					position = 2;
-				}
-				if (webresourceName == null || webresourceName == "") {
-					webresourceName = "new_u_html_dialog_template";
-				}
-				Xrm.Navigation.navigateTo({ pageType: "webresource", webresourceName: webresourceName, data: data }, { target: 2, position: position, width: width, height: height });
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.OpenWebResourceDialog.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-			_formContext.zerglrisk.WebApi.GetEntityMetadata = function (entityLogicalName, successCallback, errorCallback) {
-				if (entityLogicalName == undefined || entityLogicalName === "") {
-					entityLogicalName = formContext.data.entity.getEntityName();
-				}
-
-				//Getting entity Metadata to get otc (Object Type Code)
-				Xrm.Utility.getEntityMetadata(entityLogicalName).then(successCallback, errorCallback);
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.GetEntityTypeCode.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-		try {
-			_formContext.zerglrisk.WebApi.SetStatus = function (statecode, statuscode, successCallBack, errorCallBack) {
-				var entityLogicalName = _formContext.data.entity.getEntityName();
-
-				// Remove brackets from the GUID if there’s any
-				var id = _formContext.data.entity.getEntityReference().id.replace("{", "").replace("}", "").toString();
-
-				// Set statecode and statuscode
-				var data = {
-					"statecode": statecode,
-					"statuscode": statuscode
-				};
-
-				if (successCallBack == null) {
-					successCallBack = function success(result) {
-						_formContext.data.refresh(false);
+					const config = {
+						childList: true,
+						subtree: true
 					};
-				}
-				if (errorCallBack == null) {
-					errorCallBack = function (error) {
-						_formContext.data.refresh(false);
-					};
-				}
 
-				// WebApi call
-				Xrm.WebApi.updateRecord(entityLogicalName, id, data).then(successCallBack, errorCallBack);
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.SetStatus.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-		try {
-			_formContext.zerglrisk.WebApi.Update = function (data, successCallBack, errorCallBack) {
-				var entityLogicalName = _formContext.data.entity.getEntityName();
+					observer.observe(target, config);
 
-				// Remove brackets from the GUID if there’s any
-				var id = _formContext.data.entity.getEntityReference().id.replace("{", "").replace("}", "").toString();
-
-				// WebApi call
-				Xrm.WebApi.updateRecord(entityLogicalName, id, data).then(successCallBack, errorCallBack);
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.SetStatus.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-
-			//only for subgrid in uci ( not work even set on form editor )
-			// Deprecated, Rederning Order Changed. (if want fix it, use mutationobserver that you can spying grid render time.)
-			_formContext.zerglrisk.SetSubGridHeaderColor = function (subGridId) {
-				if (subGridId == null || subGridId == "") {
-					return;
+					return observer;
 				}
 
-				var a = true;
-
-				// FIXME : Deprecated.
-				if (a)
-					return;
-
-				_formContext.getControl(subGridId).addOnLoad(function (element) {
-
-					//console.log(this.name + "loaded");
-					if (element.getEventSource == undefined) {
-
-						//not uci
-						console.error("[new_js_common] SetSubGridHeaderColor : Cannot find EventSource");
+				// Observing Parent Secetion
+				_formContext.zerglrisk.initializedNoteTemplateParentSection = function (templateHtml, fieldTarget) {
+					if (!fieldTarget || fieldTarget == '') {
+						console.error("[new_js_common] fieldTarget is required.");
 						return;
 					}
 
-					// only for UCI
-					// only for subgrid in addOnLoad event
-					function GetSubGridHeadrColor(element) {
-						parameters = element.getEventSource().controlDescriptor.Parameters;
-						if (parameters == undefined || parameters == null) {
-							return null;
-						}
-						if (parameters.HeaderColorCode == undefined || parameters.HeaderColorCode == null) {
-							return null;
-						}
+					// fieldTarget이 attribute name인지 domId인지 getDomId 결과로 확인
+					//const domId = _formContext.zerglrisk.getDomId(fieldTarget);
+					const parentSectionName = _formContext.zerglrisk.getParentSectionName(fieldTarget);
 
-						return element.getEventSource().controlDescriptor.Parameters.HeaderColorCode;
-					}
-
-					// only for UCI
-					// only for subgrid in addOnLoad event
-					function GetLabelParentElement(element) {
-						var target = window.top.document.getElementById(element.getEventSource().controlDescriptor.DomId).closest("[id$=" + element.getEventSource().controlDescriptor.Id + "]");
-
-						// Label Element
-						//return Array.from(target.querySelectorAll('div')).find(el => el.children.length === 0 && el.textContent === element.getEventSource().controlDescriptor.Label);
-						// Label Parent Element
-						//return Array.from(target.querySelectorAll('div')).find(el => el.textContent === element.getEventSource().controlDescriptor.Label);
-						//-> IE에서 find folyfill해도 es2015 안먹혀서 변경
-						function findtextContent(el) {
-							return el.textContent === element.getEventSource().controlDescriptor.Label;
-						}
-						return Array.from(target.querySelectorAll('div')).find(findtextContent);
-					}
-
-					var target = GetLabelParentElement(element);
-					if (target != undefined) {
-						target.style.background = GetSubGridHeadrColor(element);
-					}
-
-					//element.getEventSource().controlDescriptor.Parameters.ViewId
-					//element.getEventSource().controlDescriptor.DomId
-
-					//var target = window.parent.document.getElementById("dataSetRoot_sub_Competitor");
-					//if (target != undefined)
-					//var childNode = target.childNodes[0];
-					//if (childNode != undefined) {
-					//    childNode.style.background = "#EC7063";
+					//if (!domId) {
+					//	console.error("[new_js_common] Cannot find DOM ID. Please check if the field exists in the form.");
+					//	return;
 					//}
-				});
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.SetSubGridHeaderColor.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-		try {
 
-			//only for UCI
-			//field tag generate 되기 전에 미리 dom ID를 알 수 있다. mutation observer를 사용하여 필드가 load 되었는지 감시할 때 사용 가능
-			_formContext.zerglrisk.getDomId = function (fieldId) {
-				if (fieldId == null || fieldId == "") {
-					return null;
-				}
-				return _formContext.getControl(fieldId).controlDescriptor.DomId;
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.getDomId.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-		try {
-			_formContext.zerglrisk.getCurrentFormId = function () {
-				var formItem = formContext.ui.formSelector.getCurrentItem();
-				return (formItem != null ? formItem.getId() : null);
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.getDomId.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-			_formContext.zerglrisk.WebApi.ReplaceImageBlobToCrmAPI = function (fieldid) {
-				if (!_formContext.getAttribute(fieldid)) {
-					console.error("[new_js_common] UpdateImageBlob : cannot find '" + fieldid + "' field.");
-					return null;
-				}
-
-				//괄호 포함 /\((.*?)\)/g
-				//괄호 미포함 /(?<=\().+?(?=\))/g
-				var template = document.createElement("div");
-				var replaceStr = _formContext.getAttribute(fieldid).getValue();
-				template.innerHTML = replaceStr.trim();
-				var imgs = template.getElementsByTagName("img");
-
-				for (var i = 0; i < imgs.length; ++i) {
-					if (imgs[i].src.indexOf('msdyn_richtextfiles') == -1) {
-						continue;
-					}
-
-					var regx = /\((.*?)\)/g;
-					var m = regx.exec(imgs[i].src);
-					var targetId = m[0].replace("(", "").replace(")", "");
-					console.log(targetId);
-
-					//수정필요 src부분의 XXX/api XXX부분 삭제(http:///불라불라 호스트)
-					replaceStr = replaceStr.replace(imgs[i].src.replace(window.top.window.location.origin, ''), "https://crmweb.kohyoung.net:447/Services/ContentService.svc/imageblob/" + targetId);
-				}
-
-				//target
-				console.log(replaceStr);
-				return replaceStr;
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.getDomId.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-			_formContext.zerglrisk.WebApi.RetrieveGlobalOptionSets = function (optionsetName) {
-				var data = null;
-				var req = new XMLHttpRequest();
-				req.open('GET', Xrm.Page.context.getClientUrl() + "/api/data/v9.0/GlobalOptionSetDefinitions(Name='" + optionsetName + "')", false);
-				req.setRequestHeader("Accept", "application/json");
-				req.setRequestHeader("OData-MaxVersion", "4.0");
-				req.setRequestHeader("OData-Version", "4.0");
-				req.setRequestHeader("Prefer", "odata.include-annotations=*");
-				req.send();
-				if (req.readyState == 4 /* complete */) {
-					if (req.status == 200) {
-						data = JSON.parse(req.response);
-					} else {
-						var error = JSON.parse(req.response).error;
-						console.log(error.message);
-					}
-				}
-				return data;
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveGlobalOptionSets.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-
-			// usage : RetrieveGlobalOptionSetsAsync('new_p_calltype2').then(function (a){ console.log(a);}).catch(function(err){ console.log(err);});
-			_formContext.zerglrisk.WebApi.RetrieveGlobalOptionSetsAsync = function (optionsetName) {
-				return new Promise(function (resolve, reject) {
-					var req = new XMLHttpRequest();
-					req.open('GET', Xrm.Page.context.getClientUrl() + "/api/data/v9.0/GlobalOptionSetDefinitions(Name='" + optionsetName + "')");
-					req.setRequestHeader("Accept", "application/json");
-					req.setRequestHeader("OData-MaxVersion", "4.0");
-					req.setRequestHeader("OData-Version", "4.0");
-					req.setRequestHeader("Prefer", "odata.include-annotations=*");
-					req.onload = function () {
-						if (this.status >= 200 && this.status < 300) {
-							resolve(JSON.parse(req.response));
-						} else {
-							var error = JSON.parse(req.response).error;
-							reject({
-								status: this.status,
-								statusText: error.message,
-							});
-
-							console.log(error.message);
-						}
-					};
-					req.onerror = function () {
-						reject({
-							status: this.status,
-							statusText: req.statusText
+					// Waiting Target Field html code generate.
+					const findTarget = (parentSectionName) => {
+						return new Promise((resolve, reject) => {
+							const findElement = () => {
+								const target = parent?.document.querySelector(`[data-id="${parentSectionName}"]`) ?? window.top.document.querySelector(`[data-id="${parentSectionName}"]`);
+								if (target) {
+									resolve(target);
+								} else {
+									setTimeout(findElement, 1000);
+								}
+							};
+							findElement();
 						});
 					};
-					req.send();
-				});
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveGlobalOptionSetsAsync.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-		try {
 
-			//Query Must startwith '?'
-			// Using RetrieveEntityManyToManyRelationshipRecordsAsync('teams','10b9fbe0-fa54-e911-a988-000d3aa37980','teammembership_association','');
-			// Using RetrieveEntityManyToManyRelationshipRecordsAsync('systemusers','dae9b66d-4610-ec11-b6e6-000d3a82ed38','new_new_salesoffice_systemuser','?$select=new_name&$filter=new_chk_useincalendar eq true&$orderby=new_i_order');
-			// Using RetrieveEntityManyToManyRelationshipRecordsAsync('new_salesoffices','2b8ccdde-fe1f-ec11-b6e6-000d3a852496','new_new_salesoffice_systemuser','?$select=fullname&$filter=isdisabled eq false and accessmode eq 0 and zerglrisk_fc_inc_tc eq true and new_chk_anzuser eq true&$orderby=fullname asc');
-			_formContext.zerglrisk.WebApi.RetrieveEntityManyToManyRelationshipRecordsAsync = function (entitySetName, entityRecordId, relationshipSchemaName, query) {
-				return new Promise(function (resolve, reject) {
-					var req = new XMLHttpRequest();
-					req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/${entitySetName}(${entityRecordId})/${relationshipSchemaName}${(query ? query : '')}`);
-					req.setRequestHeader("Accept", "application/json");
-					req.setRequestHeader("OData-MaxVersion", "4.0");
-					req.setRequestHeader("OData-Version", "4.0");
-					req.setRequestHeader("Prefer", "odata.include-annotations=*");
-					req.onload = function () {
-						if (this.status >= 200 && this.status < 300) {
-							resolve(JSON.parse(req.response));
-						} else {
-							var error = JSON.parse(req.response).error;
-							reject({
-								status: this.status,
-								statusText: error.message,
-							});
-
-							console.log(error.message);
+					findTarget(parentSectionName).then(target => {
+						if (!target) {
+							console.error("[new_js_common] Cannot Find Target.");
+							return;
 						}
-					};
-					req.onerror = function () {
-						reject({
-							status: this.status,
-							statusText: req.statusText
-						});
-					};
-					req.send();
-				});
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveEntityManyToManyRelationshipRecordsAsync.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-		try {
-			_formContext.zerglrisk.WebApi.RetrieveAttributeMetadataAsync = function (entityLogicalName, attributeName) {
-				return new Promise(function (resolve, reject) {
-					var req = new XMLHttpRequest();
-					req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')`);
-					req.setRequestHeader("Accept", "application/json");
-					req.setRequestHeader("OData-MaxVersion", "4.0");
-					req.setRequestHeader("OData-Version", "4.0");
-					req.setRequestHeader("Prefer", "odata.include-annotations=*");
-					req.onload = function () {
-						if (this.status >= 200 && this.status < 300) {
-							var jobj = JSON.parse(req.response);
-							if (jobj && jobj["@odata.type"]) {
-								RetrieveAttributeMetadataDetailAsync(entityLogicalName, attributeName, jobj["@odata.type"]).then(function (results) {
-									try {
-										resolve(results);
-									} catch (error) {
-										reject({
-											status: this.status,
-											statusText: error.message,
-										});
+
+						let entityName;
+						try {
+							entityName = Xrm.Page.data.entity.getEntityName();
+						} catch (error) {
+							console.error('[new_js_common] Failed to getting entity name');
+							return;
+						}
+
+						if (!templateHtml || templateHtml == '') {
+							console.warn('[new_js_common] templateHtml is required. cannot be set empty');
+							return;
+						}
+
+						let prevNode;
+						const observer = new MutationObserver((mutations) => {
+							mutations.forEach((mutation) => {
+								mutation.addedNodes.forEach((node) => {
+									if (node.nodeType === 1) {
+										if (prevNode && prevNode.innerHTML.indexOf(node.outerHTML) > -1) { // Find CK Editor data;
+											const editorDiv = prevNode.querySelector('div.ck.ck-content');
+											if (editorDiv) {
+												const editor = editorDiv.ckeditorInstance;
+												if (editor?.getData() == '') {
+													editor?.setData(templateHtml);
+												}
+												prevNode = null;
+											}
+										}
+										if (node.getAttribute('data-lp-id') == `MscrmControls.RichTextEditorV2.RichTextEditorControlV2|notescontrol.RichTextEditorControl_Container|${entityName}`) {
+											prevNode = node;
+										}
 									}
-								}).catch(function (err) {
-									reject({
-										status: this.status,
-										statusText: err.message,
-									});
 								});
-							}
-							else {
-								resolve(JSON.parse(req.response));
-							}
-						} else {
-							var error = JSON.parse(req.response).error;
-							reject({
-								status: this.status,
-								statusText: error.message,
 							});
-
-							console.log(error.message);
-						}
-					};
-					req.onerror = function () {
-						reject({
-							status: this.status,
-							statusText: req.statusText
 						});
-					};
-					req.send();
-				});
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveAttributeMetadataAsync.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-		try {
-			_formContext.zerglrisk.WebApi.RetrieveAttributeMetadataDetailAsync = function (entityLogicalName, attributeName, odataType) {
-				return new Promise(function (resolve, reject) {
-					var odataTpyeQuery = '';
-					if (!odataType) {
-						reject({
-							status: 0,
-							statusText: '@odata.type value is Empty.'
-						});
-						return;
-					}
-					var expand = '';
-					if (odataType == '#Microsoft.Dynamics.CRM.PicklistAttributeMetadata') {
-						expand = '?$expand=OptionSet($select=Options),GlobalOptionSet($select=Options)';
 
-						//또는 바로 Optionset만 가져오도록 /OptionSet?$select=Options 해도 됨
-					}
-					else if (odataType == '#Microsoft.Dynamics.CRM.BooleanAttributeMetadata') {
-						expand = '?$expand=GlobalOptionSet($select=FalseOption,TrueOption)';
+						const config = {
+							childList: true,
+							subtree: true
+						};
 
-						//GlobalOptionSet Only
-					}
-					else {
-						expand = '';
-					}
-					odataTpyeQuery = `/${odataType.replace('#', '')}${expand}`;
-					var req = new XMLHttpRequest();
-					req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')${odataTpyeQuery}`);
-					req.setRequestHeader("Accept", "application/json");
-					req.setRequestHeader("OData-MaxVersion", "4.0");
-					req.setRequestHeader("OData-Version", "4.0");
-					req.setRequestHeader("Prefer", "odata.include-annotations=*");
-					req.onload = function () {
-						if (this.status >= 200 && this.status < 300) {
-							resolve(JSON.parse(req.response));
-						} else {
-							var error = JSON.parse(req.response).error;
-							reject({
-								status: this.status,
-								statusText: error.message,
-							});
-
-							console.log(error.message);
-						}
-					};
-					req.onerror = function () {
-						reject({
-							status: this.status,
-							statusText: req.statusText
-						});
-					};
-					req.send();
-				});
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveAttributeMetadataDetailAsync.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-			_formContext.zerglrisk.WebApi.RetrieveEntityRelationshipMetadataAsync = function (entityLogicalName, RelationshipType, SchemaName) {
-				return new Promise(function (resolve, reject) {
-					if (RelationshipType !== 'OneToManyRelationships' && RelationshipType !== 'ManyToManyRelationships' && RelationshipType !== ManyToOneRelationships) {
-						reject({
-							status: 0,
-							statusText: 'Unknown RelationshipType.',
-						});
-						return;
-					}
-					if (!SchemaName) {
-						SchemaName = '';
-					}
-					else {
-						SchemaName = `(SchemaName='${SchemaName}')`;
-					}
-					var req = new XMLHttpRequest();
-					req.open('GET', Xrm.Page.context.getClientUrl() + `/api/data/v9.0/EntityDefinitions(LogicalName='${entityLogicalName}')/${RelationshipType}${SchemaName}`);
-					req.setRequestHeader("Accept", "application/json");
-					req.setRequestHeader("OData-MaxVersion", "4.0");
-					req.setRequestHeader("OData-Version", "4.0");
-					req.setRequestHeader("Prefer", "odata.include-annotations=*");
-					req.onload = function () {
-						if (this.status >= 200 && this.status < 300) {
-							var jobj = JSON.parse(req.response);
-							if (jobj && jobj["@odata.type"]) {
-								RetrieveAttributeMetadataDetailAsync(entityLogicalName, attributeName, jobj["@odata.type"]).then(function (results) {
-									try {
-										resolve(results);
-									} catch (error) {
-										reject({
-											status: this.status,
-											statusText: error.message,
-										});
-									}
-								}).catch(function (err) {
-									reject({
-										status: this.status,
-										statusText: err.message,
-									});
-								});
-							}
-							else {
-								resolve(JSON.parse(req.response));
-							}
-						} else {
-							var error = JSON.parse(req.response).error;
-							reject({
-								status: this.status,
-								statusText: error.message,
-							});
-
-							console.log(error.message);
-						}
-					};
-					req.onerror = function () {
-						reject({
-							status: this.status,
-							statusText: req.statusText
-						});
-					};
-					req.send();
-				});
-			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.WebApi.RetrieveEntityRelationshipMetadataAsync.");
-			(console.error || console.log).call(console, e.stack || e);
-		}
-
-		try {
-
-			// Only Event Activate on getControl's setDisabled, setLabel, setVisible.
-			// 2023-10-05, I checked this source code. And this code appears to be an abandoned code.
-			/* eventCallback Example
-			function (controlDescriptor) {
-				console.log("Control's controlDescriptor : ");
-				console.log(controlDescriptor);
-			}
-			*/
-			_formContext.zerglrisk.RegisterFieldObserver = function (attributeName, eventCallback) {
-				if (typeof eventCallback != 'function') {
-					return;
-				}
-				if (_formContext.getControl(attributeName) == undefined) {
-					return;
-				}
-
-				let observer = {
-					update: eventCallback
+						observer.observe(target, config);
+						return observer;
+					}).catch(error => {
+						console.error('[new_js_common] Error finding target:', error);
+					});
 				};
 
-				formContext.getControl('new_l_l1').controlStateObservable.registerObserver(observer);
+				// Not work
+				_formContext.zerglrisk.initializedNoteTemplate = function (templateHtml, fieldTarget = null) {
+					if (!fieldTarget) {
+						console.error("[new_js_common] fieldTarget is required. Please provide field name.");
+						return;
+					}
+
+					let domId = fieldTarget;
+					if (fieldTarget) {
+						const getDomIdResult = _formContext.zerglrisk.getDomId(fieldTarget);
+						if (getDomIdResult) {
+							domId = getDomIdResult;
+						}
+					}
+
+					if (!domId) {
+						console.error("[new_js_common] Cannot find DOM ID. Please check if the field exists in the form.");
+						return;
+					}
+
+					let entityName;
+					try {
+						entityName = Xrm.Page.data.entity.getEntityName();
+					} catch (error) {
+						console.error('[new_js_common] Failed to getting entity name');
+						return;
+					}
+
+					if (!templateHtml || templateHtml == '') {
+						console.warn('[new_js_common] templateHtml is required. cannot be set empty');
+						return;
+					}
+
+					// DOM에서 target이 제거되거나 변경되는 것을 감시하기 위한 상위 observer
+					const parentObserver = new MutationObserver((mutations) => {
+						mutations.forEach(() => {
+							const currentTarget = document.querySelector(`#${domId}`) || parent?.document.querySelector(`#${domId}`) || window.top.document.querySelector(`#${domId}`); // domId에 #추가
+							if (currentTarget && !currentTarget.dataset.observing) {
+								startChildObserver(currentTarget);
+							}
+						});
+					});
+
+					function startChildObserver(target) {
+						if (target.dataset.observing === 'true') return;
+
+						target.dataset.observing = 'true';
+						console.log('[new_js_common] Starting observer for field:', fieldTarget);
+
+						let prevNode;
+						const childObserver = new MutationObserver((mutations) => {
+							mutations.forEach((mutation) => {
+								mutation.addedNodes.forEach((node) => {
+									if (node.nodeType === 1) {
+										// CKEditor 초기화 감지 - 해당 필드의 노트에만 적용
+										if (node.outerHTML == '<p><br data-cke-filter="true"></p>' && prevNode) {
+											const editorDiv = prevNode.querySelector('div.ck.ck-content');
+											if (editorDiv && editorDiv.closest(`#${domId}`)) {  // 해당 필드 내부인지 확인
+												const editor = editorDiv.ckeditorInstance;
+												if (editor?.getData() == '') {
+													console.log('[new_js_common] Setting template data for field:', fieldTarget);
+													editor?.setData(templateHtml);
+												}
+												prevNode = null;
+											}
+										}
+
+										// RichTextEditor 컨테이너 감지 - 해당 필드의 것만
+										if (node.getAttribute('data-lp-id') == `MscrmControls.RichTextEditorV2.RichTextEditorControlV2|notescontrol.RichTextEditorControl_Container|${entityName}`
+											&& node.closest(`#${domId}`)) {
+											prevNode = node;
+										}
+									}
+								});
+							});
+						});
+
+						const config = {
+							childList: true,
+							subtree: true
+						};
+
+						childObserver.observe(target, config);
+
+						target.addEventListener('DOMNodeRemoved', () => {
+							console.log('[new_js_common] Field target removed, disconnecting observer:', fieldTarget);
+							childObserver.disconnect();
+							target.dataset.observing = 'false';
+						});
+					}
+
+					const findAndObserveTarget = () => {
+						const target = document.querySelector(`#${domId}`) || parent?.document.querySelector(`#${domId}`) || window.top.document.querySelector(`#${domId}`);
+						if (target) {
+							console.log('[new_js_common] Initial field target found:', fieldTarget);
+							startChildObserver(target);
+
+							parentObserver.observe(target.parentElement, {
+								childList: true,
+								subtree: true
+							});
+						} else {
+							console.log('[new_js_common] Field target not found, retrying...:', fieldTarget);
+							setTimeout(findAndObserveTarget, 1000);
+						}
+					};
+
+					findAndObserveTarget();
+
+					return {
+						disconnect: () => {
+							parentObserver.disconnect();
+							const target = document.querySelector(`#${domId}`) || parent?.document.querySelector(`#${domId}`) || window.top.document.querySelector(`#${domId}`);
+							if (target) {
+								target.dataset.observing = 'false';
+							}
+						}
+					};
+				};
 			};
-		} catch (e) {
-			console.error("[new_js_common] Failed To Load formContext.zerglrisk.RegisterFieldObserver.");
-			(console.error || console.log).call(console, e.stack || e);
+
+			// Initialize all function groups
+			initializeDebugFunctions();
+			initializeWebApiFunctions();
+			initializeUtilityFunctions();
+
+		} catch (error) {
+			console.error("[new_js_common] Failed to initialize formContext functions:", error);
+			console.error(error.stack);
 		}
 
-		//for use formcontext easily from iframe or webresource
+		// Make formContext accessible globally
 		window.top.formContext = _formContext;
 		console.log("[new_js_common] Defined formContext from new_js_common to window.top");
 	}
@@ -735,6 +1000,14 @@ if (!Array.prototype.find) {
 	});
 }
 
+
+Object.defineProperty(this, 'queryString', {
+	get: function () { return _queryString; },
+	set: function (v) {
+		_queryString = v;
+	}
+});
+
 //closest IE not support, so register that
 if (window.Element && !Element.prototype.closest) {
 	Element.prototype.closest = function (s) {
@@ -749,9 +1022,46 @@ if (window.Element && !Element.prototype.closest) {
 	};
 }
 
-//formContext Load용
-function loadContext(executionContext) {
+// formContext Load용
+// Usage : Form Properties의 이벤트 처리기 에서 이벤트 OnLoad에 해당 함수 loadContext 추가 시
+// 하단의 함수로 전달되는 쉼표로 구분되는 매개 변수 목록에서 "new_js_account", "OnLoad" 로 추가하면 각각 onLoadTarget, onLoadFunctionName에 바인딩 됨
+// 절대로 onLoadFunctionName에 new_js_common 외 다른 먼저 Load되는 js와 겹치는 function명 금지
+function loadContext(executionContext, onLoadTarget, onLoadFunctionName) {
 	formContext = executionContext.getFormContext();
+	queryString = Xrm.Utility.getGlobalContext().getQueryStringParameters();
+
+	// 이 파일 이후에 onLoad되는 script 자동 실행
+	if (onLoadTarget) {
+		var targetWindow = findContentWindow(onLoadTarget);
+		if (targetWindow) {
+			const functionName = (onLoadFunctionName && onLoadFunctionName != '') ? onLoadFunctionName : '_onLoad';
+
+			if (typeof targetWindow[functionName] === 'function') {
+				targetWindow[functionName](executionContext);
+			}
+		}
+	}
+	formContext.zerglrisk.initializedNoteTemplate('<p>테스트</p>', 'Timeline');
+}
+
+function findContentWindow(scriptFileName) {
+	if (scriptFileName == null || scriptFileName == '') {
+		return;
+	}
+
+	const documents = parent.document.querySelectorAll('[id^="ClientApiFrame_"]');
+
+	for (var i = 0; i < documents.length; i++) {
+		const scripts = documents[i].contentWindow.document.getElementsByTagName('script');
+
+		for (var j = 0; j < scripts.length; j++) {
+			if (scripts[j].src != null && scripts[j].src.indexOf(scriptFileName) !== -1) {
+				return documents[i].contentWindow;
+			}
+		}
+	}
+
+	return null;
 }
 
 //룩업필드 값 세팅
@@ -795,11 +1105,9 @@ function InitializeLoadingPanel() {
 	// Loading Panel Content Div
 	$('body').append('<div id="contentDiv"></div>');
 
-	$("#panel").hide()
-		.css({ 'position': 'absolute', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%', 'background-color': '#FFFFFF', 'opacity': '0.5' });
+	$("#panel").hide().css({ 'position': 'absolute', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%', 'background-color': '#FFFFFF', 'opacity': '0.5' });
 
-	$("#contentDiv").append('<img id="loading" src="https://kohyoung.crm5.dynamics.com//WebResources/new_gif_progress" style="width:45px; height:45px;" />')
-		.hide();
+	$("#contentDiv").append(`<img id="loading" src="${Xrm.Page.context.getClientUrl()}/WebResources/new_gif_progress" style="width:45px; height:45px;" />`).hide();
 
 	//.css({ 'background-color': '#DDDDDD', 'height': '100px', 'width': '300px' });
 
@@ -837,7 +1145,7 @@ function OpenLoadingPanel() {
 function CloseLoadingPanel() {
 	$("#contentDiv").fadeOut("fast", function () {
 		$("#panel").fadeOut(0, function () {
-			("#contentDiv").hide();
+			$("#contentDiv").hide();
 		});
 	});
 	$("#panel").remove();

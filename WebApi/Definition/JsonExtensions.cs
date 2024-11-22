@@ -4,7 +4,7 @@ using System.Text;
 
 namespace WebApi_ADAL.Definition
 {
-    public static class JsonExtention
+    public static class JsonExtensions
     {
     }
 }

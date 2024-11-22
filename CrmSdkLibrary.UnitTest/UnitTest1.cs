@@ -35,7 +35,7 @@ namespace CrmSdkLibrary.UnitTest
 		public void v8TestMethod1()
 		{
 			var conn = new Connectionv8();
-			var service = conn.ConnectService(new Uri("https://crm.gitauto.com//XRMServices/2011/Organization.svc"), "git\\crmadmin", "gitauto12#");
+			var service = conn.ConnectService(new Uri("https://crmpage/XRMServices/2011/Organization.svc"), "doman\\id", "password");
 
 			QueryExpression qe = new QueryExpression("usersettings");
 			qe.ColumnSet = new ColumnSet(true);

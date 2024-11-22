@@ -7,7 +7,7 @@ using WebApi_ADAL.Definition.Attribute;
 
 namespace WebApi_ADAL.Definition
 {
-    public static class Extention
+    public static class Extensions
     {
         /// <summary>
         /// Get System.ComponentModel.DescriptionAttribute  Value

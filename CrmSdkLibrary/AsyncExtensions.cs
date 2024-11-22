@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CrmSdkLibrary
 {
-	public static class AsyncExtention
+	public static class AsyncExtensions
 	{
 		public static async Task AssociateAsync(this IOrganizationService service, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken = default)
 		{

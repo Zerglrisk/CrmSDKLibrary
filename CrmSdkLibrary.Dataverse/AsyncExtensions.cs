@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 
 namespace CrmSdkLibrary.Dataverse
 {
-	public static class AsyncExtention
-	{
-		public static async Task AssociateAsync(this IOrganizationService service, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken = default)
+	public static class AsyncExtensions
+    {
+        [Obsolete("This method is deprecated as it is now officially supported in Microsoft.PowerPlatform.Dataverse.Client (v1.1.32 or later). Please use ServiceClient.AssociateAsync instead.")]
+
+        public static async Task AssociateAsync(this IOrganizationService service, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken = default)
 		{
 			var t = Task.Factory.StartNew(() =>
 			{
@@ -28,7 +30,8 @@ namespace CrmSdkLibrary.Dataverse
 			await t;
 		}
 
-		public static async Task AuthenticateAsync(this ServiceProxy<IOrganizationService> service, CancellationToken cancellationToken = default)
+
+        public static async Task AuthenticateAsync(this ServiceProxy<IOrganizationService> service, CancellationToken cancellationToken = default)
 		{
 			var t = Task.Factory.StartNew(() =>
 			{
@@ -46,8 +49,9 @@ namespace CrmSdkLibrary.Dataverse
 
 			await t;
 		}
+        [Obsolete("This method is deprecated as it is now officially supported in Microsoft.PowerPlatform.Dataverse.Client (v1.1.32 or later). Please use ServiceClient.CreateAsync instead.")]
 
-		public static async Task<Guid> CreateAsync(this IOrganizationService service, Entity entity, CancellationToken cancellationToken = default)
+        public static async Task<Guid> CreateAsync(this IOrganizationService service, Entity entity, CancellationToken cancellationToken = default)
 		{
 			var t = Task.Factory.StartNew(() =>
 			{
@@ -71,8 +75,9 @@ namespace CrmSdkLibrary.Dataverse
 			//if (t.IsFaulted) { throw t.Exception.Flatten(); }
 			//return t.Result;
 		}
+        [Obsolete("This method is deprecated as it is now officially supported in Microsoft.PowerPlatform.Dataverse.Client (v1.1.32 or later). Please use ServiceClient.DeleteAsync instead.")]
 
-		public static async Task DeleteAsync(this IOrganizationService service, string entityName, Guid id, CancellationToken cancellationToken = default)
+        public static async Task DeleteAsync(this IOrganizationService service, string entityName, Guid id, CancellationToken cancellationToken = default)
 		{
 			var t = Task.Factory.StartNew(() =>
 			{
@@ -90,8 +95,9 @@ namespace CrmSdkLibrary.Dataverse
 
 			await t;
 		}
+        [Obsolete("This method is deprecated as it is now officially supported in Microsoft.PowerPlatform.Dataverse.Client (v1.1.32 or later). Please use ServiceClient.DisassociateAsync instead.")]
 
-		public static async Task DisassociateAsync(this IOrganizationService service, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken = default)
+        public static async Task DisassociateAsync(this IOrganizationService service, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken = default)
 		{
 			var t = Task.Factory.StartNew(() =>
 			{
@@ -109,8 +115,9 @@ namespace CrmSdkLibrary.Dataverse
 
 			await t;
 		}
+        [Obsolete("This method is deprecated as it is now officially supported in Microsoft.PowerPlatform.Dataverse.Client (v1.1.32 or later). Please use ServiceClient.ExecuteAsync instead.")]
 
-		public static async Task<T> ExecuteAsync<T>(this IOrganizationService service, OrganizationRequest request, CancellationToken cancellationToken = default) where T : OrganizationResponse
+        public static async Task<T> ExecuteAsync<T>(this IOrganizationService service, OrganizationRequest request, CancellationToken cancellationToken = default) where T : OrganizationResponse
 		{
 			var t = Task.Factory.StartNew(() =>
 			{
@@ -130,8 +137,9 @@ namespace CrmSdkLibrary.Dataverse
 
 			return await t;
 		}
+        [Obsolete("This method is deprecated as it is now officially supported in Microsoft.PowerPlatform.Dataverse.Client (v1.1.32 or later). Please use ServiceClient.RetrieveAsync instead.")]
 
-		public static async Task<Entity> RetrieveAsync(this IOrganizationService service, string entityName, Guid id, ColumnSet columnSet, CancellationToken cancellationToken = default)
+        public static async Task<Entity> RetrieveAsync(this IOrganizationService service, string entityName, Guid id, ColumnSet columnSet, CancellationToken cancellationToken = default)
 		{
 			var t = Task.Factory.StartNew(() =>
 			{
@@ -148,8 +156,9 @@ namespace CrmSdkLibrary.Dataverse
 
 			return await t;
 		}
+        [Obsolete("This method is deprecated as it is now officially supported in Microsoft.PowerPlatform.Dataverse.Client (v1.1.32 or later). Please use ServiceClient.RetrieveMultipleAsync instead.")]
 
-		public static async Task<EntityCollection> RetrieveMultipleAsync(this IOrganizationService service, QueryBase query, CancellationToken cancellationToken = default)
+        public static async Task<EntityCollection> RetrieveMultipleAsync(this IOrganizationService service, QueryBase query, CancellationToken cancellationToken = default)
 		{
 			var t = Task.Factory.StartNew(() =>
 			{
@@ -166,8 +175,9 @@ namespace CrmSdkLibrary.Dataverse
 
 			return await t;
 		}
+        [Obsolete("This method is deprecated as it is now officially supported in Microsoft.PowerPlatform.Dataverse.Client (v1.1.32 or later). Please use ServiceClient.UpdateAsync instead.")]
 
-		public static async Task UpdateAsync(this IOrganizationService service, Entity entity, CancellationToken cancellationToken = default)
+        public static async Task UpdateAsync(this IOrganizationService service, Entity entity, CancellationToken cancellationToken = default)
 		{
 			var t = Task.Factory.StartNew(() =>
 			{

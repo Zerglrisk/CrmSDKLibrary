@@ -1241,5 +1241,6 @@ namespace CrmSdkLibrary.Dataverse
 		/// <param name="date"></param>
 		/// <returns></returns>
 		public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date) => date.AddMinutes(GetUserTimeZoneBias(service, systemUserId));
+
 	}
 }

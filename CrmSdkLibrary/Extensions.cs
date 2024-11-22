@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace CrmSdkLibrary
 {
-	public static class Extention
+	public static class Extensions
 	{
 		/// <summary>
 		/// Generate Random String
