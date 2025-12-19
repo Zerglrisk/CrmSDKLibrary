@@ -303,7 +303,28 @@ namespace CrmSdkLibrary.Dataverse.NUnitTest
             var service = Connection.ConnectServiceOAuth(config.EnvironmentUrl, config.ClientId,
                    config.UserId, config.UserPassword, config.TenantId);
 
-            var a = Audits.RestoreDeletedRecord(service, new Guid("F44E78E4-EE29-EE11-A9BB-000D3AA26549"));
+            var entity = new Entity("incident", new Guid("54a13107-b325-ec11-b6e6-000d3ac94604"));
+            entity.Attributes["masterid"] = new EntityReference("incident", new Guid("5572f316-a2b6-ee11-a568-000d3a07e793"));
+            service.Update(entity);
+
+            //Audits.RestoreDeletedRecord(service, new Guid("9186C34B-5170-48EF-9439-A3269E2A5881"), new Guid("c9779837-1088-f011-b4cc-002248566f5b"));
+            //Audits.RestoreDeletedRecord(service, new Guid("F3977748-A275-4485-8F79-21693C554E0F"));
+            //Audits.RestoreDeletedRecord(service, new Guid("7311FCED-5D3F-4F6F-8FA8-92A39A54A91B"));
+            //Audits.RestoreDeletedRecord(service, new Guid("0312DFD3-C3CE-45D4-ABCF-D24E5116D4A2"));
+            //Audits.RestoreDeletedRecord(service, new Guid("67FCF9E6-D382-4DC3-9434-BCC357E4D821"));
+
+            //Audits.RestoreDeletedRecord(service, new Guid("893ED63D-1E98-42E3-9285-697CCFC49A4A"), new Guid("5572f316-a2b6-ee11-a568-000d3a07e793"));
+            //Audits.RestoreDeletedRecord(service, new Guid("EF86E571-4333-413F-AA69-943277A3909B"));
+            //Audits.RestoreDeletedRecord(service, new Guid("CCA2552C-B1ED-406B-B220-8C73C2F4A699"));
+            //Audits.RestoreDeletedRecord(service, new Guid("A7B4F57E-24AD-41B2-8295-7D374AD15802"));
+            //Audits.RestoreDeletedRecord(service, new Guid("63DB3871-47CC-4E56-9F42-46A9C522661E"));
+            //Audits.RestoreDeletedRecord(service, new Guid("1199C527-BF49-426A-BA8C-E679AE33BF18"));
+            //Audits.RestoreDeletedRecord(service, new Guid("DCD23269-B2A0-4315-B72E-2E09F8D96C2F"));
+            //Audits.RestoreDeletedRecord(service, new Guid("0C648755-B2EE-4457-81A0-2E2DB90D3721"));
+            //Audits.RestoreDeletedRecord(service, new Guid("B1812F17-E6F5-4E46-B9C9-88CEAC72BF28"));
+            //Audits.RestoreDeletedRecord(service, new Guid("8185A4D8-E183-4F1E-AF76-AE5B0B5EDC68"));
+            //Audits.RestoreDeletedRecord(service, new Guid("2FD3F2B5-1014-4E85-A6E0-E4EE78D43521"));
+            //Audits.RestoreDeletedRecord(service, new Guid("3B070FAC-55C5-49E5-B671-B2A369EA6CDD"));
         }
 
         [Test]

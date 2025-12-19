@@ -1,7 +1,9 @@
 ﻿using Microsoft.Crm.Sdk.Messages;
+using Microsoft.Identity.Client;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -11,36 +13,83 @@ namespace CrmSdkLibrary.Dataverse
 	{
 		public static ServiceClient Service { get; private set; }
 
-		//private static Microsoft.PowerPlatform.Dataverse.Client.ServiceClient serviceClient;
+        //private static Microsoft.PowerPlatform.Dataverse.Client.ServiceClient serviceClient;
 
-		//public static ServiceClient ServiceClient
-		//{
-		//    get
-		//    {
-		//        if (serviceClient == null ||
-		//            serviceClient.ActiveAuthenticationType == AuthenticationType.InvalidConnection)
-		//        {
-		//            ServiceClient = ConnectServiceOAuth();
-		//        }
-		//        return serviceClient;
-		//    }
-		//    set
-		//    {
-		//        serviceClient = value;
-		//    }
-		//}
+        //public static ServiceClient ServiceClient
+        //{
+        //    get
+        //    {
+        //        if (serviceClient == null ||
+        //            serviceClient.ActiveAuthenticationType == AuthenticationType.InvalidConnection)
+        //        {
+        //            ServiceClient = ConnectServiceOAuth();
+        //        }
+        //        return serviceClient;
+        //    }
+        //    set
+        //    {
+        //        serviceClient = value;
+        //    }
+        //}
 
-		/// <summary>
-		/// Connect with specific crm user.
-		/// You must set AllowPublicClient in AAD, AppRegistration, Manifest.
-		/// </summary>
-		/// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
-		/// <param name="clientId">from aad, app registration</param>
-		/// <param name="id">crm id</param>
-		/// <param name="pw">crm pw</param>
-		/// <param name="tenantId">from aad, app registration </param>
-		/// <returns></returns>
-		public static ServiceClient ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
+        /// <summary>
+        /// Interactive 로그인 (Microsoft Login Control 팝업 사용)
+        /// </summary>
+        /// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">AAD App 등록된 ClientId</param>
+        /// <param name="redirectUri">App 등록 시 지정한 Redirect URI (예: http://localhost 또는 app://GUID)</param>
+        /// <returns></returns>
+        public static ServiceClient ConnectInteractive(string environmentUri, string clientId, string redirectUri, bool forcePopup = false)
+        {
+            string conn = $@"
+				AuthType=OAuth;
+				Url={environmentUri};
+				AppId={clientId};
+				RedirectUri={redirectUri};
+				LoginPrompt={(forcePopup ? "Always" : "Auto")};
+				RequireNewInstance=True;
+			";
+
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+
+            //실행 대기시간 default 2분 -> 5분
+            ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+            ServiceClient svc;
+            try
+            {
+                svc = new ServiceClient(conn);
+            }
+            catch (Microsoft.PowerPlatform.Dataverse.Client.Utils.DataverseConnectionException dcex)
+            {
+                throw dcex;
+            }
+
+            if (svc.IsReady)
+            {
+                svc.CallerId = GetCallerId(ref svc);
+            }
+            else
+            {
+                throw svc.LastException;
+            }
+
+            Service = svc;
+
+            return svc;
+        }
+
+
+        /// <summary>
+        /// Connect with specific crm user.
+        /// You must set AllowPublicClient in AAD, AppRegistration, Manifest.
+        /// </summary>
+        /// <param name="environmentUri">https://yourorg.crm.dynamics.com</param>
+        /// <param name="clientId">from aad, app registration</param>
+        /// <param name="id">crm id</param>
+        /// <param name="pw">crm pw</param>
+        /// <param name="tenantId">from aad, app registration </param>
+        /// <returns></returns>
+        public static ServiceClient ConnectServiceOAuth(string environmentUri, string clientId, string id, string pw, string tenantId)
 		{
 			string conn = $@"
             Url = {environmentUri};

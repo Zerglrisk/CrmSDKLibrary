@@ -90,14 +90,14 @@ namespace CrmSdkLibrary
 			}) as CalculateRollupFieldResponse).Entity;
 		}
 
-		/// <summary>
-		///
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.closeincidentrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="targetId"></param>
-		/// <param name="statusCode"></param>
-		public static void CloseIncident(in IOrganizationService service, Guid targetId, string resolution, int statusCode = 5, Guid resolutionId = new Guid())
+        /// <summary>
+        ///
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.closeincidentrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="targetId"></param>
+        /// <param name="statusCode"></param>
+        public static void CloseIncident(in IOrganizationService service, Guid targetId, string resolution, int statusCode = 5, Guid resolutionId = new Guid())
 		{
 			service.Execute(new CloseIncidentRequest
 			{
@@ -1371,7 +1371,7 @@ namespace CrmSdkLibrary
         /// <returns></returns>
         public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date)
 		{
-			return date.AddMinutes(GetUserTimeZoneBias(service, systemUserId));
+			return date.AddMinutes(-GetUserTimeZoneBias(service, systemUserId));
 		}
 
         /// <summary>

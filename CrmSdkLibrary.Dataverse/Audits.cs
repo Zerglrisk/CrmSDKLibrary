@@ -136,12 +136,17 @@ namespace CrmSdkLibrary.Dataverse
 		/// <param name="service">The IOrganizationService instance to use.</param>
 		/// <param name="auditId">The ID of the audit record to use.</param>
 		/// <returns>The ID of the restored record, or null if the record could not be restored.</returns>
-		public static Guid? RestoreDeletedRecord(in IOrganizationService service, Guid auditId)
+		public static Guid? RestoreDeletedRecord(in IOrganizationService service, Guid auditId, Guid? entityId = null)
 		{
 			var detail = RetrieveAuditDetail(service, auditId);
 			if (detail.AuditRecord.GetAttributeValue<OptionSetValue>("action").Value == (int)ActionType.Delete && detail is AttributeAuditDetail)
 			{
 				var attrDetail = detail as AttributeAuditDetail;
+				if(entityId != null)
+				{
+					attrDetail.OldValue.Id = entityId.Value;
+
+                }
 				return service.Create(attrDetail.OldValue);
 			}
 

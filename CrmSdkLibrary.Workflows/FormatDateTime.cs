@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Workflow;
 using System;
 using System.Activities;
@@ -21,7 +22,11 @@ public class FormatDateTime : System.Activities.CodeActivity
 	[Input("DateTime to format")]
 	public InArgument<DateTime> DateTime { get; set; }
 
-	[Output("Formatted DateTime")]
+    [Input("Convert to User Local Time")]
+    [Default("true")]
+    public InArgument<bool> ConvertToUserTime { get; set; }
+
+    [Output("Formatted DateTime")]
 	public OutArgument<string> Result { get; set; }
 
 	#endregion Arguments
@@ -30,29 +35,49 @@ public class FormatDateTime : System.Activities.CodeActivity
 	{
 		//Create the tracing service
 		ITracingService tracingService = context.GetExtension<ITracingService>();
+		IWorkflowContext workflowContext = context.GetExtension<IWorkflowContext>();
+        IOrganizationServiceFactory serviceFactory = context.GetExtension<IOrganizationServiceFactory>();
+        IOrganizationService service = serviceFactory.CreateOrganizationService(workflowContext.UserId);
 
-		if (this.DateTime.Get<DateTime?>(context) == null)
+		try
 		{
-			return;
-		}
+            if (this.DateTime.Get<DateTime?>(context) == null)
+            {
+                tracingService.Trace("Input DateTime Is Null");
+                return;
+            }
 
-		if (!string.IsNullOrEmpty(this.DateFormat.Get<string>(context)))
-		{
-			try
-			{
-				this.Result.Set(context, this.DateTime.Get<DateTime>(context).ToString(this.DateFormat.Get<string>(context)));
-			}
-			catch
-			{
-				tracingService.Trace("Failed Format using Provided. Try Format default value : yyyyMMddHHmmssfff");
-				this.Result.Set(context, this.DateTime.Get<DateTime>(context).ToString("yyyyMMddHHmmssfff"));
-			}
-		}
-		else
-		{
-			this.Result.Set(context, this.DateTime.Get<DateTime>(context).ToString("yyyyMMddHHmmssfff"));
-		}
-	}
+            var inputDateTime = this.DateTime.Get<DateTime>(context);
+            var convertToUserTime = this.ConvertToUserTime.Get<bool>(context);
+
+            if (convertToUserTime)
+            {
+                inputDateTime = Common.GetUserDateTime(service, workflowContext.UserId, inputDateTime);
+            }
+
+            if (!string.IsNullOrEmpty(this.DateFormat.Get<string>(context)))
+            {
+                try
+                {
+                    this.Result.Set(context, inputDateTime.ToString(this.DateFormat.Get<string>(context)));
+                }
+                catch
+                {
+                    tracingService.Trace("Failed Format using Provided. Try Format default value : yyyyMMddHHmmssfff");
+                    this.Result.Set(context, inputDateTime.ToString("yyyyMMddHHmmssfff"));
+                }
+            }
+            else
+            {
+                this.Result.Set(context, inputDateTime.ToString("yyyyMMddHHmmssfff"));
+            }
+        }
+        catch(Exception ex)
+        {
+            tracingService.Trace("Error in FormatDateTime: {0}", ex.ToString());
+            throw new InvalidPluginExecutionException("An error occurred in FormatDateTime: " + ex.Message, ex);
+        }
+    }
 }
 
 //using System;

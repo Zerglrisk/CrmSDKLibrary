@@ -23,7 +23,7 @@ namespace CrmSdkLibrary
 			}, cancellationToken).ContinueWith(task =>
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
-			});
+			}, cancellationToken);
 
 			await t;
 		}
@@ -42,7 +42,7 @@ namespace CrmSdkLibrary
 			}, cancellationToken).ContinueWith(task =>
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
-			});
+			}, cancellationToken);
 
 			await t;
 		}
@@ -63,7 +63,7 @@ namespace CrmSdkLibrary
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
 				else { return task.Result; }
-			});
+			}, cancellationToken);
 
 			return await t;
 
@@ -86,7 +86,7 @@ namespace CrmSdkLibrary
 			}, cancellationToken).ContinueWith(task =>
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
-			});
+			}, cancellationToken);
 
 			await t;
 		}
@@ -105,7 +105,7 @@ namespace CrmSdkLibrary
 			}, cancellationToken).ContinueWith(task =>
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
-			});
+			}, cancellationToken);
 
 			await t;
 		}
@@ -126,7 +126,7 @@ namespace CrmSdkLibrary
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
 				else { return task.Result; }
-			});
+			}, cancellationToken);
 
 			return await t;
 		}
@@ -144,7 +144,7 @@ namespace CrmSdkLibrary
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
 				else { return task.Result; }
-			});
+			}, cancellationToken);
 
 			return await t;
 		}
@@ -162,7 +162,7 @@ namespace CrmSdkLibrary
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
 				else { return task.Result; }
-			});
+			}, cancellationToken);
 
 			return await t;
 		}
@@ -181,7 +181,7 @@ namespace CrmSdkLibrary
 			}, cancellationToken).ContinueWith(task =>
 			{
 				if (task.IsFaulted) { throw task.Exception.Flatten(); }
-			});
+			}, cancellationToken);
 
 			await t;
 		}

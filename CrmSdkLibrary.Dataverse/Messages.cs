@@ -1257,19 +1257,6 @@ namespace CrmSdkLibrary.Dataverse
         public static int GetUserTimeZoneBias(in IOrganizationService service, Guid systemUserId) => service.Retrieve("usersettings", systemUserId, new ColumnSet("timezonebias")).GetAttributeValue<int>("timezonebias");
 
         /// <summary>
-        /// Returns the datetime adjusted for the user’s timezone bias based on the received date parameter.
-        /// to use plugin system service (system service only using utc time.)
-        /// ex)
-        /// new ConditionExpression("createdon", ConditionOperator.GreaterEqual, date.AddMinutes(timezonebias)));
-        /// new ConditionExpression("createdon", ConditionOperator.LessEqual, date.AddMinutes(timezonebias).AddDays(1).AddTicks(-1)));
-        /// </summary>
-        /// <param name="service"></param>
-        /// <param name="systemUserId"></param>
-        /// <param name="date"></param>
-        /// <returns></returns>
-        public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date) => date.AddMinutes(GetUserTimeZoneBias(service, systemUserId));
-
-        /// <summary>
         /// 특정 상위 레코드에 연결된 하위 레코드들 중 현재 사용자가 읽기 권한을 가진 레코드만 조회합니다.
         /// Retrieves child records linked to a parent record that the current user has read access rights to.
         /// </summary>
@@ -1477,6 +1464,18 @@ namespace CrmSdkLibrary.Dataverse
             }) as ExportMappingsImportMapResponse).MappingsXml;
             
         }
+		/// <summary>
+		/// Returns the datetime adjusted for the user’s timezone bias based on the received date parameter.
+		/// to use plugin system service (system service only using utc time.)
+		/// ex)
+		/// new ConditionExpression("createdon", ConditionOperator.GreaterEqual, date.AddMinutes(timezonebias)));
+		/// new ConditionExpression("createdon", ConditionOperator.LessEqual, date.AddMinutes(timezonebias).AddDays(1).AddTicks(-1)));
+		/// </summary>
+		/// <param name="service"></param>
+		/// <param name="systemUserId"></param>
+		/// <param name="date"></param>
+		/// <returns></returns>
+		public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date) => date.AddMinutes(-GetUserTimeZoneBias(service, systemUserId));
 
         /// <summary>
         /// 
