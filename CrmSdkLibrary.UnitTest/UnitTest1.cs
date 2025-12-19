@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
+using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,7 +28,7 @@ namespace CrmSdkLibrary.UnitTest
 		{
 			using (var reader = new StreamReader(Directory.GetCurrentDirectory() + "/secrets.json"))
 			{
-				Config = JsonConvert.DeserializeObject<AppSettings>(reader.ReadToEnd());
+				Config = System.Text.Json..DeserializeObject<AppSettings>(reader.ReadToEnd());
 			}
 		}
 
@@ -99,5 +100,18 @@ namespace CrmSdkLibrary.UnitTest
 				Assert.Fail(ex.Message);
 			}
 		}
-	}
+
+        /// <summary>
+        /// 복구
+        /// </summary>
+        [TestMethod]
+        public void RestoreAsync()
+        {
+            var conn = new Connectionv8();
+            var service = conn.ConnectService(new Uri("https://crmpage/XRMServices/2011/Organization.svc"), "doman\\id", "password");
+
+            var a = Audits.RestoreDeletedRecord(service, new Guid("D4E50558-5CB7-EF11-80FA-D0509978AD16"));
+        }
+
+    }
 }

@@ -51,10 +51,15 @@ namespace CrmSdkLibrary.Dataverse
             RedirectUri = app://{tenantId};
             RequireNewInstance = True;
             LoginPrompt=Never;"; //GenerateConString();
-			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+#if NET9_0_OR_GREATER
+#elif NET48_OR_GREATER
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
+#else
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+#endif
 
-			//실행 대기시간 default 2분 -> 5분
-			ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+            //실행 대기시간 default 2분 -> 5분
+            ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
 			ServiceClient svc;
 			try
 			{
@@ -91,11 +96,15 @@ namespace CrmSdkLibrary.Dataverse
 		/// <returns></returns>
 		public static ServiceClient ConnectServiceOAuth(string environmentUri, string accessToken)
 		{
-			var client =
-			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+#if NET9_0_OR_GREATER
+#elif NET48_OR_GREATER
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
+#else
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+#endif
 
-			//실행 대기시간 default 2분 -> 5분
-			ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+            //실행 대기시간 default 2분 -> 5분
+            ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
 			ServiceClient svc;
 			try
 			{
@@ -138,10 +147,15 @@ namespace CrmSdkLibrary.Dataverse
             ClientId = {clientId};
             ClientSecret = {clientSecret};
             RequireNewInstance = True; LoginPrompt=Never;"; //GenerateConString();
-			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+#if NET9_0_OR_GREATER
+#elif NET48_OR_GREATER
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
+#else
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+#endif
 
-			//실행 대기시간 default 2분 -> 5분
-			ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
+            //실행 대기시간 default 2분 -> 5분
+            ServiceClient.MaxConnectionTimeout = new TimeSpan(0, 5, 0);
 
 			var svc = new ServiceClient(conn);
 			if (svc.IsReady) //Connection is successful

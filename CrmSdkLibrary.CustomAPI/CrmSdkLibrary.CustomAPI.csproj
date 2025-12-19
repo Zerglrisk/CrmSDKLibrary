@@ -1,37 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net462;net472;net48</TargetFrameworks>
+		<TargetFrameworks>net8.0;net9.0;net462;net472;net48</TargetFrameworks>
 		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
 		<RepositoryType>https://github.com/Zerglrisk/CrmSDKLibrary.git</RepositoryType>
 		<SignAssembly>True</SignAssembly>
 		<DelaySign>False</DelaySign>
 		<AssemblyOriginatorKeyFile>..\Zerglrisk.snk</AssemblyOriginatorKeyFile>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
-		<DefineConstants>NET48</DefineConstants>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
-		<DefineConstants>NET462</DefineConstants>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
-		<DefineConstants>NET472</DefineConstants>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
-		<DefineConstants>NET60</DefineConstants>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
-		<DefineConstants>NET70</DefineConstants>
-	</PropertyGroup>
-	
 	<ItemGroup Condition="'$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net462' Or '$(TargetFramework)' == 'net472'">
 		<Reference Include="System.ServiceModel" />
 	</ItemGroup>
-	
 	<ItemGroup>
-		<PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.2" />
-		<PackageReference Include="System.Memory" Version="4.6.0" />
-		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+		<PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.9" />
+		<PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.7" />
 	</ItemGroup>
 
 </Project>

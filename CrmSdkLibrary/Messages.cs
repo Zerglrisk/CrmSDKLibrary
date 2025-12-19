@@ -1124,12 +1124,30 @@ namespace CrmSdkLibrary
 			}) as RetrieveOptionSetResponse).OptionSetMetadata as OptionSetMetadata;
 		}
 
-		/// <summary>
-		///
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveprincipalaccessrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		public static AccessRights RetrievePrincipalAccessRequest(in IOrganizationService service, EntityReference target, EntityReference principal)
+        /// <summary>
+        /// 특정 보안 주체(사용자 또는 팀)의 대상 레코드에 대한 접근 권한을 검색합니다.
+        /// Retrieves the access rights that a specified security principal (user or team) has to a specific record.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveprincipalaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service">The organization service</param>
+        /// <param name="target">접근 권한을 확인할 대상 레코드 참조 / Target record reference to check access rights for</param>
+        /// <param name="principal">권한을 확인할 보안 주체(사용자/팀) 참조 / Security principal (user/team) reference to check permissions for</param>
+        /// <returns>The access rights of the principal for the target record</returns>
+        /// <example>
+        /// <code>
+        /// // 사용자의 계정 레코드에 대한 접근 권한 확인
+        /// // Check user's access rights for an account record
+        /// var userRef = new EntityReference("systemuser", userId);
+        /// var accountRef = new EntityReference("account", accountId);
+        /// var accessRights = RetrievePrincipalAccess(orgService, accountRef, userRef);
+        /// 
+        /// if((accessRights & AccessRights.ReadAccess) == AccessRights.ReadAccess)
+        /// {
+        ///     Console.WriteLine("User has read access");
+        /// }
+        /// </code>
+        /// </example>
+        public static AccessRights RetrievePrincipalAccess(in IOrganizationService service, EntityReference target, EntityReference principal)
 		{
 			return (service.Execute(new RetrievePrincipalAccessRequest
 			{
@@ -1138,15 +1156,45 @@ namespace CrmSdkLibrary
 			}) as RetrievePrincipalAccessResponse).AccessRights;
 		}
 
-		/// <summary>
-		/// Retrieves all changes to a specific entity.
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308221(v=crm.8)"/>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieverecordchangehistoryrequest?view=dataverse-sdk-latest"/>
-		/// <param name="service"></param>
-		/// <param name="target"></param>
-		/// <returns></returns>
-		public static AuditDetailCollection RetrieveRecordChangeHistory(in IOrganizationService service, EntityReference target)
+        /// <summary>
+        /// 특정 보안 주체(사용자 또는 팀)의 대상 레코드에 대한 상세 접근 권한 정보를 검색합니다.
+        /// Retrieves detailed access information for a security principal (user or team) to a specific record.
+        /// </summary>
+        /// <see cref="https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveprincipalaccessinforequest?view=dataverse-sdk-latest"/>
+        /// <param name="service">The organization service</param>
+        /// <param name="target">접근 정보를 확인할 대상 레코드 참조 / Target record reference to check access information for</param>
+        /// <param name="principal">권한 정보를 확인할 보안 주체(사용자/팀) 참조 / Security principal (user/team) reference to check permission information for</param>
+        /// <returns>접근 권한에 대한 상세 정보 문자열 / A string containing detailed access information</returns>
+        /// <example>
+        /// <code>
+        /// // 사용자의 계정 레코드에 대한 상세 접근 권한 정보 확인
+        /// // Check detailed access information for user's access to an account record
+        /// var userRef = new EntityReference("systemuser", userId);
+        /// var accountRef = new EntityReference("account", accountId);
+        /// var accessInfo = RetrievePrincipalAccessInfo(orgService, accountRef, userRef);
+        /// 
+        /// Console.WriteLine($"Detailed access information: {accessInfo}");
+        /// </code>
+        /// </example>
+        public static string RetrievePrincipalAccessInfo(in IOrganizationService service, EntityReference target, EntityReference principal)
+        {
+            return (service.Execute(new RetrievePrincipalAccessInfoRequest
+            {
+                Principal = principal,
+                EntityName = target.Name,
+                ObjectId = target.Id
+            }) as RetrievePrincipalAccessInfoResponse).AccessInfo;
+        }
+
+        /// <summary>
+        /// Retrieves all changes to a specific entity.
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308221(v=crm.8)"/>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieverecordchangehistoryrequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        public static AuditDetailCollection RetrieveRecordChangeHistory(in IOrganizationService service, EntityReference target)
 		{
 			return (service.Execute(new RetrieveRecordChangeHistoryRequest()
 			{
@@ -1186,21 +1234,6 @@ namespace CrmSdkLibrary
 		public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccess(in IOrganizationService service, EntityReference target)
 		{
 			return (service.Execute(new RetrieveSharedPrincipalsAndAccessRequest()
-			{
-				Target = target
-			}) as RetrieveSharedPrincipalsAndAccessResponse).PrincipalAccesses;
-		}
-
-		/// <summary>
-		///
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievesharedprincipalsandaccessrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="target"></param>
-		/// <returns></returns>
-		public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccessRequest(in IOrganizationService service, EntityReference target)
-		{
-			return (service.Execute(new RetrieveSharedPrincipalsAndAccessRequest
 			{
 				Target = target
 			}) as RetrieveSharedPrincipalsAndAccessResponse).PrincipalAccesses;
@@ -1302,47 +1335,163 @@ namespace CrmSdkLibrary
 			});
 		}
 
-		/// <summary>
-		/// Get User's TimeZoneBias For using DateTime
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="systemUserId"></param>
-		/// <returns></returns>
-		/// <exception cref="Exception"></exception>
-		public static int GetUserTimeZoneBias(in IOrganizationService service, Guid systemUserId)
-		{
-			EntityCollection ec = service.RetrieveMultiple(new QueryExpression("usersettings")
-			{
-				ColumnSet = new ColumnSet("timezonebias"),
-				Criteria = new FilterExpression()
-				{
-					Conditions =
-					{
-						new ConditionExpression("systemuserid", ConditionOperator.Equal, systemUserId)
-					}
-				}
-			});
-			if (ec.Entities.Count < 1)
-			{
-				throw new Exception("Failed to retrieve the user settings record.");
-			}
-			return ec.Entities.First().GetAttributeValue<int>("timezonebias");
-		}
+        /// <summary>
+        /// 사용자의 timezone bias(UTC와의 시차)를 가져옵니다.
+        /// UTC로부터의 시차를 분 단위로 반환합니다. (예: 한국 UTC+9 = -540분)
+        /// Get user's timezone bias (time difference from UTC in minutes)
+        /// </summary>
+        /// <param name="service">The organization service</param>
+        /// <param name="systemUserId">시차를 조회할 사용자 ID / User ID to get timezone bias</param>
+        /// <returns>UTC와의 시차(분) / Time difference from UTC in minutes</returns>
+        /// <example>
+        /// <code>
+        /// // 예시: 한국 시간대의 경우 (UTC+9)
+        /// var bias = GetUserTimeZoneBias(service, userId); // returns -540
+        /// 
+        /// // 예시: 미국 동부 시간대의 경우 (UTC-5) 
+        /// var bias = GetUserTimeZoneBias(service, userId); // returns +300
+        /// </code>
+        /// </example>
+        /// <exception cref="Exception">사용자 설정을 가져오지 못했을 경우 발생 / Thrown when failed to retrieve user settings</exception>
+        public static int GetUserTimeZoneBias(in IOrganizationService service, Guid systemUserId)
+        {
+            return service.Retrieve("usersettings", systemUserId, new ColumnSet("timezonebias")).GetAttributeValue<int>("timezonebias");
+        }
 
-		/// <summary>
-		/// Returns the datetime adjusted for the user’s timezone bias based on the received date parameter.
-		/// to use plugin system service (system service only using utc time.)
-		/// ex)
-		/// new ConditionExpression("createdon", ConditionOperator.GreaterEqual, date.AddMinutes(timezonebias)));
-		/// new ConditionExpression("createdon", ConditionOperator.LessEqual, date.AddMinutes(timezonebias).AddDays(1).AddTicks(-1)));
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="systemUserId"></param>
-		/// <param name="date"></param>
-		/// <returns></returns>
-		public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date)
+        /// <summary>
+        /// Returns the datetime adjusted for the user’s timezone bias based on the received date parameter.
+        /// to use plugin system service (system service only using utc time.)
+        /// ex)
+        /// new ConditionExpression("createdon", ConditionOperator.GreaterEqual, date.AddMinutes(timezonebias)));
+        /// new ConditionExpression("createdon", ConditionOperator.LessEqual, date.AddMinutes(timezonebias).AddDays(1).AddTicks(-1)));
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="systemUserId"></param>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date)
 		{
 			return date.AddMinutes(GetUserTimeZoneBias(service, systemUserId));
 		}
-	}
+
+        /// <summary>
+        /// 특정 상위 레코드에 연결된 하위 레코드들 중 현재 사용자가 읽기 권한을 가진 레코드만 조회합니다.
+        /// Retrieves child records linked to a parent record that the current user has read access rights to.
+        /// </summary>
+        /// <param name="service">The organization service</param>
+        /// <param name="childEntityName">하위 엔터티의 논리적 이름 / Logical name of child entity</param>
+        /// <param name="parentLookupFieldName">상위 레코드를 참조하는 룩업 필드 이름 / Name of lookup field referencing parent record</param>
+        /// <param name="parentId">상위 레코드의 ID / Parent record ID</param>
+        /// <param name="columns">조회할 컬럼 목록 (비어있으면 모든 컬럼 조회) / List of columns to retrieve (retrieves all columns if empty)</param>
+        /// <returns>권한이 있는 하위 레코드 컬렉션 / Collection of authorized child records</returns>
+        /// <example>
+        /// <code>
+        /// // 모든 컬럼 조회 / Retrieve all columns
+        /// var allColumns = RetrieveChildRecordsWithReadAccess(service, "new_b", "new_l_a", parentId);
+        /// 
+        /// // 특정 컬럼만 조회 / Retrieve specific columns
+        /// var specificColumns = RetrieveChildRecordsWithReadAccess(service, "new_b", "new_l_a", parentId, "new_name", "createdon");
+        /// </code>
+        /// </example>
+        public static IEnumerable<Entity> RetrieveChildRecordsWithReadAccess(IOrganizationService service, string childEntityName, string parentLookupFieldName, Guid parentId, params string[] columns)
+        {
+            var userId = ((WhoAmIResponse)service.Execute(new WhoAmIRequest())).UserId;
+
+            var query = new QueryExpression(childEntityName)
+            {
+                ColumnSet = columns.Length == 0 ? new ColumnSet(true) : new ColumnSet(columns),
+                LinkEntities =
+                {
+                    new LinkEntity
+                    {
+                        LinkToEntityName = "principalobjectaccess",
+                        LinkFromEntityName = childEntityName,
+                        LinkCriteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("principalid", ConditionOperator.Equal, userId),
+                                new ConditionExpression("accessright", ConditionOperator.Equal, (int)Microsoft.Crm.Sdk.Messages.AccessRights.ReadAccess)
+                            }
+                        }
+                    }
+                },
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression(parentLookupFieldName, ConditionOperator.Equal, parentId)
+                    }
+                }
+            };
+
+            return service.RetrieveMultiple(query).Entities;
+        }
+
+        /// <summary>
+        /// 상위 레코드에 연결된 하위 레코드들에 대한 현재 사용자의 접근 권한을 조회합니다.
+        /// Retrieves the user's access rights for child records linked to a parent record.
+        /// </summary>
+        /// <param name="service">The organization service</param>
+        /// <param name="childEntityName">하위 엔터티의 논리적 이름 / Logical name of child entity</param>
+        /// <param name="parentLookupFieldName">상위 레코드를 참조하는 룩업 필드 이름 / Name of lookup field referencing parent record</param>
+        /// <param name="parentId">상위 레코드의 ID / Parent record ID</param>
+        /// <returns>하위 레코드의 ID와 해당 접근 권한 튜플 컬렉션 / Collection of tuples containing child record IDs and their access rights</returns>
+        /// <example>
+        /// <code>
+        /// var recordRights = RetrieveChildRecordsAccessRights(
+        ///     service,
+        ///     "new_childentity",      // 하위 엔터티 이름
+        ///     "new_parentlookup",     // 상위 레코드 참조 필드
+        ///     parentGuid
+        /// );
+        /// 
+        /// foreach (var (id, rights) in recordRights)
+        /// {
+        ///     if ((rights & AccessRights.ReadAccess) == AccessRights.ReadAccess)
+        ///     {
+        ///         Console.WriteLine($"Record {id} has read access");
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
+        public static IEnumerable<(Guid Id, AccessRights Rights)> RetrieveChildRecordsAccessRights(IOrganizationService service, string childEntityName, string parentLookupFieldName, Guid parentId)
+        {
+            var userId = ((WhoAmIResponse)service.Execute(new WhoAmIRequest())).UserId;
+
+            var query = new QueryExpression(childEntityName)
+            {
+                ColumnSet = new ColumnSet(false),  // 필요한 정보만 조회
+                LinkEntities =
+                {
+                    new LinkEntity
+                    {
+                        LinkToEntityName = "principalobjectaccess",
+                        LinkFromEntityName = childEntityName,
+                        Columns = new ColumnSet("accessrights"),  // 접근 권한만 조회
+						LinkCriteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("principalid", ConditionOperator.Equal, userId)
+                            }
+                        }
+                    }
+                },
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression(parentLookupFieldName, ConditionOperator.Equal, parentId)
+                    }
+                }
+            };
+
+            return service.RetrieveMultiple(query).Entities
+                .Select(e => (
+                    Id: e.Id,
+                    Rights: (AccessRights)e.GetAttributeValue<int>("accessrights")
+                ));
+        }
+    }
 }

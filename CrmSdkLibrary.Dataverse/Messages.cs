@@ -1,7 +1,6 @@
-﻿using CrmSdkLibrary.Dataverse;
+﻿using CrmSdkLibrary.Dataverse.Definition;
 using CrmSdkLibrary.Dataverse.Definition.Enum;
 using CrmSdkLibrary.Dataverse.Definition.StaticFiles;
-using CrmSdkLibrary.Dataverse.Definition;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.PowerPlatform.Dataverse.Client.Extensions;
@@ -16,728 +15,728 @@ using System.Linq;
 
 namespace CrmSdkLibrary.Dataverse
 {
-	public static partial class Messages
-	{
-		/// <summary>
-		/// Disables duplicate detection. (Default: false)
-		/// Example: Parameters = new ParameterCollection() { GetDisableDuplicateDetectionParameter },
-		/// </summary>
-		public static bool DisableDuplicateDetection { get; set; } = false;
+    public static partial class Messages
+    {
+        /// <summary>
+        /// Disables duplicate detection. (Default: false)
+        /// Example: Parameters = new ParameterCollection() { GetDisableDuplicateDetectionParameter },
+        /// </summary>
+        public static bool DisableDuplicateDetection { get; set; } = false;
 
-		public static KeyValuePair<string, object> GetDisableDuplicateDetectionParameter => new KeyValuePair<string, object>("SuppressDuplicateDetection", DisableDuplicateDetection);
+        public static KeyValuePair<string, object> GetDisableDuplicateDetectionParameter => new KeyValuePair<string, object>("SuppressDuplicateDetection", DisableDuplicateDetection);
 
-		/// <summary>
-		/// Activate a record
-		/// </summary>
-		/// <see cref="https://msdynamicscrmblog.wordpress.com/2013/05/02/activatedeactivate-a-record-using-c-in-dynamics-crm-2011/"/>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName"></param>
-		/// <param name="recordId"></param>
-		public static void ActivateRecord(in IOrganizationService service, string entityLogicalName, Guid recordId, int stateCode = 0, int statusCode = 1)
-		{
-			var cols = new ColumnSet(new[] { "statecode", "statuscode" });
+        /// <summary>
+        /// Activate a record
+        /// </summary>
+        /// <see cref="https://msdynamicscrmblog.wordpress.com/2013/05/02/activatedeactivate-a-record-using-c-in-dynamics-crm-2011/"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="recordId"></param>
+        public static void ActivateRecord(in IOrganizationService service, string entityLogicalName, Guid recordId, int stateCode = 0, int statusCode = 1)
+        {
+            var cols = new ColumnSet(new[] { "statecode", "statuscode" });
 
-			//Check if it is Inactive or not
-			var entity = service.Retrieve(entityLogicalName, recordId, cols);
+            //Check if it is Inactive or not
+            var entity = service.Retrieve(entityLogicalName, recordId, cols);
 
-			if (entity != null && entity.GetAttributeValue<OptionSetValue>("statecode").Value == 1)
-			{
-				//StateCode = 0 and StatusCode = 1 for activating Account or Contact
-				SetStateRequest setStateRequest = new SetStateRequest()
-				{
-					EntityMoniker = new EntityReference
-					{
-						Id = recordId,
-						LogicalName = entityLogicalName,
-					},
-					State = new OptionSetValue(stateCode),
-					Status = new OptionSetValue(statusCode)
-				};
-				service.Execute(setStateRequest);
-			}
-		}
+            if (entity != null && entity.GetAttributeValue<OptionSetValue>("statecode").Value == 1)
+            {
+                //StateCode = 0 and StatusCode = 1 for activating Account or Contact
+                SetStateRequest setStateRequest = new SetStateRequest()
+                {
+                    EntityMoniker = new EntityReference
+                    {
+                        Id = recordId,
+                        LogicalName = entityLogicalName,
+                    },
+                    State = new OptionSetValue(stateCode),
+                    Status = new OptionSetValue(statusCode)
+                };
+                service.Execute(setStateRequest);
+            }
+        }
 
-		/// <summary>
-		/// It must Enabled the 'Use System Pricing Calculation'
-		/// On CRM System Settings Page > Sales Tab
-		/// </summary>
-		/// <see href="https://github.com/demianrasko/Dynamics-365-Workflow-Tools/blob/master/msdyncrmWorkflowTools/msdyncrmWorkflowTools/Class/CalculatePrice.cs"/>
-		/// <see href="https://github.com/delegateas/XrmMockup/issues/25"/>
-		/// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/dn817877%28v%3dcrm.8%29"/>
-		/// <param name="service"></param>
-		/// <param name="target"></param>
-		public static void CalculatePrice(in IOrganizationService service, EntityReference target) => service.Execute(new CalculatePriceRequest() { Target = target });
+        /// <summary>
+        /// It must Enabled the 'Use System Pricing Calculation'
+        /// On CRM System Settings Page > Sales Tab
+        /// </summary>
+        /// <see href="https://github.com/demianrasko/Dynamics-365-Workflow-Tools/blob/master/msdyncrmWorkflowTools/msdyncrmWorkflowTools/Class/CalculatePrice.cs"/>
+        /// <see href="https://github.com/delegateas/XrmMockup/issues/25"/>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/dn817877%28v%3dcrm.8%29"/>
+        /// <param name="service"></param>
+        /// <param name="target"></param>
+        public static void CalculatePrice(in IOrganizationService service, EntityReference target) => service.Execute(new CalculatePriceRequest() { Target = target });
 
-		/// <summary>
-		/// Applies To: Dynamics 365 (online), Dynamics 365 (on-premises), Dynamics CRM 2016, Dynamics CRM Online
-		/// Contains the data that is needed to calculate the value of a rollup attribute.
-		/// need test
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/dn818093(v=crm.8)?redirectedfrom=MSDN"/>
-		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/dn817863%28v%3dcrm.8%29"/> --need add
-		/// <param name="service"></param>
-		/// <param name="target">Gets or sets a reference to the record containing the rollup attribute to calculate. Required.</param>
-		/// <param name="fieldName">Gets or sets logical name of the attribute to calculate. Required.</param>
-		/// <returns>Gets an entity that contains the attributes relevant to the calculated rollup attribute.</returns>
-		public static Entity CalculateRollupField(in IOrganizationService service, EntityReference target, string fieldName) => (service.Execute(new CalculateRollupFieldRequest()
-		{
-			Target = target,
-			FieldName = fieldName
-		}) as CalculateRollupFieldResponse).Entity;
+        /// <summary>
+        /// Applies To: Dynamics 365 (online), Dynamics 365 (on-premises), Dynamics CRM 2016, Dynamics CRM Online
+        /// Contains the data that is needed to calculate the value of a rollup attribute.
+        /// need test
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/dn818093(v=crm.8)?redirectedfrom=MSDN"/>
+        /// <see cref="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/dn817863%28v%3dcrm.8%29"/> --need add
+        /// <param name="service"></param>
+        /// <param name="target">Gets or sets a reference to the record containing the rollup attribute to calculate. Required.</param>
+        /// <param name="fieldName">Gets or sets logical name of the attribute to calculate. Required.</param>
+        /// <returns>Gets an entity that contains the attributes relevant to the calculated rollup attribute.</returns>
+        public static Entity CalculateRollupField(in IOrganizationService service, EntityReference target, string fieldName) => (service.Execute(new CalculateRollupFieldRequest()
+        {
+            Target = target,
+            FieldName = fieldName
+        }) as CalculateRollupFieldResponse).Entity;
 
-		/// <summary>
-		///
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.closeincidentrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="targetId"></param>
-		/// <param name="statusCode"></param>
-		public static void CloseIncident(in IOrganizationService service, Guid targetId, string resolution, int statusCode = 5, Guid resolutionId = new Guid()) => service.Execute(new CloseIncidentRequest
-		{
-			IncidentResolution = new Entity("incidentresolution")
-			{
-				Attributes =
-					{
-						["subject"] = resolution,
-						["incidentid"] = new EntityReference("incident", targetId)
-					},
-				Id = resolutionId
-			},
-			Status = new OptionSetValue(statusCode)
-		});
+        /// <summary>
+        ///
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.closeincidentrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="targetId"></param>
+        /// <param name="statusCode"></param>
+        public static void CloseIncident(in IOrganizationService service, Guid targetId, string resolution, int statusCode = 5, Guid resolutionId = new Guid()) => service.Execute(new CloseIncidentRequest
+        {
+            IncidentResolution = new Entity("incidentresolution")
+            {
+                Attributes =
+                    {
+                        ["subject"] = resolution,
+                        ["incidentid"] = new EntityReference("incident", targetId)
+                    },
+                Id = resolutionId
+            },
+            Status = new OptionSetValue(statusCode)
+        });
 
-		/// <summary>
-		/// test
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="fileFullPath"></param>
-		/// <param name="target"></param>
-		/// <param name="subject"></param>
-		/// <param name="description"></param>
-		/// <returns></returns>
-		public static Guid CreateAnnotationtWithFileAttach(in IOrganizationService service, string fileFullPath, EntityReference target, string subject = "", string description = "")
-		{
-			var provider = new FileExtensionContentTypeProvider();
-			var mimetype = provider.GetMimeMapping(fileFullPath);
-			var filebytes = System.IO.File.ReadAllBytes(fileFullPath);
-			var encodedData = Convert.ToBase64String(filebytes);
-			Entity entity = new Entity("annotation");
-			entity["objectid"] = target;
-			entity["subject"] = subject;
-			entity["documentbody"] = encodedData;
-			entity["mimetype"] = mimetype;
-			entity["isdocument"] = true;
-			entity["filename"] = System.IO.Path.GetFileName(fileFullPath);
-			entity["notetext"] = subject;
+        /// <summary>
+        /// test
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="fileFullPath"></param>
+        /// <param name="target"></param>
+        /// <param name="subject"></param>
+        /// <param name="description"></param>
+        /// <returns></returns>
+        public static Guid CreateAnnotationtWithFileAttach(in IOrganizationService service, string fileFullPath, EntityReference target, string subject = "", string description = "")
+        {
+            var provider = new FileExtensionContentTypeProvider();
+            var mimetype = provider.GetMimeMapping(fileFullPath);
+            var filebytes = System.IO.File.ReadAllBytes(fileFullPath);
+            var encodedData = Convert.ToBase64String(filebytes);
+            Entity entity = new Entity("annotation");
+            entity["objectid"] = target;
+            entity["subject"] = subject;
+            entity["documentbody"] = encodedData;
+            entity["mimetype"] = mimetype;
+            entity["isdocument"] = true;
+            entity["filename"] = System.IO.Path.GetFileName(fileFullPath);
+            entity["notetext"] = subject;
 
-			//AnnotationEntityObject["objecttypecode"] = "";
+            //AnnotationEntityObject["objecttypecode"] = "";
 
-			return service.Create(entity);
-		}
+            return service.Create(entity);
+        }
 
-		/// <summary>
-		/// Contains the data that is needed to create a new attribute, and optionally, to add it to a specified unmanaged solution.
-		/// </summary>
-		/// <see href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.createattributerequest?view=dataverse-sdk-latest"/>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName">Gets or sets the name of the entity for which you want to create an attribute. Required.</param>
-		/// <param name="attributeMetadata">Gets or sets the definition of the attribute type that you want to create. Required.</param>
-		/// <param name="solutionUniqueName">Gets or sets the name of the unmanaged solution to which you want to add this attribute. Optional.</param>
-		public static void CreateAttribute(in IOrganizationService service, string entityLogicalName, AttributeMetadata attributeMetadata, string solutionUniqueName = null) => service.Execute(new CreateAttributeRequest
-		{
-			EntityName = entityLogicalName,
-			Attribute = attributeMetadata,
-			SolutionUniqueName = solutionUniqueName
-		});
+        /// <summary>
+        /// Contains the data that is needed to create a new attribute, and optionally, to add it to a specified unmanaged solution.
+        /// </summary>
+        /// <see href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.createattributerequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName">Gets or sets the name of the entity for which you want to create an attribute. Required.</param>
+        /// <param name="attributeMetadata">Gets or sets the definition of the attribute type that you want to create. Required.</param>
+        /// <param name="solutionUniqueName">Gets or sets the name of the unmanaged solution to which you want to add this attribute. Optional.</param>
+        public static void CreateAttribute(in IOrganizationService service, string entityLogicalName, AttributeMetadata attributeMetadata, string solutionUniqueName = null) => service.Execute(new CreateAttributeRequest
+        {
+            EntityName = entityLogicalName,
+            Attribute = attributeMetadata,
+            SolutionUniqueName = solutionUniqueName
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to create a new global option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.createoptionsetrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="optionSet"></param>
-		/// <returns>Created Option Set Guid</returns>
-		public static Guid CreateOptionSet(in IOrganizationService service, OptionSetMetadata optionSet) => (service.Execute(new CreateOptionSetRequest()
-		{
-			OptionSet = optionSet
-		}) as CreateOptionSetResponse).OptionSetId;
+        /// <summary>
+        /// Contains the data that is needed to create a new global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.createoptionsetrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSet"></param>
+        /// <returns>Created Option Set Guid</returns>
+        public static Guid CreateOptionSet(in IOrganizationService service, OptionSetMetadata optionSet) => (service.Execute(new CreateOptionSetRequest()
+        {
+            OptionSet = optionSet
+        }) as CreateOptionSetResponse).OptionSetId;
 
-		/// <summary>
-		/// Deactivate a record
-		/// </summary>
-		/// <see cref="https://msdynamicscrmblog.wordpress.com/2013/05/02/activatedeactivate-a-record-using-c-in-dynamics-crm-2011/"/>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName"></param>
-		/// <param name="recordId"></param>
-		public static void DeactivateRecord(in IOrganizationService service, string entityLogicalName, Guid recordId, int stateCode = 1, int statusCode = 2)
-		{
-			var cols = new ColumnSet(new[] { "statecode", "statuscode" });
+        /// <summary>
+        /// Deactivate a record
+        /// </summary>
+        /// <see cref="https://msdynamicscrmblog.wordpress.com/2013/05/02/activatedeactivate-a-record-using-c-in-dynamics-crm-2011/"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="recordId"></param>
+        public static void DeactivateRecord(in IOrganizationService service, string entityLogicalName, Guid recordId, int stateCode = 1, int statusCode = 2)
+        {
+            var cols = new ColumnSet(new[] { "statecode", "statuscode" });
 
-			//Check if it is Active or not
-			var entity = service.Retrieve(entityLogicalName, recordId, cols);
+            //Check if it is Active or not
+            var entity = service.Retrieve(entityLogicalName, recordId, cols);
 
-			if (entity != null && entity.GetAttributeValue<OptionSetValue>("statecode").Value == 0)
-			{
-				//StateCode = 1 and StatusCode = 2 for deactivating Account or Contact
-				SetStateRequest setStateRequest = new SetStateRequest()
-				{
-					EntityMoniker = new EntityReference
-					{
-						Id = recordId,
-						LogicalName = entityLogicalName,
-					},
-					State = new OptionSetValue(stateCode),
-					Status = new OptionSetValue(statusCode)
-				};
-				service.Execute(setStateRequest);
-			}
-		}
+            if (entity != null && entity.GetAttributeValue<OptionSetValue>("statecode").Value == 0)
+            {
+                //StateCode = 1 and StatusCode = 2 for deactivating Account or Contact
+                SetStateRequest setStateRequest = new SetStateRequest()
+                {
+                    EntityMoniker = new EntityReference
+                    {
+                        Id = recordId,
+                        LogicalName = entityLogicalName,
+                    },
+                    State = new OptionSetValue(stateCode),
+                    Status = new OptionSetValue(statusCode)
+                };
+                service.Execute(setStateRequest);
+            }
+        }
 
-		/// <summary>
-		///
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName">Gets or sets the logical name of the entity that contains the attribute. Required.</param>
-		/// <param name="attributeLogicalName">Gets or sets the logical name of the attribute to delete.Required.</param>
-		public static void DeleteAttribute(in IOrganizationService service, string entityLogicalName, string attributeLogicalName) => service.Execute(new DeleteAttributeRequest
-		{
-			EntityLogicalName = entityLogicalName,
-			LogicalName = attributeLogicalName
-		});
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName">Gets or sets the logical name of the entity that contains the attribute. Required.</param>
+        /// <param name="attributeLogicalName">Gets or sets the logical name of the attribute to delete.Required.</param>
+        public static void DeleteAttribute(in IOrganizationService service, string entityLogicalName, string attributeLogicalName) => service.Execute(new DeleteAttributeRequest
+        {
+            EntityLogicalName = entityLogicalName,
+            LogicalName = attributeLogicalName
+        });
 
-		/// <summary>
-		/// Deletes all partitions containing audit data created before a given end date.
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg327533(v=crm.8)"/>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.deleteauditdatarequest?view=dataverse-sdk-latest"/>
-		/// <param name="service"></param>
-		/// <param name="endDate"></param>
-		/// <returns></returns>
-		public static void DeleteAuditData(in IOrganizationService service, DateTime endDate)
-		{
-			//// Get the list of audit partitions.
-			//RetrieveAuditPartitionListResponse partitionRequest =
-			//    (RetrieveAuditPartitionListResponse)service.Execute(new RetrieveAuditPartitionListRequest());
-			//AuditPartitionDetailCollection partitions = partitionRequest.AuditPartitionDetailCollection;
+        /// <summary>
+        /// Deletes all partitions containing audit data created before a given end date.
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg327533(v=crm.8)"/>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.deleteauditdatarequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        public static void DeleteAuditData(in IOrganizationService service, DateTime endDate)
+        {
+            //// Get the list of audit partitions.
+            //RetrieveAuditPartitionListResponse partitionRequest =
+            //    (RetrieveAuditPartitionListResponse)service.Execute(new RetrieveAuditPartitionListRequest());
+            //AuditPartitionDetailCollection partitions = partitionRequest.AuditPartitionDetailCollection;
 
-			//// Create a delete request with an end date earlier than possible.
-			//DeleteAuditDataRequest deleteRequest = new DeleteAuditDataRequest();
-			//deleteRequest.EndDate = new DateTime(2000, 1, 1);
+            //// Create a delete request with an end date earlier than possible.
+            //DeleteAuditDataRequest deleteRequest = new DeleteAuditDataRequest();
+            //deleteRequest.EndDate = new DateTime(2000, 1, 1);
 
-			//// Check if partitions are not supported as is the case with SQL Server Standard edition.
-			//if (partitions.IsLogicalCollection)
-			//{
-			//    // Delete all audit records created up until now.
-			//    deleteRequest.EndDate = DateTime.Now;
-			//}
+            //// Check if partitions are not supported as is the case with SQL Server Standard edition.
+            //if (partitions.IsLogicalCollection)
+            //{
+            //    // Delete all audit records created up until now.
+            //    deleteRequest.EndDate = DateTime.Now;
+            //}
 
-			//// Otherwise, delete all partitions that are older than the current partition.
-			//// Hint: The partitions in the collection are returned in sorted order where the
-			//// partition with the oldest end date is at index 0.
-			//else
-			//{
-			//    for (int n = partitions.Count - 1; n >= 0; --n)
-			//    {
-			//        if (partitions[n].EndDate <= DateTime.Now && partitions[n].EndDate > deleteRequest.EndDate)
-			//        {
-			//            deleteRequest.EndDate = (DateTime)partitions[n].EndDate;
-			//            break;
-			//        }
-			//    }
-			//}
+            //// Otherwise, delete all partitions that are older than the current partition.
+            //// Hint: The partitions in the collection are returned in sorted order where the
+            //// partition with the oldest end date is at index 0.
+            //else
+            //{
+            //    for (int n = partitions.Count - 1; n >= 0; --n)
+            //    {
+            //        if (partitions[n].EndDate <= DateTime.Now && partitions[n].EndDate > deleteRequest.EndDate)
+            //        {
+            //            deleteRequest.EndDate = (DateTime)partitions[n].EndDate;
+            //            break;
+            //        }
+            //    }
+            //}
 
-			//// Delete the audit records.
-			//if (deleteRequest.EndDate != new DateTime(2000, 1, 1))
-			//{
-			//    service.Execute(deleteRequest);
-			//    Console.WriteLine("Audit records have been deleted.");
-			//}
-			//else
-			//    Console.WriteLine("There were no audit records that could be deleted.");
-		}
+            //// Delete the audit records.
+            //if (deleteRequest.EndDate != new DateTime(2000, 1, 1))
+            //{
+            //    service.Execute(deleteRequest);
+            //    Console.WriteLine("Audit records have been deleted.");
+            //}
+            //else
+            //    Console.WriteLine("There were no audit records that could be deleted.");
+        }
 
-		/// <summary>
-		/// Contains the data that is needed to delete a global option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionsetrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="globalOptionSetName"></param>
-		public static void DeleteOptionSet(in IOrganizationService service, string globalOptionSetName) => service.Execute(new DeleteOptionSetRequest()
-		{
-			Name = globalOptionSetName
-		});
+        /// <summary>
+        /// Contains the data that is needed to delete a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionsetrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="globalOptionSetName"></param>
+        public static void DeleteOptionSet(in IOrganizationService service, string globalOptionSetName) => service.Execute(new DeleteOptionSetRequest()
+        {
+            Name = globalOptionSetName
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to delete an option value in a global option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionvaluerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="optionSetName">Gets or sets the name of the option set that contains the value.</param>
-		/// <param name="value">Gets or sets the value of the option to delete.</param>
-		public static void DeleteOptionValue(in IOrganizationService service, string optionSetName, int value) => service.Execute(new DeleteOptionValueRequest()
-		{
-			OptionSetName = optionSetName,
-			Value = value,
-		});
+        /// <summary>
+        /// Contains the data that is needed to delete an option value in a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName">Gets or sets the name of the option set that contains the value.</param>
+        /// <param name="value">Gets or sets the value of the option to delete.</param>
+        public static void DeleteOptionValue(in IOrganizationService service, string optionSetName, int value) => service.Execute(new DeleteOptionValueRequest()
+        {
+            OptionSetName = optionSetName,
+            Value = value,
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to delete an option value in a local option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionvaluerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="optionSetName">Gets or sets the name of the option set that contains the value.</param>
-		/// <param name="value">Gets or sets the value of the option to delete.</param>
-		/// <param name="entityLogicalName">Gets or sets the logical name of the entity that contains the attribute.</param>
-		/// <param name="attributeLogicalName">Gets or sets the logical name of the attribute from which to delete the option value.</param>
-		/// <param name="solutionUniqueName">Gets or sets the solution name associated with this option value. Optional.</param>
-		public static void DeleteOptionValue(in IOrganizationService service, string optionSetName, int value,
-			string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null) => service.Execute(new DeleteOptionValueRequest()
-			{
-				OptionSetName = optionSetName,
-				Value = value,
-				EntityLogicalName = entityLogicalName,
-				AttributeLogicalName = attributeLogicalName,
-				SolutionUniqueName = solutionUniqueName
-			});
+        /// <summary>
+        /// Contains the data that is needed to delete an option value in a local option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.deleteoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName">Gets or sets the name of the option set that contains the value.</param>
+        /// <param name="value">Gets or sets the value of the option to delete.</param>
+        /// <param name="entityLogicalName">Gets or sets the logical name of the entity that contains the attribute.</param>
+        /// <param name="attributeLogicalName">Gets or sets the logical name of the attribute from which to delete the option value.</param>
+        /// <param name="solutionUniqueName">Gets or sets the solution name associated with this option value. Optional.</param>
+        public static void DeleteOptionValue(in IOrganizationService service, string optionSetName, int value,
+            string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null) => service.Execute(new DeleteOptionValueRequest()
+            {
+                OptionSetName = optionSetName,
+                Value = value,
+                EntityLogicalName = entityLogicalName,
+                AttributeLogicalName = attributeLogicalName,
+                SolutionUniqueName = solutionUniqueName
+            });
 
-		/// <summary>
-		/// Contains the data that is needed to convert a query in FetchXML to a QueryExpression.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.fetchxmltoqueryexpressionrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="fetchXml"></param>
-		/// <returns></returns>
-		public static QueryExpression FetchXmlToQueryExpression(in IOrganizationService service, string fetchXml) => (service.Execute(new FetchXmlToQueryExpressionRequest()
-		{
-			FetchXml = fetchXml
-		}) as FetchXmlToQueryExpressionResponse).Query;
+        /// <summary>
+        /// Contains the data that is needed to convert a query in FetchXML to a QueryExpression.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.fetchxmltoqueryexpressionrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="fetchXml"></param>
+        /// <returns></returns>
+        public static QueryExpression FetchXmlToQueryExpression(in IOrganizationService service, string fetchXml) => (service.Execute(new FetchXmlToQueryExpressionRequest()
+        {
+            FetchXml = fetchXml
+        }) as FetchXmlToQueryExpressionResponse).Query;
 
-		/// <summary>
-		/// Get All Entity Set Name
-		/// </summary>
-		/// <param name="service"></param>
-		/// <returns></returns>
-		public static Dictionary<string, string> GetAllEntitySetName(in IOrganizationService service) => RetrieveAllEntities(service, EntityFilters.Entity).ToDictionary(
-					delegate (EntityMetadata metadata) { return metadata.LogicalName; },
-					delegate (EntityMetadata metadata) { return metadata.EntitySetName; });
+        /// <summary>
+        /// Get All Entity Set Name
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        public static Dictionary<string, string> GetAllEntitySetName(in IOrganizationService service) => RetrieveAllEntities(service, EntityFilters.Entity).ToDictionary(
+                    delegate (EntityMetadata metadata) { return metadata.LogicalName; },
+                    delegate (EntityMetadata metadata) { return metadata.EntitySetName; });
 
-		public static Guid GetCurrentBusinessUnitId(in IOrganizationService service) => (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).BusinessUnitId;
+        public static Guid GetCurrentBusinessUnitId(in IOrganizationService service) => (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).BusinessUnitId;
 
-		/// <summary>
-		/// Get Current Microsoft Dynamics CRM version
-		/// </summary>
-		/// <param name="service"></param>
-		/// <returns>Version</returns>
-		public static string GetCurrentCRMVersion(in IOrganizationService service) => (service.Execute(new RetrieveVersionRequest()) as RetrieveVersionResponse).Version;
+        /// <summary>
+        /// Get Current Microsoft Dynamics CRM version
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns>Version</returns>
+        public static string GetCurrentCRMVersion(in IOrganizationService service) => (service.Execute(new RetrieveVersionRequest()) as RetrieveVersionResponse).Version;
 
-		public static Guid GetCurrentOrganizationId(in IOrganizationService service) => (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).OrganizationId;
+        public static Guid GetCurrentOrganizationId(in IOrganizationService service) => (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).OrganizationId;
 
-		/// <summary>
-		/// Get logged-in user id
-		/// </summary>
-		/// <param name="service"></param>
-		/// <returns></returns>
-		[Obsolete("GetCurrentUseById is deprecated. Please use CrmServiceClient.GetMyCrmUserId().", true)]
-		public static Guid GetCurrentUserId(this ServiceClient service) => (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).UserId;
+        /// <summary>
+        /// Get logged-in user id
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        [Obsolete("GetCurrentUseById is deprecated. Please use CrmServiceClient.GetMyCrmUserId().", true)]
+        public static Guid GetCurrentUserId(this ServiceClient service) => (service.Execute(new WhoAmIRequest()) as WhoAmIResponse).UserId;
 
-		#region A
+        #region A
 
-		/// <summary>
-		/// Contains the data that is needed to add app components to a business app.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addappcomponentsrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="appId"></param>
-		/// <param name="components"></param>
-		public static void AddAppComponents(in IOrganizationService service, Guid appId, EntityReferenceCollection components) => service.Execute(new AddAppComponentsRequest
-		{
-			AppId = appId,
-			Components = components
-		});
+        /// <summary>
+        /// Contains the data that is needed to add app components to a business app.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addappcomponentsrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="appId"></param>
+        /// <param name="components"></param>
+        public static void AddAppComponents(in IOrganizationService service, Guid appId, EntityReferenceCollection components) => service.Execute(new AddAppComponentsRequest
+        {
+            AppId = appId,
+            Components = components
+        });
 
-		/// <summary>
-		/// For internal use only.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addchannelaccessprofileprivilegesrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="channelAccessProfileid"></param>
-		/// <param name="privileges"></param>
-		public static void AddChannelAccessProfilePrivileges(in IOrganizationService service, Guid channelAccessProfileid, IEnumerable<ChannelAccessProfilePrivilege> privileges) => service.Execute(new AddChannelAccessProfilePrivilegesRequest
-		{
-			ChannelAccessProfileId = channelAccessProfileid,
-			Privileges = privileges.ToArray()
-		});
+        /// <summary>
+        /// For internal use only.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addchannelaccessprofileprivilegesrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="channelAccessProfileid"></param>
+        /// <param name="privileges"></param>
+        public static void AddChannelAccessProfilePrivileges(in IOrganizationService service, Guid channelAccessProfileid, IEnumerable<ChannelAccessProfilePrivilege> privileges) => service.Execute(new AddChannelAccessProfilePrivilegesRequest
+        {
+            ChannelAccessProfileId = channelAccessProfileid,
+            Privileges = privileges.ToArray()
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to add an item to a campaign activity.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.additemcampaignactivityrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="campaignActivityId"></param>
-		/// <param name="entityName"></param>
-		/// <param name="itemId"></param>
-		public static void AddItemCampaignActivity(in IOrganizationService service, Guid campaignActivityId, string entityName, Guid itemId) => service.Execute(new AddItemCampaignActivityRequest
-		{
-			CampaignActivityId = campaignActivityId,
-			EntityName = entityName,
-			ItemId = itemId
-		});
+        /// <summary>
+        /// Contains the data that is needed to add an item to a campaign activity.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.additemcampaignactivityrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="campaignActivityId"></param>
+        /// <param name="entityName"></param>
+        /// <param name="itemId"></param>
+        public static void AddItemCampaignActivity(in IOrganizationService service, Guid campaignActivityId, string entityName, Guid itemId) => service.Execute(new AddItemCampaignActivityRequest
+        {
+            CampaignActivityId = campaignActivityId,
+            EntityName = entityName,
+            ItemId = itemId
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to add members to the list.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addlistmemberslistrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="listId"></param>
-		/// <param name="memberIds"></param>
-		public static void AddListMembersList(in IOrganizationService service, Guid listId, IEnumerable<Guid> memberIds) => service.Execute(new AddListMembersListRequest
-		{
-			ListId = listId,
-			MemberIds = memberIds.ToArray()
-		});
+        /// <summary>
+        /// Contains the data that is needed to add members to the list.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addlistmemberslistrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="listId"></param>
+        /// <param name="memberIds"></param>
+        public static void AddListMembersList(in IOrganizationService service, Guid listId, IEnumerable<Guid> memberIds) => service.Execute(new AddListMembersListRequest
+        {
+            ListId = listId,
+            MemberIds = memberIds.ToArray()
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to add a member to a list (marketing list).
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addmemberlistrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="listId"></param>
-		/// <param name="entityId"></param>
-		/// <returns>Gets the ID of the resulting list member.</returns>
-		public static Guid AddMemberList(in IOrganizationService service, Guid listId, Guid entityId) => (service.Execute(new AddMemberListRequest
-		{
-			ListId = listId,
-			EntityId = entityId
-		}) as AddMemberListResponse).Id;
+        /// <summary>
+        /// Contains the data that is needed to add a member to a list (marketing list).
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addmemberlistrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="listId"></param>
+        /// <param name="entityId"></param>
+        /// <returns>Gets the ID of the resulting list member.</returns>
+        public static Guid AddMemberList(in IOrganizationService service, Guid listId, Guid entityId) => (service.Execute(new AddMemberListRequest
+        {
+            ListId = listId,
+            EntityId = entityId
+        }) as AddMemberListResponse).Id;
 
-		/// <summary>
-		/// Contains the data that is needed to add members to a team.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addmembersteamrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="teamId"></param>
-		/// <param name="memberIds"></param>
-		public static void AddMembersTeam(in IOrganizationService service, Guid teamId, IEnumerable<Guid> memberIds) => service.Execute(new AddMembersTeamRequest
-		{
-			TeamId = teamId,
-			MemberIds = memberIds.ToArray()
-		});
+        /// <summary>
+        /// Contains the data that is needed to add members to a team.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addmembersteamrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="teamId"></param>
+        /// <param name="memberIds"></param>
+        public static void AddMembersTeam(in IOrganizationService service, Guid teamId, IEnumerable<Guid> memberIds) => service.Execute(new AddMembersTeamRequest
+        {
+            TeamId = teamId,
+            MemberIds = memberIds.ToArray()
+        });
 
-		/// <summary>
-		/// Contains the data to add the specified principal to the list of queue members. If the principal is a team, add each team member to the queue.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addprincipaltoqueuerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="principal"></param>
-		/// <param name="queueId"></param>
-		public static void AddPrincipalToQueue(in IOrganizationService service, Entity principal, Guid queueId) => service.Execute(new AddPrincipalToQueueRequest
-		{
-			Principal = principal,
-			QueueId = queueId
-		});
+        /// <summary>
+        /// Contains the data to add the specified principal to the list of queue members. If the principal is a team, add each team member to the queue.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addprincipaltoqueuerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="principal"></param>
+        /// <param name="queueId"></param>
+        public static void AddPrincipalToQueue(in IOrganizationService service, Entity principal, Guid queueId) => service.Execute(new AddPrincipalToQueueRequest
+        {
+            Principal = principal,
+            QueueId = queueId
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to add a set of existing privileges to an existing role.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addprivilegesrolerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="roleId"></param>
-		/// <param name="privileges"></param>
-		/// <returns>There is no return value from this operation.</returns>
-		public static void AddPrivilegesRole(in IOrganizationService service, Guid roleId, IEnumerable<RolePrivilege> privileges) => service.Execute(new AddPrivilegesRoleRequest()
-		{
-			RoleId = roleId,
-			Privileges = privileges.ToArray()
-		});
+        /// <summary>
+        /// Contains the data that is needed to add a set of existing privileges to an existing role.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addprivilegesrolerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="roleId"></param>
+        /// <param name="privileges"></param>
+        /// <returns>There is no return value from this operation.</returns>
+        public static void AddPrivilegesRole(in IOrganizationService service, Guid roleId, IEnumerable<RolePrivilege> privileges) => service.Execute(new AddPrivilegesRoleRequest()
+        {
+            RoleId = roleId,
+            Privileges = privileges.ToArray()
+        });
 
-		/// <summary>
-		/// Deprecated. Use the <see cref="ProductAssociation"/> entity. Contains the data that is needed to add a product to a kit.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addproducttokitrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="productId"></param>
-		/// <param name="kitId"></param>
-		public static void AddProductToKit(in IOrganizationService service, Guid productId, Guid kitId) => service.Execute(new AddProductToKitRequest
-		{
-			ProductId = productId,
-			KitId = kitId
-		});
+        /// <summary>
+        /// Deprecated. Use the <see cref="ProductAssociation"/> entity. Contains the data that is needed to add a product to a kit.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addproducttokitrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="productId"></param>
+        /// <param name="kitId"></param>
+        public static void AddProductToKit(in IOrganizationService service, Guid productId, Guid kitId) => service.Execute(new AddProductToKitRequest
+        {
+            ProductId = productId,
+            KitId = kitId
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to add recurrence information to an existing appointment.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addrecurrencerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="appointmentId"></param>
-		/// <param name="target"></param>
-		/// <returns>Gets the ID of the newly created recurring appointment.</returns>
-		public static Guid AddRecurrence(in IOrganizationService service, Guid appointmentId, Entity target) => (service.Execute(new AddRecurrenceRequest
-		{
-			AppointmentId = appointmentId,
-			Target = target
-		}) as AddRecurrenceResponse).id;
+        /// <summary>
+        /// Contains the data that is needed to add recurrence information to an existing appointment.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addrecurrencerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="appointmentId"></param>
+        /// <param name="target"></param>
+        /// <returns>Gets the ID of the newly created recurring appointment.</returns>
+        public static Guid AddRecurrence(in IOrganizationService service, Guid appointmentId, Entity target) => (service.Execute(new AddRecurrenceRequest
+        {
+            AppointmentId = appointmentId,
+            Target = target
+        }) as AddRecurrenceResponse).id;
 
-		/// <summary>
-		/// Contains the data that is needed to add a solution component to an unmanaged solution.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addsolutioncomponentrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="addRequiredComponents">Gets or sets a value that indicates whether other solution components that are required by the solution component that you are adding should also be added to the unmanaged solution. Required.</param>
-		/// <param name="componentType">Gets or sets the value that represents the solution component that you are adding.Required.</param>
-		/// <param name="componentId">Gets or sets the ID of the solution component. Required.</param>
-		/// <param name="solutionUniqueName">Gets or sets the unique name of the solution you are adding the solution component to. Required.</param>
-		/// <returns></returns>
-		public static Guid AddSolutionComponent(in IOrganizationService service, bool addRequiredComponents, int componentType, Guid componentId, string solutionUniqueName) => (service.Execute(new AddSolutionComponentRequest
-		{
-			AddRequiredComponents = addRequiredComponents,
-			ComponentType = componentType,
-			ComponentId = componentId,
-			SolutionUniqueName = solutionUniqueName,
-		}) as AddSolutionComponentResponse).id;
+        /// <summary>
+        /// Contains the data that is needed to add a solution component to an unmanaged solution.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.addsolutioncomponentrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="addRequiredComponents">Gets or sets a value that indicates whether other solution components that are required by the solution component that you are adding should also be added to the unmanaged solution. Required.</param>
+        /// <param name="componentType">Gets or sets the value that represents the solution component that you are adding.Required.</param>
+        /// <param name="componentId">Gets or sets the ID of the solution component. Required.</param>
+        /// <param name="solutionUniqueName">Gets or sets the unique name of the solution you are adding the solution component to. Required.</param>
+        /// <returns></returns>
+        public static Guid AddSolutionComponent(in IOrganizationService service, bool addRequiredComponents, int componentType, Guid componentId, string solutionUniqueName) => (service.Execute(new AddSolutionComponentRequest
+        {
+            AddRequiredComponents = addRequiredComponents,
+            ComponentType = componentType,
+            ComponentId = componentId,
+            SolutionUniqueName = solutionUniqueName,
+        }) as AddSolutionComponentResponse).id;
 
-		/// <summary>
-		/// Remove member to marketing list.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.removememberlistrequest?view=dynamics-general-ce-9"/>
-		/// <param name="listId">Marketing List Id</param>
-		/// <param name="memberId">Member Id</param>
-		/// <returns>
-		/// <see cref="RemoveMemberListResponse"/>
-		/// </returns>
-		public static void RemoveMemberList(in IOrganizationService service, Guid listId, Guid memberId) => service.Execute(new RemoveMemberListRequest()
-		{
-			ListId = listId,
-			EntityId = memberId
-		});
+        /// <summary>
+        /// Remove member to marketing list.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.removememberlistrequest?view=dynamics-general-ce-9"/>
+        /// <param name="listId">Marketing List Id</param>
+        /// <param name="memberId">Member Id</param>
+        /// <returns>
+        /// <see cref="RemoveMemberListResponse"/>
+        /// </returns>
+        public static void RemoveMemberList(in IOrganizationService service, Guid listId, Guid memberId) => service.Execute(new RemoveMemberListRequest()
+        {
+            ListId = listId,
+            EntityId = memberId
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to add members to a team.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.removemembersteamrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="teamId"></param>
-		/// <param name="memberIds"></param>
-		public static void RemoveMembersTeam(in IOrganizationService service, Guid teamId, IEnumerable<Guid> memberIds) => service.Execute(new RemoveMembersTeamRequest
-		{
-			TeamId = teamId,
-			MemberIds = memberIds.ToArray()
-		});
+        /// <summary>
+        /// Contains the data that is needed to add members to a team.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.removemembersteamrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="teamId"></param>
+        /// <param name="memberIds"></param>
+        public static void RemoveMembersTeam(in IOrganizationService service, Guid teamId, IEnumerable<Guid> memberIds) => service.Execute(new RemoveMembersTeamRequest
+        {
+            TeamId = teamId,
+            MemberIds = memberIds.ToArray()
+        });
 
-		public static void ReplacePrivilegesRole(in IOrganizationService service, Guid roleId, IEnumerable<RolePrivilege> privileges) => service.Execute(new ReplacePrivilegesRoleRequest
-		{
-			RoleId = roleId,
-			Privileges = privileges.ToArray()
-		});
+        public static void ReplacePrivilegesRole(in IOrganizationService service, Guid roleId, IEnumerable<RolePrivilege> privileges) => service.Execute(new ReplacePrivilegesRoleRequest
+        {
+            RoleId = roleId,
+            Privileges = privileges.ToArray()
+        });
 
-		#endregion A
+        #endregion A
 
-		/// <summary>
-		/// Get LogicalName from ObjectTypeCode
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="entityTypeCode"></param>
-		/// <returns></returns>
-		public static string GetEntityLogicalNameFromTypeCode(in IOrganizationService service, int entityTypeCode)
-		{
-			var response = service.Execute(new RetrieveMetadataChangesRequest()
-			{
-				Query = new EntityQueryExpression()
-				{
-					Criteria = new MetadataFilterExpression()
-					{
-						Conditions =
-							{
-								new MetadataConditionExpression("ObjectTypeCode", MetadataConditionOperator.Equals, entityTypeCode)
-							}
-					},
-					Properties = new MetadataPropertiesExpression()
-					{
-						AllProperties = false,
-						PropertyNames = { "LogicalName" }
-					},
+        /// <summary>
+        /// Get LogicalName from ObjectTypeCode
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityTypeCode"></param>
+        /// <returns></returns>
+        public static string GetEntityLogicalNameFromTypeCode(in IOrganizationService service, int entityTypeCode)
+        {
+            var response = service.Execute(new RetrieveMetadataChangesRequest()
+            {
+                Query = new EntityQueryExpression()
+                {
+                    Criteria = new MetadataFilterExpression()
+                    {
+                        Conditions =
+                            {
+                                new MetadataConditionExpression("ObjectTypeCode", MetadataConditionOperator.Equals, entityTypeCode)
+                            }
+                    },
+                    Properties = new MetadataPropertiesExpression()
+                    {
+                        AllProperties = false,
+                        PropertyNames = { "LogicalName" }
+                    },
 
-					//AttributeQuery = new AttributeQueryExpression()
-					//{
-					//    Criteria = new MetadataFilterExpression(),
-					//    Properties = new MetadataPropertiesExpression()
-					//},
-					//LabelQuery = new LabelQueryExpression()
-				},
-				ClientVersionStamp = null,
+                    //AttributeQuery = new AttributeQueryExpression()
+                    //{
+                    //    Criteria = new MetadataFilterExpression(),
+                    //    Properties = new MetadataPropertiesExpression()
+                    //},
+                    //LabelQuery = new LabelQueryExpression()
+                },
+                ClientVersionStamp = null,
 
-				//DeletedMetadataFilters = DeletedMetadataFilters.OptionSet
-			}) as RetrieveMetadataChangesResponse;
+                //DeletedMetadataFilters = DeletedMetadataFilters.OptionSet
+            }) as RetrieveMetadataChangesResponse;
 
-			return response.EntityMetadata.Any() ? response.EntityMetadata.FirstOrDefault()?.LogicalName : null;
-		}
+            return response.EntityMetadata.Any() ? response.EntityMetadata.FirstOrDefault()?.LogicalName : null;
+        }
 
-		/// <summary>
-		/// Get EntityMetadata from ObjectTypeCode
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="entityTypeCode"></param>
-		/// <returns></returns>
-		public static EntityMetadata GetEntityMetadataFromTypeCode(in IOrganizationService service, int entityTypeCode)
-		{
-			var response = service.Execute(new RetrieveMetadataChangesRequest()
-			{
-				Query = new EntityQueryExpression()
-				{
-					Criteria = new MetadataFilterExpression()
-					{
-						Conditions =
-							{
-								new MetadataConditionExpression("ObjectTypeCode", MetadataConditionOperator.Equals, entityTypeCode)
-							}
-					},
-					Properties = new MetadataPropertiesExpression()
-					{
-						AllProperties = true
-					},
+        /// <summary>
+        /// Get EntityMetadata from ObjectTypeCode
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityTypeCode"></param>
+        /// <returns></returns>
+        public static EntityMetadata GetEntityMetadataFromTypeCode(in IOrganizationService service, int entityTypeCode)
+        {
+            var response = service.Execute(new RetrieveMetadataChangesRequest()
+            {
+                Query = new EntityQueryExpression()
+                {
+                    Criteria = new MetadataFilterExpression()
+                    {
+                        Conditions =
+                            {
+                                new MetadataConditionExpression("ObjectTypeCode", MetadataConditionOperator.Equals, entityTypeCode)
+                            }
+                    },
+                    Properties = new MetadataPropertiesExpression()
+                    {
+                        AllProperties = true
+                    },
 
-					//AttributeQuery = new AttributeQueryExpression()
-					//{
-					//    Criteria = new MetadataFilterExpression(),
-					//    Properties = new MetadataPropertiesExpression()
-					//},
-					//LabelQuery = new LabelQueryExpression()
-				},
-				ClientVersionStamp = null,
+                    //AttributeQuery = new AttributeQueryExpression()
+                    //{
+                    //    Criteria = new MetadataFilterExpression(),
+                    //    Properties = new MetadataPropertiesExpression()
+                    //},
+                    //LabelQuery = new LabelQueryExpression()
+                },
+                ClientVersionStamp = null,
 
-				//DeletedMetadataFilters = DeletedMetadataFilters.OptionSet
-			}) as RetrieveMetadataChangesResponse;
+                //DeletedMetadataFilters = DeletedMetadataFilters.OptionSet
+            }) as RetrieveMetadataChangesResponse;
 
-			return response.EntityMetadata.Any() ? response.EntityMetadata.FirstOrDefault() : null;
-		}
+            return response.EntityMetadata.Any() ? response.EntityMetadata.FirstOrDefault() : null;
+        }
 
-		/// <summary>
-		/// Get EntityPrimaryFieldName
-		/// Custom Entities Default Primary Field Name is new_name
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName"></param>
-		/// <returns></returns>
-		public static string GetEntityPrimaryFieldName(in IOrganizationService service, string entityLogicalName) => RetrieveEntity(service, entityLogicalName, EntityFilters.Entity).PrimaryNameAttribute;
+        /// <summary>
+        /// Get EntityPrimaryFieldName
+        /// Custom Entities Default Primary Field Name is new_name
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static string GetEntityPrimaryFieldName(in IOrganizationService service, string entityLogicalName) => RetrieveEntity(service, entityLogicalName, EntityFilters.Entity).PrimaryNameAttribute;
 
-		/// <summary>
-		/// Get Entity Set Name
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.entitymetadata.entitysetname?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName"></param>
-		/// <returns></returns>
-		public static string GetEntitySetName(in IOrganizationService service, string entityLogicalName) => RetrieveEntity(service, entityLogicalName, EntityFilters.Entity).EntitySetName;
+        /// <summary>
+        /// Get Entity Set Name
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.entitymetadata.entitysetname?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static string GetEntitySetName(in IOrganizationService service, string entityLogicalName) => RetrieveEntity(service, entityLogicalName, EntityFilters.Entity).EntitySetName;
 
-		/// <summary>
-		/// Get EntityTypeCode from EntityLgoicalName
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName"></param>
-		/// <returns></returns>
-		public static int GetEntityTypeCode(in IOrganizationService service, string entityLogicalName)
-		{
-			var metaData = RetrieveEntity(service, entityLogicalName);
-			if (!metaData.ObjectTypeCode.HasValue)
-			{
-				throw new Exception("ObjectTypeCode is null.");
-			}
+        /// <summary>
+        /// Get EntityTypeCode from EntityLgoicalName
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <returns></returns>
+        public static int GetEntityTypeCode(in IOrganizationService service, string entityLogicalName)
+        {
+            var metaData = RetrieveEntity(service, entityLogicalName);
+            if (!metaData.ObjectTypeCode.HasValue)
+            {
+                throw new Exception("ObjectTypeCode is null.");
+            }
 
-			return metaData.ObjectTypeCode.Value;
-		}
+            return metaData.ObjectTypeCode.Value;
+        }
 
-		/// <summary>
-		/// Contains the data that is needed to grant a security principal (user or team) access to the specified record.
-		/// Availability : Account, Annotation, Appointment, Campaign, CampaignActivity, CampaignResponse, Connection, Contact, Contract, ConvertRule
-		/// CustomerOpportunityRole, CustomerRelationship, DuplicateRule, Email, EmailServerProfile, Entitlement, Fax, Goal
-		/// GoalRollupQuery, Import, ImportFile, ImportMap, Incident, IncidentResolution, Invoice, Lead, Letter, List, Mailbox
-		/// MailMergeTemplate, msdyn_PostAlbum, msdyn_wallsavedqueryusersettings, Opportunity, OpportunityClose, OrderClose
-		/// PhoneCall, ProcessSession, Queue, Quote, QuoteClose, RecurringAppointmentMaster, Report, RoutingRule, SalesOrder
-		/// ServiceAppointment, SharePointDocumentLocation, SharePointSite, SLA, SLAKPIInstance, SocialActivity, SocialProfile
-		/// Task, Template, UserForm, UserQuery, UserQueryVisualization, Workflow
-		/// [TODO] need test
-		/// [Example]
-		/// //var teamReference = new EntityReference("team", teamid);
-		/// var pr = new PrincipalAccess()
-		/// {
-		///     AccessMask = AccessRights.ReadAccess | AccessRights.WriteAccess,
-		///     Principal = teamReference
-		/// };
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.grantaccessrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="principalAccess">principal is team EntityReference.</param>
-		/// <param name="target">target entity reference</param>
-		public static void GrantAccess(in IOrganizationService service, PrincipalAccess principalAccess, EntityReference target) => service.Execute(new GrantAccessRequest()
-		{
-			PrincipalAccess = principalAccess,
-			Target = target,
-		});
+        /// <summary>
+        /// Contains the data that is needed to grant a security principal (user or team) access to the specified record.
+        /// Availability : Account, Annotation, Appointment, Campaign, CampaignActivity, CampaignResponse, Connection, Contact, Contract, ConvertRule
+        /// CustomerOpportunityRole, CustomerRelationship, DuplicateRule, Email, EmailServerProfile, Entitlement, Fax, Goal
+        /// GoalRollupQuery, Import, ImportFile, ImportMap, Incident, IncidentResolution, Invoice, Lead, Letter, List, Mailbox
+        /// MailMergeTemplate, msdyn_PostAlbum, msdyn_wallsavedqueryusersettings, Opportunity, OpportunityClose, OrderClose
+        /// PhoneCall, ProcessSession, Queue, Quote, QuoteClose, RecurringAppointmentMaster, Report, RoutingRule, SalesOrder
+        /// ServiceAppointment, SharePointDocumentLocation, SharePointSite, SLA, SLAKPIInstance, SocialActivity, SocialProfile
+        /// Task, Template, UserForm, UserQuery, UserQueryVisualization, Workflow
+        /// [TODO] need test
+        /// [Example]
+        /// //var teamReference = new EntityReference("team", teamid);
+        /// var pr = new PrincipalAccess()
+        /// {
+        ///     AccessMask = AccessRights.ReadAccess | AccessRights.WriteAccess,
+        ///     Principal = teamReference
+        /// };
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.grantaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="principalAccess">principal is team EntityReference.</param>
+        /// <param name="target">target entity reference</param>
+        public static void GrantAccess(in IOrganizationService service, PrincipalAccess principalAccess, EntityReference target) => service.Execute(new GrantAccessRequest()
+        {
+            PrincipalAccess = principalAccess,
+            Target = target,
+        });
 
-		/// <summary>
-		///
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.grantaccessrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="principalAccess">new PrincipalAccess { AccessMask = AccessRights.ReadAccess, Principal = entityReference(systemuser, team, ...) }</param>
-		/// <param name="target">entityreference ex) lead, contact ...</param>
-		public static void GrantAccessRequest(in IOrganizationService service, PrincipalAccess principalAccess, EntityReference target) => service.Execute(new GrantAccessRequest
-		{
-			PrincipalAccess = principalAccess,
-			Target = target
-		});
+        /// <summary>
+        ///
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.grantaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="principalAccess">new PrincipalAccess { AccessMask = AccessRights.ReadAccess, Principal = entityReference(systemuser, team, ...) }</param>
+        /// <param name="target">entityreference ex) lead, contact ...</param>
+        public static void GrantAccessRequest(in IOrganizationService service, PrincipalAccess principalAccess, EntityReference target) => service.Execute(new GrantAccessRequest
+        {
+            PrincipalAccess = principalAccess,
+            Target = target
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to insert a new option value for a global option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.insertoptionvaluerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="optionSetName"></param>
-		/// <param name="label"></param>
-		/// <returns>Gets the option value for the new option.</returns>
-		public static int InsertOptionValue(in IOrganizationService service, string optionSetName, Label label) => (service.Execute(new InsertOptionValueRequest()
-		{
-			OptionSetName = optionSetName,
-			Label = label
-		}) as InsertOptionValueResponse).NewOptionValue;
+        /// <summary>
+        /// Contains the data that is needed to insert a new option value for a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.insertoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName"></param>
+        /// <param name="label"></param>
+        /// <returns>Gets the option value for the new option.</returns>
+        public static int InsertOptionValue(in IOrganizationService service, string optionSetName, Label label) => (service.Execute(new InsertOptionValueRequest()
+        {
+            OptionSetName = optionSetName,
+            Label = label
+        }) as InsertOptionValueResponse).NewOptionValue;
 
-		/// <summary>
-		/// Contains the data that is needed to insert a new option value for a local option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.insertoptionvaluerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="optionSetName"></param>
-		/// <param name="label"></param>
-		/// <returns>Gets the option value for the new option.</returns>
-		public static int InsertOptionValue(in IOrganizationService service, string optionSetName,
-			Label label, string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null) => (service.Execute(new InsertOptionValueRequest()
-			{
-				OptionSetName = optionSetName,
-				Label = label,
-				EntityLogicalName = entityLogicalName,
-				AttributeLogicalName = attributeLogicalName,
-				SolutionUniqueName = solutionUniqueName,
-			}) as InsertOptionValueResponse).NewOptionValue;
+        /// <summary>
+        /// Contains the data that is needed to insert a new option value for a local option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.insertoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName"></param>
+        /// <param name="label"></param>
+        /// <returns>Gets the option value for the new option.</returns>
+        public static int InsertOptionValue(in IOrganizationService service, string optionSetName,
+            Label label, string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null) => (service.Execute(new InsertOptionValueRequest()
+            {
+                OptionSetName = optionSetName,
+                Label = label,
+                EntityLogicalName = entityLogicalName,
+                AttributeLogicalName = attributeLogicalName,
+                SolutionUniqueName = solutionUniqueName,
+            }) as InsertOptionValueResponse).NewOptionValue;
 
-		/// <summary>
-		/// Contains the data that is needed to qualify a lead and create account, contact, and opportunity records that are linked to the originating lead record.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.qualifyleadrequest?view=dynamics-general-ce-9"/>
-		/// <see cref="https://community.dynamics.com/365/b/crmmemories/posts/qualify-a-lead-in-c"/>
-		/// <param name="service"></param>
-		/// <param name="targetLead">The ID of the lead that is qualified</param>
-		/// <param name="statusCode">The status of the lead.</param>
-		/// <param name="qualifyLeadEntity">A value that indicates whether to create an Entity from the originating lead.</param>
-		/// <param name="opportunityCurrency">The Currency to use for the Opportunity.</param>
-		/// <param name="opportunityCustomer">The Account or Contact that will be associated with the Opportunity.</param>
-		/// <param name="sourceCampaign">The source Campaign that will be associated with the Opportunity.</param>
-		/// <returns>The collection of references to the newly created account, contact, and opportunity records.</returns>
-		public static EntityReferenceCollection QualifyLead(in IOrganizationService service, EntityReference targetLead,
-			int statusCode, QualifyLeadEntity qualifyLeadEntity, EntityReference opportunityCustomer = null,
-			EntityReference opportunityCurrency = null, EntityReference sourceCampaign = null)
-		{
-			try
-			{
-				/*
+        /// <summary>
+        /// Contains the data that is needed to qualify a lead and create account, contact, and opportunity records that are linked to the originating lead record.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.qualifyleadrequest?view=dynamics-general-ce-9"/>
+        /// <see cref="https://community.dynamics.com/365/b/crmmemories/posts/qualify-a-lead-in-c"/>
+        /// <param name="service"></param>
+        /// <param name="targetLead">The ID of the lead that is qualified</param>
+        /// <param name="statusCode">The status of the lead.</param>
+        /// <param name="qualifyLeadEntity">A value that indicates whether to create an Entity from the originating lead.</param>
+        /// <param name="opportunityCurrency">The Currency to use for the Opportunity.</param>
+        /// <param name="opportunityCustomer">The Account or Contact that will be associated with the Opportunity.</param>
+        /// <param name="sourceCampaign">The source Campaign that will be associated with the Opportunity.</param>
+        /// <returns>The collection of references to the newly created account, contact, and opportunity records.</returns>
+        public static EntityReferenceCollection QualifyLead(in IOrganizationService service, EntityReference targetLead,
+            int statusCode, QualifyLeadEntity qualifyLeadEntity, EntityReference opportunityCustomer = null,
+            EntityReference opportunityCurrency = null, EntityReference sourceCampaign = null)
+        {
+            try
+            {
+                /*
                    Messages.QualifyLead(Connection.OrgService,
                    new EntityReference("lead", new Guid("561231D5-78E0-454C-8C80-374BB5E3FA26")), 3,
                    QualifyLeadEntity.Account | QualifyLeadEntity.Contact | QualifyLeadEntity.Opportunity,
@@ -749,498 +748,751 @@ namespace CrmSdkLibrary.Dataverse
                     QualifyLeadEntity.Account | QualifyLeadEntity.Contact | QualifyLeadEntity.Opportunity);
                  */
 
-				//statusCode Value 3 is Qualify StatusCode. (Default)
-				var createAccount = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Account);
-				var createContact = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Contact);
-				var createOpportunity = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Opportunity);
+                //statusCode Value 3 is Qualify StatusCode. (Default)
+                var createAccount = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Account);
+                var createContact = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Contact);
+                var createOpportunity = qualifyLeadEntity.HasFlag(QualifyLeadEntity.Opportunity);
 
-				var response = service.Execute(new QualifyLeadRequest()
-				{
-					Parameters = new ParameterCollection() { GetDisableDuplicateDetectionParameter },
+                var response = service.Execute(new QualifyLeadRequest()
+                {
+                    Parameters = new ParameterCollection() { GetDisableDuplicateDetectionParameter },
 
-					LeadId = targetLead,
-					Status = new OptionSetValue(statusCode),
+                    LeadId = targetLead,
+                    Status = new OptionSetValue(statusCode),
 
-					CreateAccount = createAccount,
-					CreateContact = createContact,
-					CreateOpportunity = createOpportunity,
+                    CreateAccount = createAccount,
+                    CreateContact = createContact,
+                    CreateOpportunity = createOpportunity,
 
-					// The Currency to use for the Opportunity.
-					OpportunityCurrencyId = null,
+                    // The Currency to use for the Opportunity.
+                    OpportunityCurrencyId = null,
 
-					// The Account or Contact that will be associated with the Opportunity.
-					OpportunityCustomerId = null,
+                    // The Account or Contact that will be associated with the Opportunity.
+                    OpportunityCustomerId = null,
 
-					// The source Campaign that will be associated with the Opportunity.
-					SourceCampaignId = null,
-				}) as QualifyLeadResponse;
-				return response.CreatedEntities;
-			}
-			catch (Exception)
-			{
-				throw;
-			}
-		}
+                    // The source Campaign that will be associated with the Opportunity.
+                    SourceCampaignId = null,
+                }) as QualifyLeadResponse;
+                return response.CreatedEntities;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
 
-		/// <summary>
-		/// Contains the data that is needed to convert a query, which is represented as a QueryExpression class, to its equivalent query, which is represented as FetchXML.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.queryexpressiontofetchxmlrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="queryExpression"></param>
-		/// <returns></returns>
-		public static string QueryExpressionToFetchXml(in IOrganizationService service, QueryExpression queryExpression) => (service.Execute(new QueryExpressionToFetchXmlRequest()
-		{
-			Query = queryExpression
-		}) as QueryExpressionToFetchXmlResponse).FetchXml;
+        /// <summary>
+        /// Contains the data that is needed to convert a query, which is represented as a QueryExpression class, to its equivalent query, which is represented as FetchXML.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.queryexpressiontofetchxmlrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="queryExpression"></param>
+        /// <returns></returns>
+        public static string QueryExpressionToFetchXml(in IOrganizationService service, QueryExpression queryExpression) => (service.Execute(new QueryExpressionToFetchXmlRequest()
+        {
+            Query = queryExpression
+        }) as QueryExpressionToFetchXmlResponse).FetchXml;
 
-		/// <summary>
-		/// Contains the data that is needed to retrieve metadata information about all the entities.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveallentitiesrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="entityFilters"></param>
-		/// <returns></returns>
-		public static IEnumerable<EntityMetadata> RetrieveAllEntities(in IOrganizationService service, EntityFilters entityFilters = EntityFilters.Default) => (service.Execute(new RetrieveAllEntitiesRequest()
-		{
-			EntityFilters = entityFilters
-		}) as RetrieveAllEntitiesResponse).EntityMetadata;
+        /// <summary>
+        /// Contains the data that is needed to retrieve metadata information about all the entities.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveallentitiesrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="entityFilters"></param>
+        /// <returns></returns>
+        public static IEnumerable<EntityMetadata> RetrieveAllEntities(in IOrganizationService service, EntityFilters entityFilters = EntityFilters.Default) => (service.Execute(new RetrieveAllEntitiesRequest()
+        {
+            EntityFilters = entityFilters
+        }) as RetrieveAllEntitiesResponse).EntityMetadata;
 
-		public static IEnumerable<Guid> RetrieveAllMembers(in IOrganizationService service, Guid listId)
-		{
-			var qe = new QueryExpression("listmember")
-			{
-				ColumnSet = new ColumnSet(true),
-				Criteria = new FilterExpression()
-				{
-					Conditions =
-					{
-						new ConditionExpression("listid", ConditionOperator.Equal, listId)
-					}
-				},
-				PageInfo = new PagingInfo()
-				{
-					Count = 5000,
-					PageNumber = 1,
-				}
-			};
+        public static IEnumerable<Guid> RetrieveAllMembers(in IOrganizationService service, Guid listId)
+        {
+            var qe = new QueryExpression("listmember")
+            {
+                ColumnSet = new ColumnSet(true),
+                Criteria = new FilterExpression()
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("listid", ConditionOperator.Equal, listId)
+                    }
+                },
+                PageInfo = new PagingInfo()
+                {
+                    Count = 5000,
+                    PageNumber = 1,
+                }
+            };
 
-			var ec = service.RetrieveMultiple(qe);
+            var ec = service.RetrieveMultiple(qe);
 
-			List<Guid> memberList = ec.Entities.Select(entity => entity.ToCrmValue<EntityReference>("entityid").Id).ToList();
+            List<Guid> memberList = ec.Entities.Select(entity => entity.ToCrmValue<EntityReference>("entityid").Id).ToList();
 
-			while (ec.MoreRecords)
-			{
-				qe.PageInfo.PageNumber += 1;
-				qe.PageInfo.PagingCookie = ec.PagingCookie;
-				ec = service.RetrieveMultiple(qe);
+            while (ec.MoreRecords)
+            {
+                qe.PageInfo.PageNumber += 1;
+                qe.PageInfo.PagingCookie = ec.PagingCookie;
+                ec = service.RetrieveMultiple(qe);
 
-				memberList.AddRange(ec.Entities.Select(entity => entity.ToCrmValue<EntityReference>("entityid").Id));
-			}
+                memberList.AddRange(ec.Entities.Select(entity => entity.ToCrmValue<EntityReference>("entityid").Id));
+            }
 
-			return memberList;
-		}
+            return memberList;
+        }
 
-		/// <summary>
-		/// Contains the data that is needed to retrieve information about all global option sets.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrievealloptionsetsrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <returns></returns>
-		public static IEnumerable<OptionSetMetadataBase> RetrieveAllOptionSets(in IOrganizationService service, bool retrieveAsIfPublished = false) => (service.Execute(new RetrieveAllOptionSetsRequest()
-		{
-			RetrieveAsIfPublished = retrieveAsIfPublished
-		}) as RetrieveAllOptionSetsResponse).OptionSetMetadata;
+        /// <summary>
+        /// Contains the data that is needed to retrieve information about all global option sets.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrievealloptionsetsrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        public static IEnumerable<OptionSetMetadataBase> RetrieveAllOptionSets(in IOrganizationService service, bool retrieveAsIfPublished = false) => (service.Execute(new RetrieveAllOptionSetsRequest()
+        {
+            RetrieveAsIfPublished = retrieveAsIfPublished
+        }) as RetrieveAllOptionSetsResponse).OptionSetMetadata;
 
-		/// <summary>
-		/// Contains the data that is needed to retrieve attribute metadata.
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveattributerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="logicalName"></param>
-		/// <param name="attributeName"></param>
-		/// <returns></returns>
-		public static AttributeMetadata RetrieveAttribute(in IOrganizationService service, bool retrieveAsIfPublished = false, string logicalName = null, string attributeName = null, int columnNumber = 0)
-			=> (service.Execute(new RetrieveAttributeRequest
-			{
-				EntityLogicalName = logicalName, // optional
-				LogicalName = attributeName, // optional
-				RetrieveAsIfPublished = retrieveAsIfPublished, // required
-				ColumnNumber = columnNumber, // optional
-			}) as RetrieveAttributeResponse).AttributeMetadata;
+        /// <summary>
+        /// Contains the data that is needed to retrieve attribute metadata.
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveattributerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="logicalName"></param>
+        /// <param name="attributeName"></param>
+        /// <returns></returns>
+        public static AttributeMetadata RetrieveAttribute(in IOrganizationService service, bool retrieveAsIfPublished = false, string logicalName = null, string attributeName = null, int columnNumber = 0)
+            => (service.Execute(new RetrieveAttributeRequest
+            {
+                EntityLogicalName = logicalName, // optional
+                LogicalName = attributeName, // optional
+                RetrieveAsIfPublished = retrieveAsIfPublished, // required
+                ColumnNumber = columnNumber, // optional
+            }) as RetrieveAttributeResponse).AttributeMetadata;
 
-		/// <summary>
-		/// Retrieves all changes to a specific attribute.
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308132(v=crm.8)"/>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveattributechangehistoryrequest?view=dataverse-sdk-latest"/>
-		/// <param name="service"></param>
-		/// <param name="target"></param>
-		/// <param name="targetAttributeLogicalName"></param>
-		/// <returns></returns>
-		public static Microsoft.Crm.Sdk.Messages.AuditDetailCollection RetrieveAttributeChangeHistory(in IOrganizationService service, EntityReference target, string targetAttributeLogicalName)
-			=> (service.Execute(new RetrieveAttributeChangeHistoryRequest
-			{
-				Target = target,
-				AttributeLogicalName = targetAttributeLogicalName
-			}) as RetrieveAttributeChangeHistoryResponse).AuditDetailCollection;
+        /// <summary>
+        /// Retrieves all changes to a specific attribute.
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308132(v=crm.8)"/>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveattributechangehistoryrequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="target"></param>
+        /// <param name="targetAttributeLogicalName"></param>
+        /// <returns></returns>
+        public static Microsoft.Crm.Sdk.Messages.AuditDetailCollection RetrieveAttributeChangeHistory(in IOrganizationService service, EntityReference target, string targetAttributeLogicalName)
+            => (service.Execute(new RetrieveAttributeChangeHistoryRequest
+            {
+                Target = target,
+                AttributeLogicalName = targetAttributeLogicalName
+            }) as RetrieveAttributeChangeHistoryResponse).AuditDetailCollection;
 
-		/// <summary>
-		/// Retrieves the full audit details of a particular audit record. The record to retrieve is specified in the AuditId property.
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308134(v=crm.8)"/>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveauditdetailsrequest?view=dataverse-sdk-latest"/>
-		/// <param name="service"></param>
-		/// <param name="auditId"></param>
-		/// <returns></returns>
-		public static Microsoft.Crm.Sdk.Messages.AuditDetail RetrieveAuditDetails(in IOrganizationService service, Guid auditId)
-			=> (service.Execute(new RetrieveAuditDetailsRequest
-			{
-				AuditId = auditId
-			}) as RetrieveAuditDetailsResponse).AuditDetail;
+        /// <summary>
+        /// Retrieves the full audit details of a particular audit record. The record to retrieve is specified in the AuditId property.
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308134(v=crm.8)"/>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveauditdetailsrequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="auditId"></param>
+        /// <returns></returns>
+        public static Microsoft.Crm.Sdk.Messages.AuditDetail RetrieveAuditDetails(in IOrganizationService service, Guid auditId)
+            => (service.Execute(new RetrieveAuditDetailsRequest
+            {
+                AuditId = auditId
+            }) as RetrieveAuditDetailsResponse).AuditDetail;
 
-		/// <summary>
-		/// Contains the data that is needed to retrieve the list of database partitions that are used to store audited history data.
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308136(v=crm.8)"/>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveauditpartitionlistrequest?view=dataverse-sdk-latest"/>
-		/// <param name="service"></param>
-		/// <returns></returns>
-		public static AuditPartitionDetailCollection RetrieveAuditPartitionList(in IOrganizationService service)
-			=> (service.Execute(new RetrieveAuditPartitionListRequest()) as RetrieveAuditPartitionListResponse).AuditPartitionDetailCollection;
+        /// <summary>
+        /// Contains the data that is needed to retrieve the list of database partitions that are used to store audited history data.
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308136(v=crm.8)"/>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveauditpartitionlistrequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        public static AuditPartitionDetailCollection RetrieveAuditPartitionList(in IOrganizationService service)
+            => (service.Execute(new RetrieveAuditPartitionListRequest()) as RetrieveAuditPartitionListResponse).AuditPartitionDetailCollection;
 
-		/// <summary>
-		/// Contains the data that’s needed to retrieve information about the current organization.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievecurrentorganizationrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <returns></returns>
-		public static Microsoft.Xrm.Sdk.Organization.OrganizationDetail RetrieveCurrentOrganization(in IOrganizationService service) => (service.Execute(new RetrieveCurrentOrganizationRequest()) as RetrieveCurrentOrganizationResponse).Detail;
+        /// <summary>
+        /// Contains the data that’s needed to retrieve information about the current organization.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievecurrentorganizationrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        public static Microsoft.Xrm.Sdk.Organization.OrganizationDetail RetrieveCurrentOrganization(in IOrganizationService service) => (service.Execute(new RetrieveCurrentOrganizationRequest()) as RetrieveCurrentOrganizationResponse).Detail;
 
-		public static string RetrieveCurrentOrganzizationWebApplicationUrl(in IOrganizationService service) => RetrieveCurrentOrganization(service).Endpoints.FirstOrDefault(e => e.Key == Microsoft.Xrm.Sdk.Organization.EndpointType.WebApplication).Value;
+        public static string RetrieveCurrentOrganzizationWebApplicationUrl(in IOrganizationService service) => RetrieveCurrentOrganization(service).Endpoints.FirstOrDefault(e => e.Key == Microsoft.Xrm.Sdk.Organization.EndpointType.WebApplication).Value;
 
-		/// <summary>
-		/// Contains the data that is needed to retrieves a list dependencies for solution components that directly depend on a solution component.
-		/// </summary>
-		/// <see href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievedependentcomponentsrequest?view=dataverse-sdk-latest"/>
-		/// <see href="https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/metadata-option-sets"/>
-		/// <param name="service"></param>
-		/// <param name="optionSetId"></param>
-		/// <param name="componentType"></param>
-		/// <returns></returns>
-		public static EntityCollection RetrieveDependentComponents(in IOrganizationService service, Guid optionSetId, int componentType) => (service.Execute(new RetrieveDependentComponentsRequest
-		{
-			ObjectId = optionSetId,
-			ComponentType = componentType
-		}) as RetrieveDependentComponentsResponse).EntityCollection;
+        /// <summary>
+        /// Contains the data that is needed to retrieves a list dependencies for solution components that directly depend on a solution component.
+        /// </summary>
+        /// <see href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievedependentcomponentsrequest?view=dataverse-sdk-latest"/>
+        /// <see href="https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/metadata-option-sets"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetId"></param>
+        /// <param name="componentType"></param>
+        /// <returns></returns>
+        public static EntityCollection RetrieveDependentComponents(in IOrganizationService service, Guid optionSetId, int componentType) => (service.Execute(new RetrieveDependentComponentsRequest
+        {
+            ObjectId = optionSetId,
+            ComponentType = componentType
+        }) as RetrieveDependentComponentsResponse).EntityCollection;
 
-		/// <summary>
-		/// Contains the data that is needed to detect and retrieve duplicates for a specified record.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveduplicatesrequest?view=dynamics-general-ce-9"/>
-		/// <see cref="https://blog.naver.com/wmf1235/221788586740"/>
-		/// <param name="service"></param>
-		/// <param name="businessEntity">Gets or sets a record for which the duplicates are retrieved.Required.</param>
-		/// <param name="pagingInfo">Gets or sets a paging information for the retrieved duplicates.Required.</param>
-		/// <returns>Gets a collection of duplicate entity instances.</returns>
-		public static EntityCollection RetrieveDuplicates(in IOrganizationService service, Entity businessEntity, PagingInfo pagingInfo) => (service.Execute(new RetrieveDuplicatesRequest
-		{
-			BusinessEntity = businessEntity,
-			MatchingEntityName = businessEntity.LogicalName,
-			PagingInfo = pagingInfo
-		}) as RetrieveDuplicatesResponse).DuplicateCollection;
+        /// <summary>
+        /// Contains the data that is needed to detect and retrieve duplicates for a specified record.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveduplicatesrequest?view=dynamics-general-ce-9"/>
+        /// <see cref="https://blog.naver.com/wmf1235/221788586740"/>
+        /// <param name="service"></param>
+        /// <param name="businessEntity">Gets or sets a record for which the duplicates are retrieved.Required.</param>
+        /// <param name="pagingInfo">Gets or sets a paging information for the retrieved duplicates.Required.</param>
+        /// <returns>Gets a collection of duplicate entity instances.</returns>
+        public static EntityCollection RetrieveDuplicates(in IOrganizationService service, Entity businessEntity, PagingInfo pagingInfo) => (service.Execute(new RetrieveDuplicatesRequest
+        {
+            BusinessEntity = businessEntity,
+            MatchingEntityName = businessEntity.LogicalName,
+            PagingInfo = pagingInfo
+        }) as RetrieveDuplicatesResponse).DuplicateCollection;
 
-		/// <summary>
-		/// Contains the data that is needed to retrieve entity metadata.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveentityrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName"></param>
-		/// <param name="entityFilters"></param>
-		/// <returns></returns>
-		public static EntityMetadata RetrieveEntity(in IOrganizationService service, string entityLogicalName,
-			EntityFilters entityFilters = EntityFilters.Default) => (service.Execute(new RetrieveEntityRequest()
-			{
-				EntityFilters = entityFilters,
-				LogicalName = entityLogicalName
-			}) as RetrieveEntityResponse).EntityMetadata;
+        /// <summary>
+        /// Contains the data that is needed to retrieve entity metadata.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveentityrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="entityFilters"></param>
+        /// <returns></returns>
+        public static EntityMetadata RetrieveEntity(in IOrganizationService service, string entityLogicalName,
+            EntityFilters entityFilters = EntityFilters.Default) => (service.Execute(new RetrieveEntityRequest()
+            {
+                EntityFilters = entityFilters,
+                LogicalName = entityLogicalName
+            }) as RetrieveEntityResponse).EntityMetadata;
 
-		/// <summary>
-		/// Retrieve Members(SystemUser) in provided Team
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="teamId"></param>
-		/// <param name="columnSet">default, All ColumnSet</param>
-		/// <returns></returns>
-		public static EntityCollection RetrieveMembersTeam(in IOrganizationService service, Guid teamId, ColumnSet columnSet = null) => service.RetrieveMultiple(new QueryExpression("systemuser")
-		{
-			ColumnSet = columnSet ?? new ColumnSet(true),
-			LinkEntities =
-				{
-					new LinkEntity("systemuser","teammembership","systemuserid","systemuserid", JoinOperator.Inner)
-					{
-						LinkCriteria = new FilterExpression()
-						{
-							Conditions =
-							{
-								new ConditionExpression("teamid", ConditionOperator.Equal, teamId)
-							}
-						}
-					}
-				}
-		});
+        /// <summary>
+        /// Retrieve Members(SystemUser) in provided Team
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="teamId"></param>
+        /// <param name="columnSet">default, All ColumnSet</param>
+        /// <returns></returns>
+        public static EntityCollection RetrieveMembersTeam(in IOrganizationService service, Guid teamId, ColumnSet columnSet = null) => service.RetrieveMultiple(new QueryExpression("systemuser")
+        {
+            ColumnSet = columnSet ?? new ColumnSet(true),
+            LinkEntities =
+                {
+                    new LinkEntity("systemuser","teammembership","systemuserid","systemuserid", JoinOperator.Inner)
+                    {
+                        LinkCriteria = new FilterExpression()
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("teamid", ConditionOperator.Equal, teamId)
+                            }
+                        }
+                    }
+                }
+        });
 
-		/// <summary>
-		/// Deprecated
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievemembersteamrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="teamId"></param>
-		/// <param name="columnSet"></param>
-		public static EntityCollection RetrieveMembersTeamDeprecated(in IOrganizationService service, Guid teamId, ColumnSet columnSet) => (service.Execute(new RetrieveMembersTeamRequest()
-		{
-			EntityId = teamId,
-			MemberColumnSet = columnSet
-		}) as RetrieveMembersTeamResponse).EntityCollection;
+        /// <summary>
+        /// Deprecated
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievemembersteamrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="teamId"></param>
+        /// <param name="columnSet"></param>
+        public static EntityCollection RetrieveMembersTeamDeprecated(in IOrganizationService service, Guid teamId, ColumnSet columnSet) => (service.Execute(new RetrieveMembersTeamRequest()
+        {
+            EntityId = teamId,
+            MemberColumnSet = columnSet
+        }) as RetrieveMembersTeamResponse).EntityCollection;
 
-		/// <summary>
-		///
-		/// </summary>
-		/// <see href="https://learn.microsoft.com/en-us/dynamics365/customerengagement/on-premises/developer/retrieve-detect-changes-metadata?view=op-9-1"/>
-		/// <param name="service"></param>
-		/// <param name="query"></param>
-		/// <param name="deletedMetadataFilters"></param>
-		/// <param name="clientVersionStamp"></param>
-		/// <param name="retrieveAllSettings"></param>
-		/// <returns></returns>
-		public static (EntityMetadataCollection, DeletedMetadataCollection) RetrieveMetadataChanges(in IOrganizationService service, EntityQueryExpression query, DeletedMetadataFilters deletedMetadataFilters, string clientVersionStamp, bool retrieveAllSettings)
-		{
-			var response = (service.Execute(new RetrieveMetadataChangesRequest()
-			{
-				ClientVersionStamp = clientVersionStamp,
-				DeletedMetadataFilters = deletedMetadataFilters,
-				Query = query,
-				RetrieveAllSettings = retrieveAllSettings,
-			}) as RetrieveMetadataChangesResponse);
-			return (response.EntityMetadata, response.DeletedMetadata);
-		}
+        /// <summary>
+        ///
+        /// </summary>
+        /// <see href="https://learn.microsoft.com/en-us/dynamics365/customerengagement/on-premises/developer/retrieve-detect-changes-metadata?view=op-9-1"/>
+        /// <param name="service"></param>
+        /// <param name="query"></param>
+        /// <param name="deletedMetadataFilters"></param>
+        /// <param name="clientVersionStamp"></param>
+        /// <param name="retrieveAllSettings"></param>
+        /// <returns></returns>
+        public static (EntityMetadataCollection, DeletedMetadataCollection) RetrieveMetadataChanges(in IOrganizationService service, EntityQueryExpression query, DeletedMetadataFilters deletedMetadataFilters, string clientVersionStamp, bool retrieveAllSettings)
+        {
+            var response = (service.Execute(new RetrieveMetadataChangesRequest()
+            {
+                ClientVersionStamp = clientVersionStamp,
+                DeletedMetadataFilters = deletedMetadataFilters,
+                Query = query,
+                RetrieveAllSettings = retrieveAllSettings,
+            }) as RetrieveMetadataChangesResponse);
+            return (response.EntityMetadata, response.DeletedMetadata);
+        }
 
-		/// <summary>
-		/// Contains the data that is needed to retrieve a global option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveoptionsetrequest?view=dynamics-general-ce-9"/>
-		/// <param name="servie"></param>
-		/// <param name="globalOptionSetName"></param>
-		/// <returns></returns>
-		public static OptionSetMetadata RetrieveOptionSet(in IOrganizationService service, string globalOptionSetName, bool retrieveAsIfPublished = false) => (service.Execute(new RetrieveOptionSetRequest()
-		{
-			Name = globalOptionSetName,
-			RetrieveAsIfPublished = retrieveAsIfPublished
-		}) as RetrieveOptionSetResponse).OptionSetMetadata as OptionSetMetadata;
+        /// <summary>
+        /// Contains the data that is needed to retrieve a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.retrieveoptionsetrequest?view=dynamics-general-ce-9"/>
+        /// <param name="servie"></param>
+        /// <param name="globalOptionSetName"></param>
+        /// <returns></returns>
+        public static OptionSetMetadata RetrieveOptionSet(in IOrganizationService service, string globalOptionSetName, bool retrieveAsIfPublished = false) => (service.Execute(new RetrieveOptionSetRequest()
+        {
+            Name = globalOptionSetName,
+            RetrieveAsIfPublished = retrieveAsIfPublished
+        }) as RetrieveOptionSetResponse).OptionSetMetadata as OptionSetMetadata;
+        
+        /// <summary>
+        /// 특정 보안 주체(사용자 또는 팀)의 대상 레코드에 대한 접근 권한을 검색합니다.
+        /// Retrieves the access rights that a specified security principal (user or team) has to a specific record.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveprincipalaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service">The organization service</param>
+        /// <param name="target">접근 권한을 확인할 대상 레코드 참조 / Target record reference to check access rights for</param>
+        /// <param name="principal">권한을 확인할 보안 주체(사용자/팀) 참조 / Security principal (user/team) reference to check permissions for</param>
+        /// <returns>The access rights of the principal for the target record</returns>
+        /// <example>
+        /// <code>
+        /// // 사용자의 계정 레코드에 대한 접근 권한 확인
+        /// // Check user's access rights for an account record
+        /// var userRef = new EntityReference("systemuser", userId);
+        /// var accountRef = new EntityReference("account", accountId);
+        /// var accessRights = RetrievePrincipalAccess(orgService, accountRef, userRef);
+        /// 
+        /// if((accessRights & AccessRights.ReadAccess) == AccessRights.ReadAccess)
+        /// {
+        ///     Console.WriteLine("User has read access");
+        /// }
+        /// </code>
+        /// </example>
+        public static Microsoft.Crm.Sdk.Messages.AccessRights RetrievePrincipalAccess(in IOrganizationService service, EntityReference target, EntityReference principal) => (service.Execute(new RetrievePrincipalAccessRequest
+        {
+            Principal = principal,
+            Target = target
+        }) as RetrievePrincipalAccessResponse).AccessRights;
 
-		/// <summary>
-		///
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveprincipalaccessrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		public static Microsoft.Crm.Sdk.Messages.AccessRights RetrievePrincipalAccessRequest(in IOrganizationService service, EntityReference target, EntityReference principal) => (service.Execute(new RetrievePrincipalAccessRequest
-		{
-			Principal = principal,
-			Target = target
-		}) as RetrievePrincipalAccessResponse).AccessRights;
+        /// <summary>
+        /// 특정 보안 주체(사용자 또는 팀)의 대상 레코드에 대한 상세 접근 권한 정보를 검색합니다.
+        /// Retrieves detailed access information for a security principal (user or team) to a specific record.
+        /// </summary>
+        /// <see cref="https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveprincipalaccessinforequest?view=dataverse-sdk-latest"/>
+        /// <param name="service">The organization service</param>
+        /// <param name="target">접근 정보를 확인할 대상 레코드 참조 / Target record reference to check access information for</param>
+        /// <param name="principal">권한 정보를 확인할 보안 주체(사용자/팀) 참조 / Security principal (user/team) reference to check permission information for</param>
+        /// <returns>접근 권한에 대한 상세 정보 문자열 / A string containing detailed access information</returns>
+        /// <example>
+        /// <code>
+        /// // 사용자의 계정 레코드에 대한 상세 접근 권한 정보 확인
+        /// // Check detailed access information for user's access to an account record
+        /// var userRef = new EntityReference("systemuser", userId);
+        /// var accountRef = new EntityReference("account", accountId);
+        /// var accessInfo = RetrievePrincipalAccessInfo(orgService, accountRef, userRef);
+        /// 
+        /// Console.WriteLine($"Detailed access information: {accessInfo}");
+        /// </code>
+        /// </example>
+        public static string RetrievePrincipalAccessInfo(in IOrganizationService service, EntityReference target, EntityReference principal) => (service.Execute(new RetrievePrincipalAccessInfoRequest
+        {
+            Principal = principal,
+            EntityName = target.Name,
+            ObjectId = target.Id
+        }) as RetrievePrincipalAccessInfoResponse).AccessInfo;
 
-		/// <summary>
-		/// Retrieves all changes to a specific entity.
-		/// </summary>
-		/// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308221(v=crm.8)"/>
-		/// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieverecordchangehistoryrequest?view=dataverse-sdk-latest"/>
-		/// <param name="service"></param>
-		/// <param name="target"></param>
-		/// <returns></returns>
-		public static Microsoft.Crm.Sdk.Messages.AuditDetailCollection RetrieveRecordChangeHistory(in IOrganizationService service, EntityReference target)
-			=> (service.Execute(new RetrieveRecordChangeHistoryRequest()
-			{
-				Target = target
-			}) as RetrieveRecordChangeHistoryResponse).AuditDetailCollection;
+        /// <summary>
+        /// Retrieves all changes to a specific entity.
+        /// </summary>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/dynamicscrm-2016/developers-guide/gg308221(v=crm.8)"/>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieverecordchangehistoryrequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        public static Microsoft.Crm.Sdk.Messages.AuditDetailCollection RetrieveRecordChangeHistory(in IOrganizationService service, EntityReference target)
+            => (service.Execute(new RetrieveRecordChangeHistoryRequest()
+            {
+                Target = target
+            }) as RetrieveRecordChangeHistoryResponse).AuditDetailCollection;
 
-		/// <summary>
-		/// Retrieve the privileges that are assigned to the specified role.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveroleprivilegesrolerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="roleId"></param>
-		/// <returns></returns>
-		public static IEnumerable<RolePrivilege> RetrieveRolePrivilegesRole(in IOrganizationService service, Guid roleId) => (service.Execute(new RetrieveRolePrivilegesRoleRequest()
-		{
-			RoleId = roleId,
-		}) as RetrieveRolePrivilegesRoleResponse).RolePrivileges;
+        /// <summary>
+        /// Retrieve the privileges that are assigned to the specified role.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveroleprivilegesrolerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="roleId"></param>
+        /// <returns></returns>
+        public static IEnumerable<RolePrivilege> RetrieveRolePrivilegesRole(in IOrganizationService service, Guid roleId) => (service.Execute(new RetrieveRolePrivilegesRoleRequest()
+        {
+            RoleId = roleId,
+        }) as RetrieveRolePrivilegesRoleResponse).RolePrivileges;
 
-		/// <summary>
-		/// Contains the data that is needed to retrieve all security principals (users or teams) that have access to, and access rights for, the specified record.
-		/// Availability : Account, Annotation, Appointment, Campaign, CampaignActivity, CampaignResponse, Connection, Contact, Contract, ConvertRule
-		/// CustomerOpportunityRole, CustomerRelationship, DuplicateRule, Email, EmailServerProfile, Entitlement, Fax, Goal
-		/// GoalRollupQuery, Import, ImportFile, ImportMap, Incident, IncidentResolution, Invoice, Lead, Letter, List, Mailbox
-		/// MailMergeTemplate, msdyn_PostAlbum, msdyn_wallsavedqueryusersettings, Opportunity, OpportunityClose, OrderClose
-		/// PhoneCall, ProcessSession, Queue, Quote, QuoteClose, RecurringAppointmentMaster, Report, RoutingRule, SalesOrder
-		/// ServiceAppointment, SharePointDocumentLocation, SharePointSite, SLA, SLAKPIInstance, SocialActivity, SocialProfile
-		/// Task, Template, UserForm, UserQuery, UserQueryVisualization, Workflow
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievesharedprincipalsandaccessrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="target"></param>
-		/// <returns></returns>
-		public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccess(in IOrganizationService service, EntityReference target) => (service.Execute(new RetrieveSharedPrincipalsAndAccessRequest()
-		{
-			Target = target
-		}) as RetrieveSharedPrincipalsAndAccessResponse).PrincipalAccesses;
+        /// <summary>
+        /// Contains the data that is needed to retrieve all security principals (users or teams) that have access to, and access rights for, the specified record.
+        /// Availability : Account, Annotation, Appointment, Campaign, CampaignActivity, CampaignResponse, Connection, Contact, Contract, ConvertRule
+        /// CustomerOpportunityRole, CustomerRelationship, DuplicateRule, Email, EmailServerProfile, Entitlement, Fax, Goal
+        /// GoalRollupQuery, Import, ImportFile, ImportMap, Incident, IncidentResolution, Invoice, Lead, Letter, List, Mailbox
+        /// MailMergeTemplate, msdyn_PostAlbum, msdyn_wallsavedqueryusersettings, Opportunity, OpportunityClose, OrderClose
+        /// PhoneCall, ProcessSession, Queue, Quote, QuoteClose, RecurringAppointmentMaster, Report, RoutingRule, SalesOrder
+        /// ServiceAppointment, SharePointDocumentLocation, SharePointSite, SLA, SLAKPIInstance, SocialActivity, SocialProfile
+        /// Task, Template, UserForm, UserQuery, UserQueryVisualization, Workflow
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievesharedprincipalsandaccessrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccess(in IOrganizationService service, EntityReference target) => (service.Execute(new RetrieveSharedPrincipalsAndAccessRequest()
+        {
+            Target = target
+        }) as RetrieveSharedPrincipalsAndAccessResponse).PrincipalAccesses;
 
-		/// <summary>
-		///
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrievesharedprincipalsandaccessrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="target"></param>
-		/// <returns></returns>
-		public static IEnumerable<PrincipalAccess> RetrieveSharedPrincipalsAndAccessRequest(in IOrganizationService service, EntityReference target) => (service.Execute(new RetrieveSharedPrincipalsAndAccessRequest
-		{
-			Target = target
-		}) as RetrieveSharedPrincipalsAndAccessResponse).PrincipalAccesses;
 
-		/// <summary>
-		/// Contains the data needed to retrieve the privileges a system user (user) has through his or her roles in the specified business unit.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveuserprivilegesrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="userId"></param>
-		/// <returns>Gets an array of privileges that the user holds.</returns>
-		public static RolePrivilege[] RetrieveUserPrivileges(in IOrganizationService service, Guid userId) => (service.Execute(new RetrieveUserPrivilegesRequest()
-		{
-			UserId = userId
-		}) as RetrieveUserPrivilegesResponse).RolePrivileges;
+        /// <summary>
+        /// Contains the data needed to retrieve the privileges a system user (user) has through his or her roles in the specified business unit.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveuserprivilegesrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="userId"></param>
+        /// <returns>Gets an array of privileges that the user holds.</returns>
+        public static RolePrivilege[] RetrieveUserPrivileges(in IOrganizationService service, Guid userId) => (service.Execute(new RetrieveUserPrivilegesRequest()
+        {
+            UserId = userId
+        }) as RetrieveUserPrivilegesResponse).RolePrivileges;
 
-		/// <summary>
-		/// Contains the data needed to retrieve the privileges a system user (user) has through his or her roles in the specified business unit.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveuserprivilegesrequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <returns>Gets an array of privileges that the user holds.</returns>
-		public static IEnumerable<RolePrivilege> RetrieveUserPrivileges(this ServiceClient service) => RetrieveUserPrivileges(service, service.GetMyUserId());
+        /// <summary>
+        /// Contains the data needed to retrieve the privileges a system user (user) has through his or her roles in the specified business unit.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveuserprivilegesrequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <returns>Gets an array of privileges that the user holds.</returns>
+        public static IEnumerable<RolePrivilege> RetrieveUserPrivileges(this ServiceClient service) => RetrieveUserPrivileges(service, service.GetMyUserId());
 
-		/// <summary>
-		/// Contains the data that is needed to send an email message.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.sendemailrequest?view=dynamics-general-ce-9"/>
-		/// <see cref="https://docs.microsoft.com/en-us/dynamics365/customerengagement/on-premises/developer/entities/email"/>
-		/// <param name="service"></param>
-		/// <param name="email"></param>
-		public static void SendEmail(in IOrganizationService service, Email.EmailFormat emailFormat)
-		{
-			var manager = new Email.EmailSendManager(service);
-			manager.SendEmail(emailFormat);
-		}
+        /// <summary>
+        /// Contains the data that is needed to send an email message.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.sendemailrequest?view=dynamics-general-ce-9"/>
+        /// <see cref="https://docs.microsoft.com/en-us/dynamics365/customerengagement/on-premises/developer/entities/email"/>
+        /// <param name="service"></param>
+        /// <param name="email"></param>
+        public static void SendEmail(in IOrganizationService service, Email.EmailFormat emailFormat)
+        {
+            var manager = new Email.EmailSendManager(service);
+            manager.SendEmail(emailFormat);
+        }
 
-		/// <summary>
-		/// Contains the data that is needed to update the definition of an attribute.
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="entityLogicalName">Gets or sets the logical name of the entity to which the attribute belongs. Required.</param>
-		/// <param name="attributeMetadata">Gets or sets the attribute metadata to be updated. Required.</param>
-		/// <param name="mergeLabels">Gets or sets whether the label metadata will be merged or overwritten. Required.</param>
-		/// <param name="solutionUniqueName">Gets or sets the name of the solution to associate the entity with. Optional.</param>
-		public static void UpdateAttribute(in IOrganizationService service, string entityLogicalName, AttributeMetadata attributeMetadata, bool mergeLabels, string solutionUniqueName = null) => service.Execute(new UpdateAttributeRequest
-		{
-			EntityName = entityLogicalName,
-			Attribute = attributeMetadata,
-			MergeLabels = mergeLabels,
-			SolutionUniqueName = solutionUniqueName,
-		});
+        /// <summary>
+        /// Contains the data that is needed to update the definition of an attribute.
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="entityLogicalName">Gets or sets the logical name of the entity to which the attribute belongs. Required.</param>
+        /// <param name="attributeMetadata">Gets or sets the attribute metadata to be updated. Required.</param>
+        /// <param name="mergeLabels">Gets or sets whether the label metadata will be merged or overwritten. Required.</param>
+        /// <param name="solutionUniqueName">Gets or sets the name of the solution to associate the entity with. Optional.</param>
+        public static void UpdateAttribute(in IOrganizationService service, string entityLogicalName, AttributeMetadata attributeMetadata, bool mergeLabels, string solutionUniqueName = null) => service.Execute(new UpdateAttributeRequest
+        {
+            EntityName = entityLogicalName,
+            Attribute = attributeMetadata,
+            MergeLabels = mergeLabels,
+            SolutionUniqueName = solutionUniqueName,
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to update the definition of a global option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionsetresponse?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="optionSet"></param>
-		public static void UpdateOptionSet(in IOrganizationService service, OptionSetMetadata optionSet) => service.Execute(new UpdateOptionSetRequest()
-		{
-			OptionSet = optionSet
-		});
+        /// <summary>
+        /// Contains the data that is needed to update the definition of a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionsetresponse?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSet"></param>
+        public static void UpdateOptionSet(in IOrganizationService service, OptionSetMetadata optionSet) => service.Execute(new UpdateOptionSetRequest()
+        {
+            OptionSet = optionSet
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to update an option value in a global option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionvaluerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="optionSetName"></param>
-		/// <param name="label"></param>
-		/// <param name="value"></param>
-		public static void UpdateOptionValue(in IOrganizationService service, string optionSetName, Label label, int value) => service.Execute(new UpdateOptionValueRequest()
-		{
-			OptionSetName = optionSetName,
-			Value = value,
-			Label = label
-		});
+        /// <summary>
+        /// Contains the data that is needed to update an option value in a global option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName"></param>
+        /// <param name="label"></param>
+        /// <param name="value"></param>
+        public static void UpdateOptionValue(in IOrganizationService service, string optionSetName, Label label, int value) => service.Execute(new UpdateOptionValueRequest()
+        {
+            OptionSetName = optionSetName,
+            Value = value,
+            Label = label
+        });
 
-		/// <summary>
-		/// Contains the data that is needed to update an option value in a local option set.
-		/// </summary>
-		/// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionvaluerequest?view=dynamics-general-ce-9"/>
-		/// <param name="service"></param>
-		/// <param name="optionSetName"></param>
-		/// <param name="label"></param>
-		/// <param name="value"></param>
-		/// <param name="entityLogicalName"></param>
-		/// <param name="attributeLogicalName"></param>
-		/// <param name="solutionUniqueName"></param>
-		public static void UpdateOptionValue(in IOrganizationService service, string optionSetName,
-			Label label, int value, string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null) => service.Execute(new UpdateOptionValueRequest()
-			{
-				OptionSetName = optionSetName,
-				Value = value,
-				Label = label,
-				EntityLogicalName = entityLogicalName,
-				AttributeLogicalName = attributeLogicalName,
-				SolutionUniqueName = solutionUniqueName
-			});
-		/// <summary>
-		/// Get User's TimeZoneBias For using DateTime
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="systemUserId"></param>
-		/// <returns></returns>
-		/// <exception cref="Exception"></exception>
-		public static int GetUserTimeZoneBias(in IOrganizationService service, Guid systemUserId)
-		{
-			EntityCollection ec = service.RetrieveMultiple(new QueryExpression("usersettings")
-			{
-				ColumnSet = new ColumnSet("timezonebias"),
-				Criteria = new FilterExpression()
-				{
-					Conditions =
-					{
-						new ConditionExpression("systemuserid", ConditionOperator.Equal, systemUserId)
-					}
-				}
-			});
-			if (ec.Entities.Count < 1)
-			{
-				throw new Exception("Failed to retrieve the user settings record.");
-			}
-			return ec.Entities.First().GetAttributeValue<int>("timezonebias");
-		}
+        /// <summary>
+        /// Contains the data that is needed to update an option value in a local option set.
+        /// </summary>
+        /// <see cref="https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.updateoptionvaluerequest?view=dynamics-general-ce-9"/>
+        /// <param name="service"></param>
+        /// <param name="optionSetName"></param>
+        /// <param name="label"></param>
+        /// <param name="value"></param>
+        /// <param name="entityLogicalName"></param>
+        /// <param name="attributeLogicalName"></param>
+        /// <param name="solutionUniqueName"></param>
+        public static void UpdateOptionValue(in IOrganizationService service, string optionSetName,
+            Label label, int value, string entityLogicalName, string attributeLogicalName, string solutionUniqueName = null) => service.Execute(new UpdateOptionValueRequest()
+            {
+                OptionSetName = optionSetName,
+                Value = value,
+                Label = label,
+                EntityLogicalName = entityLogicalName,
+                AttributeLogicalName = attributeLogicalName,
+                SolutionUniqueName = solutionUniqueName
+            });
 
-		/// <summary>
-		/// Returns the datetime adjusted for the user’s timezone bias based on the received date parameter.
-		/// to use plugin system service (system service only using utc time.)
-		/// ex)
-		/// new ConditionExpression("createdon", ConditionOperator.GreaterEqual, date.AddMinutes(timezonebias)));
-		/// new ConditionExpression("createdon", ConditionOperator.LessEqual, date.AddMinutes(timezonebias).AddDays(1).AddTicks(-1)));
-		/// </summary>
-		/// <param name="service"></param>
-		/// <param name="systemUserId"></param>
-		/// <param name="date"></param>
-		/// <returns></returns>
-		public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date) => date.AddMinutes(GetUserTimeZoneBias(service, systemUserId));
+        /// <summary>
+        /// 사용자의 timezone bias(UTC와의 시차)를 가져옵니다.
+        /// UTC로부터의 시차를 분 단위로 반환합니다. (예: 한국 UTC+9 = -540분)
+        /// Get user's timezone bias (time difference from UTC in minutes)
+        /// </summary>
+        /// <param name="service">The organization service</param>
+        /// <param name="systemUserId">시차를 조회할 사용자 ID / User ID to get timezone bias</param>
+        /// <returns>UTC와의 시차(분) / Time difference from UTC in minutes</returns>
+        /// <example>
+        /// <code>
+        /// // 예시: 한국 시간대의 경우 (UTC+9)
+        /// var bias = GetUserTimeZoneBias(service, userId); // returns -540
+        /// 
+        /// // 예시: 미국 동부 시간대의 경우 (UTC-5) 
+        /// var bias = GetUserTimeZoneBias(service, userId); // returns +300
+        /// </code>
+        /// </example>
+        /// <exception cref="Exception">사용자 설정을 가져오지 못했을 경우 발생 / Thrown when failed to retrieve user settings</exception>
+        public static int GetUserTimeZoneBias(in IOrganizationService service, Guid systemUserId) => service.Retrieve("usersettings", systemUserId, new ColumnSet("timezonebias")).GetAttributeValue<int>("timezonebias");
 
-	}
+        /// <summary>
+        /// Returns the datetime adjusted for the user’s timezone bias based on the received date parameter.
+        /// to use plugin system service (system service only using utc time.)
+        /// ex)
+        /// new ConditionExpression("createdon", ConditionOperator.GreaterEqual, date.AddMinutes(timezonebias)));
+        /// new ConditionExpression("createdon", ConditionOperator.LessEqual, date.AddMinutes(timezonebias).AddDays(1).AddTicks(-1)));
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="systemUserId"></param>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public static DateTime GetUserDateTime(in IOrganizationService service, in Guid systemUserId, DateTime date) => date.AddMinutes(GetUserTimeZoneBias(service, systemUserId));
+
+        /// <summary>
+        /// 특정 상위 레코드에 연결된 하위 레코드들 중 현재 사용자가 읽기 권한을 가진 레코드만 조회합니다.
+        /// Retrieves child records linked to a parent record that the current user has read access rights to.
+        /// </summary>
+        /// <param name="service">The organization service</param>
+        /// <param name="childEntityName">하위 엔터티의 논리적 이름 / Logical name of child entity</param>
+        /// <param name="parentLookupFieldName">상위 레코드를 참조하는 룩업 필드 이름 / Name of lookup field referencing parent record</param>
+        /// <param name="parentId">상위 레코드의 ID / Parent record ID</param>
+        /// <param name="columns">조회할 컬럼 목록 (비어있으면 모든 컬럼 조회) / List of columns to retrieve (retrieves all columns if empty)</param>
+        /// <returns>권한이 있는 하위 레코드 컬렉션 / Collection of authorized child records</returns>
+        /// <example>
+        /// <code>
+        /// // 모든 컬럼 조회 / Retrieve all columns
+        /// var allColumns = RetrieveChildRecordsWithReadAccess(service, "new_b", "new_l_a", parentId);
+        /// 
+        /// // 특정 컬럼만 조회 / Retrieve specific columns
+        /// var specificColumns = RetrieveChildRecordsWithReadAccess(service, "new_b", "new_l_a", parentId, "new_name", "createdon");
+        /// </code>
+        /// </example>
+        public static IEnumerable<Entity> RetrieveChildRecordsWithReadAccess(IOrganizationService service, string childEntityName, string parentLookupFieldName, Guid parentId, params string[] columns)
+        {
+            //var userId = ((WhoAmIResponse)service.Execute(new WhoAmIRequest())).UserId;
+
+            var qe = new QueryExpression(childEntityName)
+            {
+                ColumnSet = columns.Length == 0 ? new ColumnSet(true) : new ColumnSet(columns),
+                LinkEntities =
+                {
+                    new LinkEntity(childEntityName, "principalobjectaccess",childEntityName + "id","objectid", JoinOperator.LeftOuter)
+                    {
+                        //LinkCriteria = new FilterExpression //(principaltypecode) 팀이 있어서 불가
+                        //{
+                        //    Conditions =
+                        //    {
+                        //        new ConditionExpression("principalid", ConditionOperator.Equal, userId),
+                        //    }
+                        //}
+                    }
+                },
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression(parentLookupFieldName, ConditionOperator.Equal, parentId)
+                    }
+                }
+            };
+
+            return service.RetrieveMultiple(qe).Entities.Where(e => ((AccessRights)e.GetAttributeValue<int>("accessrightsmask") & AccessRights.ReadAccess) == AccessRights.ReadAccess).GroupBy(x => x.Id).Select(x => x.FirstOrDefault());
+        }
+
+        /// <summary>
+        /// 상위 레코드에 연결된 하위 레코드들에 대한 현재 사용자의 접근 권한을 조회합니다.
+        /// Retrieves the user's access rights for child records linked to a parent record.
+        /// </summary>
+        /// <param name="service">The organization service</param>
+        /// <param name="childEntityName">하위 엔터티의 논리적 이름 / Logical name of child entity</param>
+        /// <param name="parentLookupFieldName">상위 레코드를 참조하는 룩업 필드 이름 / Name of lookup field referencing parent record</param>
+        /// <param name="parentId">상위 레코드의 ID / Parent record ID</param>
+        /// <returns>하위 레코드의 ID와 해당 접근 권한 튜플 컬렉션 / Collection of tuples containing child record IDs and their access rights</returns>
+        /// <example>
+        /// <code>
+        /// var recordRights = RetrieveChildRecordsAccessRights(
+        ///     service,
+        ///     "new_childentity",      // 하위 엔터티 이름
+        ///     "new_parentlookup",     // 상위 레코드 참조 필드
+        ///     parentGuid
+        /// );
+        /// 
+        /// foreach (var (id, rights) in recordRights)
+        /// {
+        ///     if ((rights & AccessRights.ReadAccess) == AccessRights.ReadAccess)
+        ///     {
+        ///         Console.WriteLine($"Record {id} has read access");
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
+        public static IEnumerable<(Guid Id, AccessRights Rights)> RetrieveChildRecordsAccessRights(IOrganizationService service, string childEntityName, string parentLookupFieldName, Guid parentId)
+        {
+            //var userId = ((WhoAmIResponse)service.Execute(new WhoAmIRequest())).UserId;
+
+            var qe = new QueryExpression(childEntityName)
+            {
+                ColumnSet = new ColumnSet(false),  // 필요한 정보만 조회
+                LinkEntities =
+                {
+                    new LinkEntity(childEntityName, "principalobjectaccess",childEntityName + "id","objectid", JoinOperator.LeftOuter)
+                    {
+                        Columns = new ColumnSet(true),
+						//LinkCriteria = new FilterExpression //(principaltypecode) 팀이 있어서 불가
+      //                  {
+      //                      Conditions =
+      //                      {
+      //                          new ConditionExpression("principalid", ConditionOperator.Equal, userId)
+      //                      }
+      //                  }
+                    }
+                },
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression(parentLookupFieldName, ConditionOperator.Equal, parentId)
+                    }
+                }
+            };
+
+            return service.RetrieveMultiple(qe).Entities
+                .Select(e => (
+                    Id: e.Id,
+                    Rights: (AccessRights)e.GetAttributeValue<int>("accessrightsmask")
+                ));
+        }
+
+
+        /// <summary>
+        /// 특정 레코드에 대한 모든 접근 권한 정보(사용자와 팀)를 조회합니다.
+        /// Retrieves all access right information (users and teams) for a specific record.
+        /// </summary>
+        /// <param name="service">CRM 조직 서비스 / The organization service</param>
+        /// <param name="record">접근 권한을 조회할 레코드 참조 / Record reference to check access rights</param>
+        /// <returns>
+        /// 접근 권한을 가진 사용자/팀 정보와 권한 목록을 튜플로 반환:
+        /// - EntityLogicalName: 엔터티 논리명(systemuser/team)
+        /// - PrincipalId: 사용자/팀의 ID
+        /// - Name: 사용자 전체이름 또는 팀 이름
+        /// - AccessRights: 접근 권한
+        /// 
+        /// Returns tuple collection containing:
+        /// - EntityLogicalName: Logical name of entity (systemuser/team)
+        /// - PrincipalId: User/Team ID
+        /// - Name: User's full name or Team name
+        /// - AccessRights: Access rights
+        /// </returns>
+        /// <example>
+        /// <code>
+        /// // 계정 레코드에 대한 접근 권한 조회
+        /// // Check access rights for an account record
+        /// var record = new EntityReference("account", accountId);
+        /// var accessList = RetrieveRecordAccessList(service, record);
+        /// 
+        /// foreach (var (entityType, principalId, name, accessRights) in accessList)
+        /// {
+        ///     Console.WriteLine($"{entityType} {name} has accessRights: {accessRights}");
+        /// }
+        /// </code>
+        /// </example>
+        public static IEnumerable<(string EntityLogicalName, Guid PrincipalId, string Name, AccessRights AccessRights)>  RetrieveRecordAccessList(IOrganizationService service, EntityReference record)
+        {
+            var query = new QueryExpression("principalobjectaccess")
+            {
+                ColumnSet = new ColumnSet("accessrightsmask", "principalid", "principaltypecode"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("objecttypecode", ConditionOperator.Equal, record.LogicalName),
+                        new ConditionExpression("objectid", ConditionOperator.Equal, record.Id)
+                    }
+                },
+                LinkEntities =
+                {
+                    new LinkEntity("principalobjectaccess", "systemuser", "principalid", "systemuserid", JoinOperator.LeftOuter)
+                    {
+                        EntityAlias = "user",
+                        Columns = new ColumnSet("fullname")
+                    },
+                    new LinkEntity("principalobjectaccess", "team", "principalid", "teamid", JoinOperator.LeftOuter)
+                    {
+                        EntityAlias = "team",
+                        Columns = new ColumnSet("name")
+                    }
+                }
+            };
+
+            return service.RetrieveMultiple(query).Entities.Select(e =>
+            {
+                var principalType = e.GetAttributeValue<string>("principaltypecode");
+
+                return (
+                    EntityLogicalName: principalType,
+                    PrincipalId: e.GetAttributeValue<Guid>("principalid"),
+                    Name: principalType == "systemuser"
+                        ? (e.GetAttributeValue<AliasedValue>("user.fullname")?.Value?.ToString() ?? "")
+                        : (e.GetAttributeValue<AliasedValue>("team.name")?.Value?.ToString() ?? ""),
+                    AccessRights: (AccessRights)e.GetAttributeValue<int>("accessrightsmask")
+                );
+            });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.exportmappingsimportmaprequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="importMapId">import map (data map) guid to export</param>
+        /// <param name="exportIds"></param>
+        /// <returns></returns>
+        public static string ExportMappingsImportMap(in IOrganizationService service, Guid importMapId, bool exportIds = false)
+        {
+            return (service.Execute(new ExportMappingsImportMapRequest
+            {
+                ImportMapId = importMapId,
+                ExportIds = exportIds
+            }) as ExportMappingsImportMapResponse).MappingsXml;
+            
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <see href="https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.importmappingsimportmaprequest?view=dataverse-sdk-latest"/>
+        /// <param name="service"></param>
+        /// <param name="mappingsXml"></param>
+        /// <param name="replaceIds"></param>
+        /// <returns>newly created import map (data map) guid</returns>
+        public static Guid ImportMappingsImportMap(in IOrganizationService service, string mappingsXml, bool replaceIds = false)
+        {
+            return (service.Execute(new ImportMappingsImportMapRequest
+            {
+                MappingsXml = mappingsXml,
+                ReplaceIds = replaceIds,
+            }) as ImportMappingsImportMapResponse).ImportMapId;
+        }
+    }
 }
